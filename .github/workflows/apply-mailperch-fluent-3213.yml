@@ -1,23 +1,27 @@
 name: Apply MailPerch Fluent 2 update
 
 on:
-  push:
+  pull_request:
     branches:
       - main
-    paths:
-      - .github/workflows/apply-mailperch-fluent-3213.yml
+    types:
+      - opened
+      - synchronize
+      - reopened
 
 permissions:
   contents: write
 
 jobs:
   apply:
+    if: github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'automation/fluent-2-3213'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - name: Check out repository
+      - name: Check out pull request branch
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
+          ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
           persist-credentials: true
 
@@ -47,4 +51,4 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A
           git commit -m "style: complete MailPerch Fluent 2 interface"
-          git push origin HEAD:main
+          git push origin HEAD:"${GITHUB_HEAD_REF}"
