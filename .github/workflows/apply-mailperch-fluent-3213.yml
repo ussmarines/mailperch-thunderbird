@@ -1,0 +1,50 @@
+name: Apply MailPerch Fluent 2 update
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/apply-mailperch-fluent-3213.yml
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Apply and validate tested Fluent 2 files
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat \
+            .github/mailperch-fluent-payload/part-00 \
+            .github/mailperch-fluent-payload/part-01 \
+            .github/mailperch-fluent-payload/part-02 \
+            .github/mailperch-fluent-payload/part-03 \
+            .github/mailperch-fluent-payload/part-04 \
+            .github/mailperch-fluent-payload/part-05a \
+            .github/mailperch-fluent-payload/part-05b \
+            .github/mailperch-fluent-payload/part-06a \
+            .github/mailperch-fluent-payload/part-06b \
+            .github/mailperch-fluent-payload/part-07a \
+            .github/mailperch-fluent-payload/part-07b \
+            .github/mailperch-fluent-payload/part-08 \
+            > /tmp/mailperch-fluent.tar.gz
+          tar -xzf /tmp/mailperch-fluent.tar.gz -C .
+          rm -rf .github/mailperch-fluent-payload
+          rm -f .github/workflows/apply-mailperch-fluent-3213.yml
+          npm run ci
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "style: complete MailPerch Fluent 2 interface"
+          git push origin HEAD:main
