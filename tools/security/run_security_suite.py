@@ -43,7 +43,7 @@ def main() -> int:
     if (repo/'composer.lock').is_file():
         composer = shutil.which('composer.bat') or shutil.which('composer')
         if composer: run('composer-audit',[composer,'audit','--locked','--format=json'],results,repo,reports/'composer-audit.json')
-    run('zizmor',[tools['zizmor']['executable'],'--format','json',str(repo)],results,repo,reports/'zizmor.json')
+    run('zizmor',[tools['zizmor']['executable'],'--offline','--format','json',str(repo)],results,repo,reports/'zizmor.json')
     failed = sum(item['exit_code'] != 0 for item in results.values())
     summary = {'schema_version':1,'generated_at_utc':datetime.now(timezone.utc).isoformat(),'profile':args.profile,'safe_output':True,'matched_values_included':False,'failed_checks':failed,'results':results}
     (reports/'summary.json').write_text(json.dumps(summary,indent=2,ensure_ascii=False)+'\n',encoding='utf-8')
