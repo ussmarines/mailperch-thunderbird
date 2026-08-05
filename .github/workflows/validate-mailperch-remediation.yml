@@ -135,7 +135,8 @@ jobs:
           tar -xzf "$archive" "$binary_path"
           install -m 0755 "$binary_path" "$RUNNER_TEMP/zizmor"
       - name: Safe offline zizmor audit
-        run: "$RUNNER_TEMP/zizmor" --offline --format json . > .security-reports/zizmor.json
+        run: |
+          "$RUNNER_TEMP/zizmor" --offline --format json . > .security-reports/zizmor.json
       - name: Upload sanitized reports
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
