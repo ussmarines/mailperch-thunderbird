@@ -1,6 +1,6 @@
 # Notices
 
-Copyright © 2026 Elliot. All rights reserved.
+Copyright © 2026 ussmarines. All rights reserved.
 
 MailPerch is distributed under the **MailPerch Source-Available License 1.0** in `LICENSE`. It is not distributed under an OSI-approved open-source license.
 
