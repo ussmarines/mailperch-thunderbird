@@ -6,7 +6,7 @@
 **Pin, organize and follow up on important email in Thunderbird.**
 
 [![QA](https://github.com/ussmarines/mailperch-thunderbird/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/ussmarines/mailperch-thunderbird/actions/workflows/ci.yml)
-![Release](https://img.shields.io/badge/release-v1.2.0-0078D4)
+![Release](https://img.shields.io/badge/release-v1.2.1-0078D4)
 ![License](https://img.shields.io/badge/license-MailPerch%20Source--Available%201.1-6A5ACD)
 </div>
 
@@ -29,7 +29,7 @@ MailPerch adds a dedicated pinned-message panel above Thunderbird’s native mes
 
 ## Compatibility
 
-- **MailPerch:** `1.2.0`;
+- **MailPerch:** `1.2.1`;
 - **Thunderbird:** `128.0` through `153.*`;
 - **Format:** Manifest V3 MailExtension;
 - **Languages:** French and English;
@@ -43,12 +43,12 @@ MailPerch includes a privileged Experiment API to integrate its panel into Thund
 
 ### From a GitHub release
 
-1. Download `MailPerch_v1.2.0.xpi` from release `v1.2.0`.
+1. Download `MailPerch_v1.2.1.xpi` from release `v1.2.1`.
 2. In Thunderbird, open **Add-ons and Themes**.
 3. From the gear menu, select **Install Add-on From File**.
 4. Select the XPI and restart Thunderbird if required.
 
-> Internal `3.2.x` development builds used a version number higher than the current public versions. To test `1.2.0` after a development build, use a clean test profile or uninstall the previous build after exporting your MailPerch data.
+> Internal `3.2.x` development builds used a version number higher than the current public versions. To test `1.2.1` after a development build, use a clean test profile or uninstall the previous build after exporting your MailPerch data.
 
 ### From source
 
@@ -78,7 +78,3 @@ MailPerch is local-first: no network calls, telemetry, advertising, or remotely 
 - [Report an issue](https://github.com/ussmarines/mailperch-thunderbird/issues)
 
 MailPerch is maintained by [ussmarines](https://github.com/ussmarines). Donations through [PayPal](https://paypal.me/ussmarinesdot) are optional and do not unlock features.
-
-## License
-
-MailPerch is distributed under the **MailPerch Source-Available License 1.1**. The public repository may be inspected and any rights granted directly by GitHub remain applicable; the MailPerch license grants no additional right to sell, redistribute, publish a fork, continue the project independently, or exploit it commercially without written permission. See [LICENSE](LICENSE).
