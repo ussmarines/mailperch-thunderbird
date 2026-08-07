@@ -78,3 +78,7 @@ MailPerch fonctionne localement : aucun appel réseau, aucune télémétrie, auc
 - [Signaler un problème](https://github.com/ussmarines/mailperch-thunderbird/issues)
 
 Le développement est maintenu par [ussmarines](https://github.com/ussmarines). Les dons via [PayPal](https://paypal.me/ussmarinesdot) sont facultatifs et ne débloquent aucune fonction.
+
+## Licence
+
+MailPerch est distribué sous la **MailPerch Source-Available License 1.1**. Le dépôt public peut être consulté et les droits éventuellement accordés directement par GitHub restent applicables ; la licence MailPerch n’accorde cependant aucun droit supplémentaire de vente, redistribution, publication d’un fork, reprise indépendante du projet ou exploitation commerciale sans autorisation écrite. Consultez [LICENSE](LICENSE).
