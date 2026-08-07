@@ -78,3 +78,7 @@ MailPerch is local-first: no network calls, telemetry, advertising, or remotely 
 - [Report an issue](https://github.com/ussmarines/mailperch-thunderbird/issues)
 
 MailPerch is maintained by [ussmarines](https://github.com/ussmarines). Donations through [PayPal](https://paypal.me/ussmarinesdot) are optional and do not unlock features.
+
+## License
+
+MailPerch is distributed under the **MailPerch Source-Available License 1.1**. The public repository may be inspected and any rights granted directly by GitHub remain applicable; the MailPerch license grants no additional right to sell, redistribute, publish a fork, continue the project independently, or exploit it commercially without written permission. See [LICENSE](LICENSE).
