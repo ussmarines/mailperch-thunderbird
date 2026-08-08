@@ -34,6 +34,11 @@ assert "viewWrapper" in HARNESS
 assert "quickFilterBar" in HARNESS
 assert "currentFolderUri" in HARNESS
 assert "selectedFolderUri" in HARNESS
+assert "ExtensionParent.GlobalManager.getExtension" in HARNESS
+assert "backgroundState" in HARNESS
+assert "startupReason" in HARNESS
+assert "hasWakeupBackground" in HARNESS
+assert "afterInstallRuntime" in HARNESS
 assert "lastRuntimeState" in HARNESS
 assert "runtime-cleanup-after-uninstall" in HARNESS
 assert "clean-reinstall" in HARNESS
