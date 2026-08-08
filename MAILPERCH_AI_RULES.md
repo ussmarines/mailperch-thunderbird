@@ -1,7 +1,7 @@
 # MAILPERCH — RÈGLES DE PILOTAGE IA
 
-Version de référence : 2026-08-08  
-Révision modèles Codex : GPT-5.6 Luna / Terra / Sol  
+Version de référence : 2026-08-08
+Révision modèles Codex : GPT-5.6 Luna / Terra / Sol
 Projet : `ussmarines/mailperch-thunderbird`
 
 ## 1. Objet de ce fichier
