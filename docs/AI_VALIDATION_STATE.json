@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "purpose": "Cache machine-readable des dernières preuves de validation réutilisables. Ce fichier ne remplace ni AGENTS.md ni les règles de sécurité et ne doit jamais servir à inventer un test non exécuté.",
-  "recorded_at": "2026-08-08T20:23:00+02:00",
+  "recorded_at": "2026-08-08T20:26:08+02:00",
   "baseline": {
     "repository": "ussmarines/mailperch-thunderbird",
     "branch": "main",
@@ -82,7 +82,7 @@
       "validated_commit": "1a61967a87fde76b7301753406d524086ee25543",
       "validated_tree": "e8258ddffe5c3cfd0b60c6e4d02bb5f63cc0481c",
       "validated_at": "2026-08-08T17:19:27Z",
-      "command": "python -m unittest discover -s tests/security -p test_*.py && python .github/scripts/security_guard.py --history",
+      "command": "python -m unittest discover -s tests/security -p \"test_*.py\" && python .github/scripts/security_guard.py --history",
       "environment": {
         "os": "ubuntu-24.04",
         "python": "3.12"
@@ -103,7 +103,7 @@
       "result": "success",
       "validated_commit": "1a61967a87fde76b7301753406d524086ee25543",
       "validated_tree": "e8258ddffe5c3cfd0b60c6e4d02bb5f63cc0481c",
-      "validated_at": "2026-08-08T17:19:00Z",
+      "validated_at": "2026-08-08T17:20:37Z",
       "command": "GitHub CodeQL",
       "invalidates_on": [
         "**"
