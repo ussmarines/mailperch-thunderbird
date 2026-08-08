@@ -1,5 +1,15 @@
 # Journal des modifications
 
+## Développement — consolidation Thunderbird et Options (non publié)
+
+- isolation des accès internes Messages, Tags et Agenda derrière `PinCompatibility` et trois adaptateurs injectables ;
+- contrats de compatibilité et garde empêchant la réintroduction des appels natifs extraits dans l’orchestrateur ;
+- Options réorganisées en Essentiel, Organisation, Automatisation et Avancé ; le mode `guided` est présenté comme **Recommandé** sans migration de stockage ;
+- application des valeurs recommandées sous forme de brouillon explicite, sans sauvegarde automatique et en préservant les valeurs propres au profil ;
+- ajout d’un smoke runtime GitHub Actions basé sur un binaire Thunderbird officiel et geckodriver vérifiés par SHA-256 ;
+- documentation de la frontière Thunderbird, du banc de test, de la reprise Codex et des limites mise à jour ;
+- aucune nouvelle permission WebExtension, dépendance runtime, connexion réseau du produit, migration de stockage ou nouvelle fonction métier.
+
 ## 1.2.1 — correction sécurité de la détection des fournisseurs
 
 - remplacement des tests de sous-chaîne sur les noms d’hôte par une comparaison exacte ou par suffixe de domaine à frontière contrôlée ;

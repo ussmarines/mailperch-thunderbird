@@ -39,6 +39,8 @@ The manifest declares this compatibility range, but the full Windows/Linux/macOS
 
 MailPerch includes a privileged Experiment API to integrate its panel into Thunderbird, manage its local SQLite storage, and access required Calendar features. Thunderbird therefore displays the full-access warning during installation.
 
+On the consolidation branch, internal Messages, Tags, and Calendar access is isolated behind a dedicated compatibility layer to reduce coupling to Thunderbird internals. The `about:3pane` DOM integration remains deliberately incremental.
+
 ## Installation
 
 ### From a GitHub release
@@ -73,6 +75,9 @@ MailPerch is local-first: no network calls, telemetry, advertising, or remotely 
 ## Documentation and support
 
 - [Architecture guide](docs/ARCHITECTURE.md)
+- [Thunderbird compatibility layer](docs/THUNDERBIRD_COMPATIBILITY.md)
+- [Thunderbird test bench](docs/THUNDERBIRD_TEST_BENCH.md)
+- [Manual test plan](docs/MANUAL_TEST_PLAN.md)
 - [Reviewer build instructions](release/BUILD_INSTRUCTIONS.md)
 - [Thunderbird Add-ons submission preparation](STORE_RELEASE.md)
 - [Report an issue](https://github.com/ussmarines/mailperch-thunderbird/issues)

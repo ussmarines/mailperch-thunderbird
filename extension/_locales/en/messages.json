@@ -1310,7 +1310,7 @@
   "controlHelpGlobalDashboard": {"message": "Enables the global tab that groups pins from all accounts."},
   "controlHelpPerformanceMetrics": {"message": "Measures only local render times, with no telemetry or network transfer."},
   "controlHelpShortcut": {"message": "Thunderbird shortcut used to pin or unpin the current selection."},
-  "controlHelpSettingsExperience": {"message": "Guided mode hides advanced settings. Advanced mode shows all settings without changing their values."},
+  "controlHelpSettingsExperience": {"message": "Recommended mode hides advanced settings. Advanced mode shows all settings without changing their values."},
   "controlHelpUiPreset": {"message": "Adjusts only the settings-page spacing. It never changes the message list or main panel."},
   "controlHelpReduceMotion": {"message": "Reduces animations for comfort without disabling action feedback."},
   "controlHelpVirtualization": {"message": "Above this pin count, MailPerch limits the initial render to preserve responsiveness."},

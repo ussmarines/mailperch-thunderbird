@@ -1310,7 +1310,7 @@
   "controlHelpGlobalDashboard": {"message": "Active l’onglet global regroupant les épingles de tous les comptes."},
   "controlHelpPerformanceMetrics": {"message": "Mesure uniquement les durées de rendu locales, sans télémétrie ni envoi réseau."},
   "controlHelpShortcut": {"message": "Raccourci Thunderbird utilisé pour épingler ou désépingler la sélection courante."},
-  "controlHelpSettingsExperience": {"message": "Le mode Guidé masque les réglages avancés. Le mode Avancé affiche tous les réglages sans modifier leur valeur."},
+  "controlHelpSettingsExperience": {"message": "Le mode Recommandé masque les réglages avancés. Le mode Avancé affiche tous les réglages sans modifier leur valeur."},
   "controlHelpUiPreset": {"message": "Ajuste uniquement l’espacement de la page des paramètres. Cette option ne modifie jamais la liste des messages ni le panneau principal."},
   "controlHelpReduceMotion": {"message": "Réduit les animations pour plus de confort, sans désactiver les retours d’action."},
   "controlHelpVirtualization": {"message": "Au-delà de ce nombre d’épingles, MailPerch limite le rendu initial afin de préserver la fluidité."},

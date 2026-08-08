@@ -39,6 +39,8 @@ La plage de versions est déclarée dans le manifeste, mais la matrice complète
 
 MailPerch utilise une API Experiment privilégiée pour intégrer son panneau à Thunderbird, gérer son stockage SQLite local et accéder aux fonctions Agenda nécessaires. Thunderbird affiche donc un avertissement d’accès complet lors de l’installation.
 
+Sur la branche de consolidation, les accès internes Messages, Tags et Agenda sont isolés derrière une couche de compatibilité dédiée afin de réduire le couplage aux internals Thunderbird. Le DOM `about:3pane` reste volontairement adapté progressivement.
+
 ## Installation
 
 ### Depuis une release GitHub
@@ -73,6 +75,9 @@ MailPerch fonctionne localement : aucun appel réseau, aucune télémétrie, auc
 ## Documentation et support
 
 - [Guide d’architecture](docs/ARCHITECTURE.md)
+- [Couche de compatibilité Thunderbird](docs/THUNDERBIRD_COMPATIBILITY.md)
+- [Banc de test Thunderbird](docs/THUNDERBIRD_TEST_BENCH.md)
+- [Plan de test manuel](docs/MANUAL_TEST_PLAN.md)
 - [Instructions de build pour reviewers](release/BUILD_INSTRUCTIONS.md)
 - [Préparation de la soumission Thunderbird Add-ons](STORE_RELEASE.md)
 - [Signaler un problème](https://github.com/ussmarines/mailperch-thunderbird/issues)
