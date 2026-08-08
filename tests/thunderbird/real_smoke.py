@@ -1,9 +1,14 @@
 #!/usr/bin/env python3
 """Launch a real Thunderbird binary through geckodriver and smoke-test MailPerch.
 
-This harness deliberately uses only Python's standard library.  It is a
+This harness deliberately uses only Python's standard library. It is a
 release-binary smoke test, not a replacement for Thunderbird's own mach
 xpcshell/mochitest harness.
+
+The WebDriver profile is disposable. Before MailPerch is installed, the harness
+creates a local-only Thunderbird account and a synthetic folder so about:3pane
+has a real message-list view. No network account, credential, or user profile is
+ever configured.
 """
 
 from __future__ import annotations
@@ -25,6 +30,7 @@ from typing import Any
 ADDON_ID = "pin-mails@MailPerch.local"
 PANEL_ID = "pin-mails-panel"
 TOGGLE_ID = "pin-mails-qfb-toggle"
+SMOKE_FOLDER_NAME = "MailPerch Smoke"
 
 
 class SmokeFailure(RuntimeError):
@@ -170,11 +176,142 @@ class WebDriverClient:
             self.session_id = None
 
 
+PROVISION_MAIL_VIEW_SCRIPT = r"""
+const done = arguments[arguments.length - 1];
+(async () => {
+  const { MailServices } = ChromeUtils.importESModule(
+    "resource:///modules/MailServices.sys.mjs"
+  );
+  const { classes: Cc, interfaces: Ci } = Components;
+  const windowMediator = Cc["@mozilla.org/appshell/window-mediator;1"].getService(
+    Ci.nsIWindowMediator
+  );
+
+  const win = windowMediator.getMostRecentWindow("mail:3pane");
+  if (!win) {
+    throw new Error("No mail:3pane window is available");
+  }
+
+  let pane = null;
+  try {
+    pane = win.document.getElementById("tabmail")?.currentAbout3Pane || null;
+  } catch {}
+  if (!pane) {
+    for (const browser of win.document.querySelectorAll("browser")) {
+      try {
+        if (browser.contentWindow?.location?.href === "about:3pane") {
+          pane = browser.contentWindow;
+          break;
+        }
+      } catch {}
+    }
+  }
+  if (!pane) {
+    throw new Error("No about:3pane content window is available");
+  }
+
+  const deadline = Date.now() + 10000;
+  while (
+    Date.now() < deadline &&
+    (
+      pane.document?.readyState !== "complete" ||
+      typeof pane.displayFolder !== "function" ||
+      !pane.document?.getElementById("folderTree") ||
+      !pane.document?.getElementById("threadTree")
+    )
+  ) {
+    await new Promise(resolve => win.setTimeout(resolve, 50));
+  }
+
+  if (typeof pane.displayFolder !== "function") {
+    throw new Error("about:3pane displayFolder() is not available");
+  }
+
+  let localServer = null;
+  try {
+    localServer = MailServices.accounts.localFoldersServer;
+  } catch {}
+  const createdLocalAccount = !localServer;
+  if (!localServer) {
+    const account = MailServices.accounts.createLocalMailAccount();
+    localServer = account?.incomingServer || null;
+    if (!localServer) {
+      localServer = MailServices.accounts.localFoldersServer;
+    }
+  }
+  if (!localServer?.rootFolder) {
+    throw new Error("Local Folders server was not created");
+  }
+
+  const root = localServer.rootFolder;
+  const folderName = "MailPerch Smoke";
+  let folder = null;
+  try {
+    folder = root.getChildNamed(folderName);
+  } catch {}
+  const createdFolder = !folder;
+  if (!folder) {
+    root.createSubfolder(folderName, null);
+    folder = root.getChildNamed(folderName);
+  }
+  if (!folder) {
+    throw new Error("Synthetic local smoke folder was not created");
+  }
+
+  // Folder/server notifications can update the folder tree asynchronously.
+  // Give them a bounded opportunity to settle before selecting the folder.
+  let displayError = null;
+  for (let attempt = 0; attempt < 50; attempt++) {
+    try {
+      pane.displayFolder(folder);
+      displayError = null;
+    } catch (error) {
+      displayError = error;
+    }
+    if (
+      pane.gFolder?.URI === folder.URI &&
+      pane.gViewWrapper &&
+      pane.quickFilterBar
+    ) {
+      break;
+    }
+    await new Promise(resolve => win.setTimeout(resolve, 100));
+  }
+  if (displayError && pane.gFolder?.URI !== folder.URI) {
+    throw displayError;
+  }
+
+  done({
+    createdLocalAccount,
+    createdFolder,
+    accountCount: Array.from(MailServices.accounts.accounts || []).length,
+    localServerKey: String(localServer.key || ""),
+    rootUri: String(root.URI || ""),
+    folderUri: String(folder.URI || ""),
+    selectedFolderUri: String(
+      pane.document?.getElementById("folderTree")?.selectedRow?.uri || ""
+    ),
+    currentFolderUri: String(pane.gFolder?.URI || ""),
+    hasViewWrapper: Boolean(pane.gViewWrapper),
+    hasQuickFilterBar: Boolean(pane.quickFilterBar),
+  });
+})().catch(error => done({
+  __mailperchSmokeError: [
+    `${String(error?.name || "Error")}: ${String(error?.message || error)}`,
+    String(error?.stack || ""),
+  ].filter(Boolean).join("\n"),
+}));
+"""
+
+
 RUNTIME_STATE_SCRIPT = r"""
 const done = arguments[arguments.length - 1];
 (async () => {
 const { AddonManager } = ChromeUtils.importESModule(
   "resource://gre/modules/AddonManager.sys.mjs"
+);
+const { MailServices } = ChromeUtils.importESModule(
+  "resource:///modules/MailServices.sys.mjs"
 );
 const { classes: Cc, interfaces: Ci } = Components;
 const windowMediator = Cc["@mozilla.org/appshell/window-mediator;1"].getService(
@@ -201,23 +338,51 @@ for (const win of windows) {
   for (const pane of candidates) {
     try {
       if (pane?.location?.href !== "about:3pane") continue;
+      const document = pane.document;
+      const threadTree = Boolean(document?.getElementById("threadTree"));
+      const folderTree = Boolean(document?.getElementById("folderTree"));
+      const qfbStarred = Boolean(document?.getElementById("qfb-starred"));
+      const quickFilterButtons = Boolean(
+        document?.querySelector(".quickFilterButtons")
+      );
+      const viewWrapper = Boolean(pane.gViewWrapper);
+      const quickFilterBar = Boolean(pane.quickFilterBar);
       panes.push({
         href: pane.location.href,
-        ready: Boolean(
-          pane.document?.getElementById("threadTree") &&
-          pane.gViewWrapper &&
-          pane.quickFilterBar
+        documentReadyState: String(document?.readyState || ""),
+        folderTree,
+        threadTree,
+        qfbStarred,
+        quickFilterButtons,
+        viewWrapper,
+        quickFilterBar,
+        displayFolder: typeof pane.displayFolder === "function",
+        currentFolderUri: String(pane.gFolder?.URI || ""),
+        selectedFolderUri: String(
+          document?.getElementById("folderTree")?.selectedRow?.uri || ""
         ),
-        panel: Boolean(pane.document?.getElementById("pin-mails-panel")),
-        toggle: Boolean(pane.document?.getElementById("pin-mails-qfb-toggle")),
-        panelCount: pane.document?.querySelectorAll("#pin-mails-panel")?.length || 0,
-        toggleCount: pane.document?.querySelectorAll("#pin-mails-qfb-toggle")?.length || 0,
+        nativeReady: Boolean(
+          threadTree &&
+          qfbStarred &&
+          quickFilterButtons &&
+          viewWrapper &&
+          quickFilterBar
+        ),
+        panel: Boolean(document?.getElementById("pin-mails-panel")),
+        toggle: Boolean(document?.getElementById("pin-mails-qfb-toggle")),
+        panelCount: document?.querySelectorAll("#pin-mails-panel")?.length || 0,
+        toggleCount:
+          document?.querySelectorAll("#pin-mails-qfb-toggle")?.length || 0,
       });
     } catch (error) {
       panes.push({error: String(error?.name || error)});
     }
   }
 }
+let localServer = null;
+try {
+  localServer = MailServices.accounts.localFoldersServer;
+} catch {}
 done({
   addon: addon ? {
     id: addon.id,
@@ -225,6 +390,8 @@ done({
     version: String(addon.version || ""),
     temporarilyInstalled: Boolean(addon.temporarilyInstalled),
   } : null,
+  accountCount: Array.from(MailServices.accounts.accounts || []).length,
+  localFoldersAvailable: Boolean(localServer),
   windowCount: windows.length,
   panes,
 });
@@ -273,6 +440,17 @@ def _wait_for_state(
     )
 
 
+def _native_mail_view_is_ready(state: dict[str, Any]) -> bool:
+    panes = state.get("panes") or []
+    return any(
+        pane.get("nativeReady")
+        and pane.get("currentFolderUri")
+        and pane.get("selectedFolderUri")
+        for pane in panes
+        if isinstance(pane, dict)
+    )
+
+
 def _panel_is_ready(state: dict[str, Any]) -> bool:
     addon = state.get("addon") or {}
     panes = state.get("panes") or []
@@ -280,7 +458,7 @@ def _panel_is_ready(state: dict[str, Any]) -> bool:
         addon.get("active")
         and addon.get("id") == ADDON_ID
         and any(
-            pane.get("ready")
+            pane.get("nativeReady")
             and pane.get("panel")
             and pane.get("toggle")
             and pane.get("panelCount") == 1
@@ -302,7 +480,9 @@ def _panel_is_cleaned(state: dict[str, Any]) -> bool:
 
 
 def _write_json(path: pathlib.Path, value: Any) -> None:
-    path.write_text(json.dumps(value, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    path.write_text(
+        json.dumps(value, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
+    )
 
 
 def run(args: argparse.Namespace) -> int:
@@ -353,6 +533,28 @@ def run(args: argparse.Namespace) -> int:
             client.set_context("chrome")
             result["checks"].append("chrome-context")
 
+            # A pristine Thunderbird profile opens about:3pane without an active
+            # message folder. MailPerch intentionally waits for gViewWrapper and
+            # quickFilterBar before touching Thunderbird's DOM, so create a
+            # local-only folder first. This mirrors the precondition present on
+            # a configured user profile without introducing network traffic.
+            provisioning = client.execute_async(PROVISION_MAIL_VIEW_SCRIPT)
+            if not isinstance(provisioning, dict) or not provisioning.get("folderUri"):
+                raise SmokeFailure(
+                    f"Synthetic local mail view provisioning failed: {provisioning!r}"
+                )
+            result["provisioning"] = provisioning
+            result["checks"].append("synthetic-local-mail-view")
+
+            native_state = _wait_for_state(
+                client,
+                _native_mail_view_is_ready,
+                "native Thunderbird mail view readiness",
+                args.timeout,
+            )
+            result["nativeMailView"] = native_state
+            result["checks"].append("native-mail-view-ready")
+
             addon_id = client.install_addon(xpi)
             result["checks"].append("temporary-addon-install")
 
@@ -398,6 +600,12 @@ def run(args: argparse.Namespace) -> int:
             return 0
     except Exception as error:
         result["error"] = f"{type(error).__name__}: {error}"
+        try:
+            state = client.execute_async(RUNTIME_STATE_SCRIPT)
+            if isinstance(state, dict):
+                result["lastRuntimeState"] = state
+        except Exception:
+            pass
         _write_json(result_path, result)
         print(f"Real Thunderbird runtime smoke: FAILED: {error}", file=sys.stderr)
         return 1
