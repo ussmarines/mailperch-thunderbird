@@ -11,17 +11,17 @@ Ce fichier décrit uniquement la branche de travail actuelle pour éviter de rec
 
 ## Référence Git
 
-- version publique : **1.2.1** ;
+- version préparée pour publication : **1.3.0** ;
 - base : `main` = `385815f546968acf721c8cd8486ff48f55f78a32` ;
 - branche : `refactor/thunderbird-integration-and-ux` ;
 - ne pas fusionner `main` ;
 - ne pas créer de tag/release ;
-- ne pas modifier le numéro public avant décision de release.
+- revue Codex terminée ; la publication 1.3.0 reste soumise aux gates PR/CodeQL/QA.
 
 ## Objectifs de la branche
 
 1. isoler les API internes Thunderbird derrière une couche Messages / Tags / Agenda ;
-2. conserver le comportement produit 1.2.1 ;
+2. préserver le comportement métier de 1.2.1 tout en livrant la consolidation en 1.3.0 ;
 3. rendre les Options plus simples avec **Essentiel / Organisation / Automatisation / Avancé** ;
 4. présenter `guided` comme mode **Recommandé** sans migration ;
 5. ajouter un smoke test qui lance un vrai Thunderbird officiel ;

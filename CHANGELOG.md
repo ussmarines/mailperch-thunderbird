@@ -1,6 +1,6 @@
 # Journal des modifications
 
-## Développement — consolidation Thunderbird et Options (non publié)
+## 1.3.0 — consolidation Thunderbird et interface
 
 - isolation des accès internes Messages, Tags et Agenda derrière `PinCompatibility` et trois adaptateurs injectables ;
 - contrats de compatibilité et garde empêchant la réintroduction des appels natifs extraits dans l’orchestrateur ;

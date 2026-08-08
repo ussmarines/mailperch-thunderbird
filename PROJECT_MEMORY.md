@@ -1,13 +1,13 @@
 # Mémoire opérationnelle — MailPerch
 
-> Version publique : **1.2.1**
+> Version publique : **1.3.0**
 > Branche de consolidation : `refactor/thunderbird-integration-and-ux`
 > Base GitHub : `main` au commit `385815f546968acf721c8cd8486ff48f55f78a32`
 > Extension ID : `pin-mails@MailPerch.local`
 
 ## Résumé
 
-MailPerch est une extension Thunderbird Manifest V3 locale qui ajoute un panneau de messages épinglés et transforme ces épingles en suivis actionnables sans remplacer la liste native. La version publique 1.2.1 est la base stable. La branche de consolidation en cours n’ajoute pas de nouveau métier : elle isole les dépendances Thunderbird derrière une couche de compatibilité, simplifie la page Options autour d’un mode **Recommandé** et ajoute un banc de smoke runtime sur un vrai binaire Thunderbird.
+MailPerch est une extension Thunderbird Manifest V3 locale qui ajoute un panneau de messages épinglés et transforme ces épingles en suivis actionnables sans remplacer la liste native. La version 1.3.0 livre la consolidation sans nouveau métier : elle isole les dépendances Thunderbird derrière une couche de compatibilité, simplifie la page Options autour d’un mode **Recommandé** et ajoute un banc de smoke runtime sur un vrai binaire Thunderbird.
 
 Les futures fonctions **Prochaine action**, **Timeline de conversation**, **Follow-up récurrent** et **Résultat du suivi** sont explicitement hors périmètre de cette branche.
 
@@ -85,7 +85,7 @@ La passe navigateur finale a révélé qu’un contrôle encore déclaré par le
 
 Le workflow `.github/workflows/thunderbird-smoke.yml` télécharge un binaire Thunderbird officiel et geckodriver, vérifie leurs empreintes, construit l’XPI, prépare un profil local synthétique, installe temporairement l’extension, contrôle le background MV3 et l’injection, désinstalle, contrôle le nettoyage puis réinstalle. Le 8 août 2026, ce cycle a réussi sur Thunderbird **153.0.1 ESR** Linux : `Startup: Complete`, un panneau, un bouton, nettoyage complet puis réinjection unique. Le banc a auparavant détecté un crash réel `ExtensionError is not defined`, corrigé par un import explicite depuis `ExtensionUtils.sys.mjs` et protégé par une garde. Cette preuve ne couvre pas la matrice fournisseurs/OS/versions.
 
-## État 1.2.1 conservé
+## État 1.3.0
 
 - schéma SQLite : 5 ; schéma paramètres/données : 7 ;
 - compatibilité déclarée : Thunderbird 128.0 à 153.* ;

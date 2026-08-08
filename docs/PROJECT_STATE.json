@@ -2,7 +2,7 @@
   "format": "mailperch-project-state",
   "version": 1,
   "project": "MailPerch — Email Pins & Follow-up",
-  "extensionVersion": "1.2.1",
+  "extensionVersion": "1.3.0",
   "baseGitHub": {
     "branch": "main",
     "commit": "385815f546968acf721c8cd8486ff48f55f78a32"
@@ -107,7 +107,7 @@
     "uiDependencyPolicy": "native HTML plus local Fluent 2 CSS tokens; no npm runtime dependency, bundler, CDN or remote asset",
     "runtimeTestSupplyChain": "test-only Thunderbird/geckodriver downloads are checksum-verified and are not runtime dependencies of the extension"
   },
-  "developmentBranch": "refactor/thunderbird-integration-and-ux",
+  "developmentBranch": "main",
   "testing": {
     "contract": [
       "tests/test_thunderbird_compatibility_boundary.py",
