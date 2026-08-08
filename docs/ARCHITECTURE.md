@@ -121,7 +121,7 @@ Les fonctions 1.1.0 n’ajoutent aucune connexion réseau, dépendance d’exéc
 
 La validation est répartie en niveaux : tests statiques/modèles, contrats de compatibilité avec faux services, smoke runtime sur binaire Thunderbird officiel, tests `mach` dans un checkout comm-central et validation manuelle avec comptes/fournisseurs réels. Le détail et la portée de chaque niveau sont dans [`THUNDERBIRD_TEST_BENCH.md`](THUNDERBIRD_TEST_BENCH.md).
 
-Le workflow runtime reste séparé de la QA obligatoire tant que son comportement n’a pas été éprouvé. Un résultat local ou un test de contrat ne doit jamais être présenté comme une validation graphique Thunderbird.
+Le workflow runtime reste séparé de la QA obligatoire même après sa première exécution réussie sur Thunderbird 153.0.1 ESR : il doit accumuler plusieurs exécutions fiables avant une éventuelle promotion en contrôle requis. Un test de contrat ne doit jamais être présenté comme une validation graphique Thunderbird.
 
 ## Isolation des préférences visuelles
 

@@ -6,7 +6,8 @@
 - contrats de compatibilité et garde empêchant la réintroduction des appels natifs extraits dans l’orchestrateur ;
 - Options réorganisées en Essentiel, Organisation, Automatisation et Avancé ; le mode `guided` est présenté comme **Recommandé** sans migration de stockage ;
 - application des valeurs recommandées sous forme de brouillon explicite, sans sauvegarde automatique et en préservant les valeurs propres au profil ;
-- ajout d’un smoke runtime GitHub Actions basé sur un binaire Thunderbird officiel et geckodriver vérifiés par SHA-256 ;
+- ajout d’un smoke runtime GitHub Actions basé sur un binaire Thunderbird officiel et geckodriver vérifiés par SHA-256 ; exécution réelle réussie sur Thunderbird 153.0.1 ESR avec profil local synthétique, injection/cleanup/réinstallation contrôlés ;
+- correction d’un crash de bootstrap découvert par ce banc (`ExtensionError is not defined`) grâce à un import privilégié explicite et une garde de non-régression ;
 - documentation de la frontière Thunderbird, du banc de test, de la reprise Codex et des limites mise à jour ;
 - aucune nouvelle permission WebExtension, dépendance runtime, connexion réseau du produit, migration de stockage ou nouvelle fonction métier.
 

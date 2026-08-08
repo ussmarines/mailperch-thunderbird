@@ -23,7 +23,7 @@ La branche `refactor/thunderbird-integration-and-ux` modifie l’architecture in
 ## Banc de test Thunderbird
 
 - Les gardes statiques et contrats de la branche sont exécutables sans Thunderbird.
-- Le workflow `.github/workflows/thunderbird-smoke.yml` lance un binaire Thunderbird officiel et contrôle installation, injection, désinstallation/cleanup et réinstallation. **Il ne doit être considéré comme une preuve runtime qu’après une exécution GitHub réellement réussie.**
+- Le workflow `.github/workflows/thunderbird-smoke.yml` a réussi le 8 août 2026 sur Thunderbird **153.0.1 ESR** Linux avec un profil Local Folders synthétique : installation, background `Startup: Complete`, injection unique, désinstallation/cleanup et réinstallation propre ont été observés. Cette preuve est limitée à ce scénario local sans fournisseur réseau.
 - Un smoke Linux sur une version épinglée ne prouve pas Windows/macOS, les extrêmes de version, les fournisseurs réels, le zoom 200 %, l’accessibilité ni les performances à grande échelle.
 - Les tests XPCShell/Mochitest fournis nécessitent un checkout/build Thunderbird et ne sont pas exécutés par la CI générique du dépôt.
 

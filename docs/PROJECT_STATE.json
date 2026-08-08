@@ -60,7 +60,8 @@
     "Provider detection uses exact domain or legitimate subdomain boundaries, never arbitrary URL substrings",
     "Optional Thunderbird capabilities fail locally instead of disabling the full extension",
     "Business modules do not call Thunderbird core services directly outside compatibility adapters",
-    "Recommended mode never auto-saves and preserves profile-specific settings"
+    "Recommended mode never auto-saves and preserves profile-specific settings",
+    "Privileged dependencies injected into compatibility adapters are explicitly imported before facade creation"
   ],
   "ui": {
     "settingsSpacingAffects": [
@@ -114,6 +115,6 @@
     ],
     "runtimeWorkflow": ".github/workflows/thunderbird-smoke.yml",
     "runtimeScript": "tests/thunderbird/real_smoke.py",
-    "runtimeStatus": "implemented; real GitHub execution required before claiming runtime validation"
+    "runtimeStatus": "passed on 2026-08-08 with Thunderbird 153.0.1 ESR Linux and a synthetic Local Folders profile; MV3 Startup Complete, single injection, uninstall cleanup and clean reinstall validated; provider/OS/version matrix remains manual"
   }
 }

@@ -59,7 +59,7 @@ Thunderbird internal APIs
 
 ## Options
 
-Le stockage garde `uxMode = guided|advanced`. L’interface affiche **Recommandé** pour `guided`.
+Le stockage garde `settingsExperience = guided|advanced`. L’interface affiche **Recommandé** pour `guided`.
 
 Le mode Recommandé masque les sections marquées avancées mais ne supprime aucun contrôle. L’action d’application des recommandations :
 
@@ -78,7 +78,10 @@ Le mode Recommandé masque les sections marquées avancées mais ne supprime auc
 - binaire ciblé actuellement : Thunderbird `153.0.1esr` ;
 - geckodriver : `0.37.1` ;
 - téléchargements test uniquement, SHA-256 vérifiés ;
-- le smoke installe/désinstalle/réinstalle l’XPI et contrôle l’injection/cleanup du panneau.
+- le smoke installe/désinstalle/réinstalle l’XPI et contrôle l’injection/cleanup du panneau ;
+- exécution réelle réussie le 8 août 2026 sur Thunderbird **153.0.1 ESR** Linux avec profil Local Folders synthétique : background `Startup: Complete`, panneau/bouton injectés une seule fois, cleanup complet, réinstallation propre.
+
+Le banc a détecté pendant cette branche un crash de bootstrap `ReferenceError: ExtensionError is not defined` provoqué par l’injection immédiate d’une dépendance privilégiée jusque-là implicite. La correction importe explicitement `ExtensionError` depuis `ExtensionUtils.sys.mjs`; `tests/test_thunderbird_compatibility_boundary.py` garde cet invariant. Ne pas retirer cet import ni assouplir le smoke sans cause démontrée.
 
 Ne jamais déduire qu’il est compatible avec toutes les versions/fournisseurs à partir d’un seul smoke Linux.
 

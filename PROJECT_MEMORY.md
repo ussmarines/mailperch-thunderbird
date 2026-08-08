@@ -26,6 +26,7 @@ Les futures fonctions **Prochaine action**, **Timeline de conversation**, **Foll
 11. Une capacité facultative Tags/Agenda indisponible ne doit pas empêcher le cœur MailPerch de démarrer.
 12. Le métier ne doit pas réintroduire d’appels directs à `MailServices`, `MailUtils`, `MessageArchiver`, `cal`, `CalEvent` ou `CalTodo` en dehors de la frontière de compatibilité.
 13. Le mode **Recommandé** prépare des valeurs sûres mais ne sauvegarde jamais automatiquement ; Enregistrer/Annuler restent explicites.
+14. Toute classe ou service privilégié injecté dans `PinCompatibility` doit être importé/défini explicitement avant la création des adaptateurs ; aucun identifiant global implicite ne doit être requis au bootstrap.
 
 ## Carte complète des fichiers
 
@@ -77,7 +78,7 @@ L’action « appliquer les réglages recommandés » produit uniquement un brou
 
 ### Banc Thunderbird
 
-Le workflow `.github/workflows/thunderbird-smoke.yml` télécharge un binaire Thunderbird officiel et geckodriver, vérifie leurs empreintes, construit l’XPI, l’installe temporairement, contrôle l’injection du panneau, désinstalle, contrôle le nettoyage puis réinstalle. Son code est validé localement, mais un résultat runtime n’est acquis qu’après exécution réussie du workflow sur GitHub.
+Le workflow `.github/workflows/thunderbird-smoke.yml` télécharge un binaire Thunderbird officiel et geckodriver, vérifie leurs empreintes, construit l’XPI, prépare un profil local synthétique, installe temporairement l’extension, contrôle le background MV3 et l’injection, désinstalle, contrôle le nettoyage puis réinstalle. Le 8 août 2026, ce cycle a réussi sur Thunderbird **153.0.1 ESR** Linux : `Startup: Complete`, un panneau, un bouton, nettoyage complet puis réinjection unique. Le banc a auparavant détecté un crash réel `ExtensionError is not defined`, corrigé par un import explicite depuis `ExtensionUtils.sys.mjs` et protégé par une garde. Cette preuve ne couvre pas la matrice fournisseurs/OS/versions.
 
 ## État 1.2.1 conservé
 

@@ -14,7 +14,7 @@ Base stable : `main` / `385815f546968acf721c8cd8486ff48f55f78a32`
 - [x] ajouter des contrats avec faux services Thunderbird ;
 - [x] ajouter une garde empêchant le métier de réintroduire les accès natifs extraits ;
 - [x] garder le DOM `about:3pane` dans l’orchestrateur pour éviter un refactoring graphique massif simultané ;
-- [ ] exécuter et stabiliser le smoke runtime sur un vrai binaire Thunderbird via GitHub Actions ;
+- [x] exécuter et stabiliser le smoke runtime sur Thunderbird 153.0.1 ESR Linux avec profil local synthétique, installation/cleanup/réinstallation validés ;
 - [ ] après revue Codex, tester la future release sur le poste utilisateur et ses comptes réels.
 
 ### Options plus simples

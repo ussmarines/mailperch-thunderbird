@@ -88,6 +88,8 @@ Agenda est une capacité facultative. Une indisponibilité de `cal`, `CalEvent` 
 - rendre les dépendances Thunderbird visibles à un seul endroit ;
 - permettre aux tests Node de fournir des faux services déterministes sans démarrer Thunderbird.
 
+Toute dépendance privilégiée injectée doit elle-même être importée ou définie explicitement **avant** la création de la façade. La branche a démontré pourquoi : rendre `ExtensionError` immédiatement nécessaire a révélé un identifiant global implicite et provoqué un crash de bootstrap réel. `ExtensionError` est désormais importé depuis `ExtensionUtils.sys.mjs` et une garde protège ce contrat.
+
 Les tests de contrat ne prétendent pas remplacer un vrai Thunderbird. Ils vérifient le contrat de la couche de compatibilité et empêchent les régressions de logique avant le banc runtime.
 
 ## Ce qui reste volontairement dans l’orchestrateur
@@ -124,3 +126,7 @@ Avant d’ajouter une nouvelle capacité Thunderbird :
 Le manifeste déclare Thunderbird `128.0` à `153.*`. Cette déclaration n’est pas une preuve que chaque point interne est identique sur toute la plage. La couche de compatibilité rend les dépendances plus faciles à adapter, mais la matrice réelle reste à établir avec le banc runtime et les tests manuels.
 
 Toute future adaptation de version doit rester localisée autant que possible dans ces adaptateurs et être documentée dans `docs/KNOWN_LIMITATIONS.md` et `docs/BUG_TRACKER.md` si elle corrige une régression observée.
+
+### Preuve runtime actuelle
+
+Le 8 août 2026, le banc réel a validé Thunderbird **153.0.1 ESR** Linux sur un profil local synthétique : vue `about:3pane` prête, Experiment/background à `Startup: Complete`, panneau et bouton injectés une seule fois, nettoyage après désinstallation, puis réinstallation sans duplication. Cela valide le bootstrap et le cycle de vie de la frontière sur cette version, pas les fournisseurs réels ni toute la plage 128–153.
