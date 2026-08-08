@@ -18,13 +18,27 @@ assert "127.0.0.1" in HARNESS
 assert 'ADDON_ID = "pin-mails@MailPerch.local"' in HARNESS
 assert 'PANEL_ID = "pin-mails-panel"' in HARNESS
 assert 'TOGGLE_ID = "pin-mails-qfb-toggle"' in HARNESS
+assert 'SMOKE_FOLDER_NAME = "MailPerch Smoke"' in HARNESS
 assert "/moz/addon/install" in HARNESS
 assert "/moz/addon/uninstall" in HARNESS
 assert "/moz/context" in HARNESS
+assert "PROVISION_MAIL_VIEW_SCRIPT" in HARNESS
+assert "createLocalMailAccount" in HARNESS
+assert "displayFolder" in HARNESS
+assert "synthetic-local-mail-view" in HARNESS
+assert "native-mail-view-ready" in HARNESS
+assert "threadTree" in HARNESS
+assert "qfb-starred" in HARNESS
+assert "quickFilterButtons" in HARNESS
+assert "viewWrapper" in HARNESS
+assert "quickFilterBar" in HARNESS
+assert "currentFolderUri" in HARNESS
+assert "selectedFolderUri" in HARNESS
+assert "lastRuntimeState" in HARNESS
 assert "runtime-cleanup-after-uninstall" in HARNESS
 assert "clean-reinstall" in HARNESS
 
-# The workflow is intentionally not a required main-branch push job yet.  It
+# The workflow is intentionally not a required main-branch push job yet. It
 # runs on this consolidation branch, PRs that touch runtime-sensitive paths,
 # and explicit manual dispatch while we establish reliability.
 assert "workflow_dispatch:" in WORKFLOW
