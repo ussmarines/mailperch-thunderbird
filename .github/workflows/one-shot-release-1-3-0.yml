@@ -1,0 +1,140 @@
+name: One-shot MailPerch 1.3.0 release preparation
+
+on:
+  push:
+    branches:
+      - refactor/thunderbird-integration-and-ux
+    paths:
+      - ".github/workflows/one-shot-release-1-3-0.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  prepare:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          package-manager-cache: false
+
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+
+      - name: Prepare 1.3.0 release metadata
+        shell: python
+        run: |
+          from pathlib import Path
+          import json
+
+          OLD = "1.2.1"
+          NEW = "1.3.0"
+
+          def replace_once(path, old, new):
+              p = Path(path)
+              text = p.read_text(encoding="utf-8")
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f"{path}: expected one occurrence of {old!r}, got {count}")
+              p.write_text(text.replace(old, new, 1), encoding="utf-8")
+
+          def replace_all(path, old, new, minimum=1):
+              p = Path(path)
+              text = p.read_text(encoding="utf-8")
+              count = text.count(old)
+              if count < minimum:
+                  raise SystemExit(f"{path}: expected at least {minimum} occurrence(s) of {old!r}, got {count}")
+              p.write_text(text.replace(old, new), encoding="utf-8")
+              print(f"{path}: replaced {count} occurrence(s)")
+
+          # Canonical machine-readable version declarations.
+          for path in ("package.json", "extension/manifest.json"):
+              data = json.loads(Path(path).read_text(encoding="utf-8"))
+              if data.get("version") != OLD:
+                  raise SystemExit(f"{path}: unexpected current version {data.get('version')!r}")
+              data["version"] = NEW
+              Path(path).write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+
+          # Public installation/readme declarations are all current-version references.
+          replace_all("README.md", OLD, NEW, minimum=5)
+          replace_all("README.en.md", OLD, NEW, minimum=5)
+
+          replace_once(
+              "CHANGELOG.md",
+              "## Développement — consolidation Thunderbird et Options (non publié)",
+              "## 1.3.0 — consolidation Thunderbird et interface",
+          )
+          replace_once(
+              "THIRD_PARTY_NOTICES.md",
+              "MailPerch 1.2.1 does not bundle",
+              "MailPerch 1.3.0 does not bundle",
+          )
+          replace_once(
+              "tests/static_checks.py",
+              'assert version == "1.2.1"',
+              'assert version == "1.3.0"',
+          )
+
+          # Operational memory: update only release-facing/current-state references,
+          # preserving historical mentions such as the 1.2.1 CodeQL fix.
+          replace_once("PROJECT_MEMORY.md", "Version publique : **1.2.1**", "Version publique : **1.3.0**")
+          replace_once(
+              "PROJECT_MEMORY.md",
+              "La version publique 1.2.1 est la base stable. La branche de consolidation en cours n’ajoute pas de nouveau métier : elle isole les dépendances Thunderbird derrière une couche de compatibilité, simplifie la page Options autour d’un mode **Recommandé** et ajoute un banc de smoke runtime sur un vrai binaire Thunderbird.",
+              "La version 1.3.0 livre la consolidation sans nouveau métier : elle isole les dépendances Thunderbird derrière une couche de compatibilité, simplifie la page Options autour d’un mode **Recommandé** et ajoute un banc de smoke runtime sur un vrai binaire Thunderbird.",
+          )
+          replace_once("PROJECT_MEMORY.md", "## État 1.2.1 conservé", "## État 1.3.0")
+
+          replace_once("docs/BUG_TRACKER.md", "Version publique : **1.2.1**", "Version publique : **1.3.0**")
+
+          state_path = Path("docs/PROJECT_STATE.json")
+          state = json.loads(state_path.read_text(encoding="utf-8"))
+          if state.get("extensionVersion") != OLD:
+              raise SystemExit(f"Unexpected PROJECT_STATE extensionVersion: {state.get('extensionVersion')!r}")
+          state["extensionVersion"] = NEW
+          state["developmentBranch"] = "main"
+          state_path.write_text(json.dumps(state, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+
+          # Codex handoff becomes an archived description of the completed review.
+          replace_once("docs/CODEX_HANDOFF.md", "- version publique : **1.2.1** ;", "- version préparée pour publication : **1.3.0** ;")
+          replace_once(
+              "docs/CODEX_HANDOFF.md",
+              "- ne pas modifier le numéro public avant décision de release.",
+              "- revue Codex terminée ; la publication 1.3.0 reste soumise aux gates PR/CodeQL/QA.",
+          )
+          replace_once(
+              "docs/CODEX_HANDOFF.md",
+              "2. conserver le comportement produit 1.2.1 ;",
+              "2. préserver le comportement métier de 1.2.1 tout en livrant la consolidation en 1.3.0 ;",
+          )
+
+      - name: Show remaining 1.2.1 references
+        shell: bash
+        run: |
+          set -euo pipefail
+          git grep -n '1\.2\.1' || true
+
+      - name: Validate release candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm run ci
+          git diff --check
+          git diff --exit-code -- .github/workflows/one-shot-release-1-3-0.yml
+
+      - name: Commit release preparation
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package.json extension/manifest.json README.md README.en.md CHANGELOG.md THIRD_PARTY_NOTICES.md PROJECT_MEMORY.md docs/BUG_TRACKER.md docs/PROJECT_STATE.json docs/CODEX_HANDOFF.md tests/static_checks.py
+          git commit -m "chore(release): prepare MailPerch 1.3.0"
+          git push origin HEAD:refs/heads/refactor/thunderbird-integration-and-ux
