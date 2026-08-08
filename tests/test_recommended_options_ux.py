@@ -48,6 +48,10 @@ assert 'new Set(["guided", "advanced"])' in SETTINGS
 assert '<option value="guided" data-i18n="settingsGuided">Recommandé</option>' in HTML
 assert FR["settingsGuided"]["message"] == "Recommandé"
 assert EN["settingsGuided"]["message"] == "Recommended"
+assert "préparer un brouillon" in FR["guidedTipText"]["message"]
+assert "prepare a draft" in EN["guidedTipText"]["message"]
+assert "déjà actifs" not in FR["guidedTipText"]["message"]
+assert "already enabled" not in EN["guidedTipText"]["message"]
 
 for key in ("navEssential", "navOrganization", "navAutomation", "navAdvanced"):
     assert key in FR and key in EN, key

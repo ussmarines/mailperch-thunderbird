@@ -480,7 +480,7 @@
     "message": "Groupes"
   },
   "guidedTipText": {
-    "message": "Les réglages recommandés sont déjà actifs. Modifiez uniquement ce qui correspond à votre façon de travailler."
+    "message": "Le mode Recommandé masque les réglages techniques avancés. Utilisez « Appliquer les réglages recommandés » pour préparer un brouillon, puis Enregistrer pour le confirmer."
   },
   "guidedTipTitle": {
     "message": "Conseil"

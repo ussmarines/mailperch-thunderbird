@@ -480,7 +480,7 @@
     "message": "Groups"
   },
   "guidedTipText": {
-    "message": "Recommended settings are already enabled. Change only what matches your workflow."
+    "message": "Recommended mode hides advanced technical settings. Use “Apply recommended settings” to prepare a draft, then Save to confirm it."
   },
   "guidedTipTitle": {
     "message": "Tip"
