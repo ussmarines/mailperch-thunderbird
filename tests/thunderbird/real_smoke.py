@@ -176,12 +176,13 @@ const done = arguments[arguments.length - 1];
 const { AddonManager } = ChromeUtils.importESModule(
   "resource://gre/modules/AddonManager.sys.mjs"
 );
-const { Services } = ChromeUtils.importESModule(
-  "resource://gre/modules/Services.sys.mjs"
+const { classes: Cc, interfaces: Ci } = Components;
+const windowMediator = Cc["@mozilla.org/appshell/window-mediator;1"].getService(
+  Ci.nsIWindowMediator
 );
 const addon = await AddonManager.getAddonByID("pin-mails@MailPerch.local");
 const windows = [];
-for (const win of Services.wm.getEnumerator("mail:3pane")) {
+for (const win of windowMediator.getEnumerator("mail:3pane")) {
   windows.push(win);
 }
 const panes = [];
@@ -228,7 +229,10 @@ done({
   panes,
 });
 })().catch(error => done({
-  __mailperchSmokeError: String(error?.stack || error?.message || error),
+  __mailperchSmokeError: [
+    `${String(error?.name || "Error")}: ${String(error?.message || error)}`,
+    String(error?.stack || ""),
+  ].filter(Boolean).join("\n"),
 }));
 """
 
