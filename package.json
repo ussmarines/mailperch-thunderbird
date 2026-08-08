@@ -23,8 +23,5 @@
     "node": ">=20",
     "npm": ">=10",
     "python": ">=3.11"
-  },
-  "dependencies": {
-    "@fluentui/web-components": "^3.0.3"
   }
 }

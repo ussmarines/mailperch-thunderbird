@@ -87,6 +87,10 @@ Les dix commandes MailPerch sont personnalisables avec l’API `commands` de Thu
 
 Le bouton injecté émet `pinInbox.onDashboardRequested`; le background ouvre la page d’extension avec `messenger.tabs.create`, afin de conserver le bon principal de sécurité.
 
+### Politique de composants UI
+
+MailPerch suit Fluent 2 par ses jetons CSS locaux, sa hiérarchie, ses états et ses contrôles HTML natifs. Le build assemble directement les fichiers suivis sous `extension/` et n’exécute aucun bundler : une dépendance npm non importée ne peut donc pas devenir un composant du XPI. `@fluentui/web-components` 3.0.3 a été évalué puis retiré, notamment parce qu’il exige Node 22/24 alors que la validation du dépôt inclut Node 20. Une future adoption exige simultanément un besoin produit précis, un bundle local déterministe auditable, aucun actif distant et une matrice Node/Thunderbird documentée.
+
 ## Stockage et migrations
 
 - base : `pin-mails-v2.sqlite` ;

@@ -33,6 +33,7 @@ La branche `refactor/thunderbird-integration-and-ux` modifie l’architecture in
 - Le mode **Recommandé** masque les réglages avancés mais ne supprime pas leurs fonctions. Le stockage conserve la valeur historique `guided` afin d’éviter une migration.
 - Le plancher CSS de 12 px est contrôlé automatiquement, mais le rendu effectif à zoom 200 %, avec polices système différentes, contraste élevé et lecteurs d’écran doit être observé manuellement.
 - Les gardes DOM/Playwright utilisent des actifs réels mais une API synthétique ; elles ne remplacent pas les interactions dans `about:3pane`.
+- Les scénarios Chromium ont validé Options et dashboard après les corrections finales, mais ils ne prouvent ni le rendu dans un onglet Thunderbird ni le zoom navigateur réel à 200 %.
 
 ## Cycle de vie et stockage
 

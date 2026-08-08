@@ -103,6 +103,10 @@ Le workflow de smoke Thunderbird télécharge un binaire Thunderbird et geckodri
 
 Cette activité réseau appartient à la chaîne CI, pas au produit installé ; la promesse « aucun réseau/télémétrie dans MailPerch » reste inchangée.
 
+## Dépendances de l’interface
+
+Le XPI ne contient aucune dépendance npm runtime, aucun composant chargé depuis un CDN et aucun code généré à l’installation. L’évaluation de `@fluentui/web-components` 3.0.3 n’a trouvé aucun import dans l’extension et aucun chemin de bundle vers le XPI ; conserver le paquet aurait ajouté une chaîne de dépendances inutilisée et une exigence Node 22/24. Le paquet et le lockfile ont donc été retirés. Les contrôles restent natifs et les jetons Fluent 2 sont versionnés localement dans `extension/styles/tokens.css`.
+
 ## Règles pour les futures modifications
 
 - toute nouvelle méthode Experiment doit valider et borner ses entrées ;

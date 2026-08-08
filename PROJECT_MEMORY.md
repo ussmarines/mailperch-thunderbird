@@ -27,6 +27,7 @@ Les futures fonctions **Prochaine action**, **Timeline de conversation**, **Foll
 12. Le métier ne doit pas réintroduire d’appels directs à `MailServices`, `MailUtils`, `MessageArchiver`, `cal`, `CalEvent` ou `CalTodo` en dehors de la frontière de compatibilité.
 13. Le mode **Recommandé** prépare des valeurs sûres mais ne sauvegarde jamais automatiquement ; Enregistrer/Annuler restent explicites.
 14. Toute classe ou service privilégié injecté dans `PinCompatibility` doit être importé/défini explicitement avant la création des adaptateurs ; aucun identifiant global implicite ne doit être requis au bootstrap.
+15. L’apparence Fluent 2 repose sur les composants HTML natifs et les jetons CSS locaux de `extension/styles/tokens.css` ; aucun paquet Fluent, bundler ou actif distant n’entre dans le XPI.
 
 ## Carte complète des fichiers
 
@@ -75,6 +76,10 @@ Le DOM `about:3pane` reste volontairement dans l’orchestrateur. Toute extracti
 Les réglages sont présentés par familles : **Essentiel**, **Organisation**, **Automatisation**, **Avancé**. Le mode stocké `guided` est désormais présenté comme **Recommandé** ; la valeur persistée reste inchangée pour éviter une migration. En mode Recommandé, les sections techniques avancées sont masquées, mais aucun contrôle avancé n’est supprimé du produit.
 
 L’action « appliquer les réglages recommandés » produit uniquement un brouillon et conserve les valeurs personnelles/environnementales telles que calendrier préféré, groupe d’attente, dossier de sauvegarde, couleurs de comptes et activation des boîtes. L’utilisateur doit encore cliquer sur Enregistrer.
+
+La passe navigateur finale a révélé qu’un contrôle encore déclaré par le registre (`moveToWaitingOnReply`) avait disparu du HTML lors de la réorganisation : l’initialisation entière des Options échouait. Le contrôle a été restauré et la garde statique vérifie désormais le contrat dans les deux sens, HTML vers registre et registre vers HTML. Le scénario Playwright exerce 99 réglages persistants avec les actifs de production et une API synthétique.
+
+`@fluentui/web-components` 3.0.3 a été évalué puis retiré : aucun fichier de l’extension ne l’importait, le build XPI n’a pas de bundler, le paquet exige Node 22/24 alors que le dépôt conserve Node 20 dans sa matrice, et son arbre n’apportait donc aucun composant au produit livré. La consolidation garde le langage Fluent 2 local, sans dépendance npm runtime ni lockfile.
 
 ### Banc Thunderbird
 

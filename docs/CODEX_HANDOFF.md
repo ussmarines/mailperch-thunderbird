@@ -70,6 +70,10 @@ Le mode Recommandé masque les sections marquées avancées mais ne supprime auc
 - **ne sauvegarde pas** ;
 - laisse Enregistrer/Annuler décider du résultat.
 
+Le registre de réglages et le HTML doivent rester bijectifs. La passe Playwright finale a trouvé puis corrigé l’absence de `moveToWaitingOnReply`, qui rendait sinon l’initialisation terminale. `tests/test_options_controls.py` contrôle maintenant aussi registre → HTML ; ne pas revenir à une garde dans un seul sens.
+
+Le langage visuel Fluent 2 est implémenté avec les contrôles HTML natifs et `extension/styles/tokens.css`. L’essai de `@fluentui/web-components` 3.0.3 a été retiré : le code ne l’importait pas, le build ne le regroupait pas dans le XPI et son exigence Node 22/24 contredisait la matrice Node 20. Le dépôt reste donc sans dépendance npm runtime et sans lockfile tant qu’un besoin de composant, un bundle local déterministe et sa maintenance sécurité ne sont pas démontrés ensemble.
+
 ## Banc Thunderbird
 
 - workflow : `.github/workflows/thunderbird-smoke.yml` ;

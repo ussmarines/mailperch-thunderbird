@@ -61,7 +61,8 @@
     "Optional Thunderbird capabilities fail locally instead of disabling the full extension",
     "Business modules do not call Thunderbird core services directly outside compatibility adapters",
     "Recommended mode never auto-saves and preserves profile-specific settings",
-    "Privileged dependencies injected into compatibility adapters are explicitly imported before facade creation"
+    "Privileged dependencies injected into compatibility adapters are explicitly imported before facade creation",
+    "Fluent 2 styling uses local CSS tokens and native HTML controls with no npm runtime dependency or remote asset"
   ],
   "ui": {
     "settingsSpacingAffects": [
@@ -103,6 +104,7 @@
     "providerDetection": "exact recognized domain or dot-boundary subdomain matching; CodeQL incomplete URL substring checks removed in 1.2.1",
     "thunderbirdBoundary": "MailServices/MailUtils/MessageArchiver and Calendar internals are injected into dedicated compatibility adapters; business logic must not call them directly",
     "recommendedMode": "recommended values are draft-only, preserve profile-specific fields and require explicit save",
+    "uiDependencyPolicy": "native HTML plus local Fluent 2 CSS tokens; no npm runtime dependency, bundler, CDN or remote asset",
     "runtimeTestSupplyChain": "test-only Thunderbird/geckodriver downloads are checksum-verified and are not runtime dependencies of the extension"
   },
   "developmentBranch": "refactor/thunderbird-integration-and-ux",
@@ -115,6 +117,7 @@
     ],
     "runtimeWorkflow": ".github/workflows/thunderbird-smoke.yml",
     "runtimeScript": "tests/thunderbird/real_smoke.py",
+    "browserStatus": "production Options and dashboard assets passed local Chromium Playwright flows with a synthetic extension API on 2026-08-08; 99 persisted settings, save/cancel/failure/retry paths, 7 dashboard views, 9 statistics, localization, dark mode and 720px overflow were checked",
     "runtimeStatus": "passed on 2026-08-08 with Thunderbird 153.0.1 ESR Linux and a synthetic Local Folders profile; MV3 Startup Complete, single injection, uninstall cleanup and clean reinstall validated; provider/OS/version matrix remains manual"
   }
 }

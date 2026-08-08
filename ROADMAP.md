@@ -26,6 +26,7 @@ Base stable : `main` / `385815f546968acf721c8cd8486ff48f55f78a32`
 - [x] préserver les choix propres au profil lors de l’application du brouillon ;
 - [x] conserver recherche, Enregistrer, Annuler et le mode Avancé ;
 - [x] couvrir la taxonomie et le comportement par une garde dédiée FR/EN.
+- [x] valider dans un navigateur réel la bijection registre/HTML, le brouillon, Enregistrer/Annuler et les reprises d’initialisation.
 
 ### Qualité et banc de test
 
@@ -34,6 +35,7 @@ Base stable : `main` / `385815f546968acf721c8cd8486ff48f55f78a32`
 - [x] installer, désinstaller et réinstaller le XPI dans le scénario runtime ;
 - [x] conserver les logs/résultats/captures comme artefacts ;
 - [x] documenter les niveaux de preuve et la voie officielle comm-central `mach` ;
+- [x] confirmer que Fluent 2 reste local et sans dépendance npm runtime tant qu’aucun bundle de composants n’est justifié ;
 - [ ] promouvoir éventuellement le smoke en contrôle requis uniquement après plusieurs exécutions fiables.
 
 ### Documentation et revue
