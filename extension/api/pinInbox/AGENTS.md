@@ -17,6 +17,7 @@ Lire aussi `docs/SECURITY_BOUNDARY.md`, `docs/THUNDERBIRD_COMPATIBILITY.md` et l
 - Les arguments des pages doivent être bornés et normalisés au niveau privilégié, même si le schéma les valide déjà.
 - Les chemins locaux ne sont modifiés que par un sélecteur natif ; aucun chemin fourni par le DOM/import.
 - La désinstallation doit fermer le stockage avant purge et ne doit jamais recréer un fichier de récupération.
+- Toute dépendance privilégiée injectée dans `PinCompatibility` doit être importée explicitement au bootstrap de l’Experiment avant la création des adaptateurs ; ne pas dépendre d’un identifiant global implicite ou d’un chemin d’erreur qui n’aurait pas encore été évalué.
 
 ## Carte de travail
 
