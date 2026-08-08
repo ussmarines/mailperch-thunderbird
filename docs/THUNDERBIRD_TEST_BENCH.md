@@ -49,7 +49,7 @@ Script : `tests/thunderbird/real_smoke.py`
 
 Le workflow est volontairement séparé de la QA obligatoire pendant sa phase d’épreuve. Il s’exécute sur la branche de consolidation et peut aussi être lancé manuellement.
 
-Thunderbird documente officiellement `mach`/xpcshell/Mochitest pour ses propres tests. En revanche, la documentation geckodriver est centrée sur Gecko/Firefox et ne garantit pas explicitement ce scénario Thunderbird ; le smoke externe est donc traité comme un harnais expérimental jusqu’à preuve par exécution. En cas d’incompatibilité structurelle, on conserve les contrats et on utilise la voie officielle comm-central plutôt que de masquer l’échec.
+Thunderbird documente officiellement `mach`/xpcshell/Mochitest pour ses propres tests. En revanche, la documentation geckodriver est centrée sur Gecko/Firefox et ne garantit pas explicitement ce scénario Thunderbird ; le smoke externe reste donc un contrôle d’intégration complémentaire. En cas d’incompatibilité structurelle future, on conserve les contrats et on utilise la voie officielle comm-central plutôt que de masquer l’échec.
 
 ### Chaîne de confiance
 
@@ -60,12 +60,14 @@ Le job :
 3. vérifie l’archive avec le `SHA256SUMS` officiel Mozilla ;
 4. télécharge geckodriver `0.37.1` depuis la release Mozilla officielle ;
 5. vérifie le SHA-256 de l’asset fourni par GitHub ;
-6. lance Thunderbird sous Xvfb ;
-7. installe temporairement le XPI par l’extension WebDriver Mozilla ;
-8. passe au contexte privilégié et contrôle l’état runtime ;
-9. désinstalle puis contrôle le nettoyage ;
-10. réinstalle et contrôle une nouvelle injection propre ;
-11. conserve logs, résultat JSON et captures disponibles comme artefacts.
+6. lance Thunderbird sous Xvfb dans un profil WebDriver jetable ;
+7. crée uniquement dans ce profil un compte **Local Folders** et un dossier synthétique `MailPerch Smoke`, sans compte réseau ni identifiant utilisateur ;
+8. sélectionne ce dossier dans `about:3pane` et attend la vue native (`threadTree`, `gViewWrapper`, Quick Filter) ;
+9. installe temporairement le XPI par l’extension WebDriver Mozilla ;
+10. passe au contexte privilégié et contrôle l’état runtime, le background MV3 et les injections ;
+11. désinstalle puis contrôle le nettoyage ;
+12. réinstalle et contrôle une nouvelle injection propre ;
+13. conserve logs, résultat JSON et captures comme artefacts.
 
 Aucun de ces téléchargements n’est une dépendance d’exécution de MailPerch. Ils existent uniquement dans l’environnement de test.
 
@@ -74,8 +76,9 @@ Aucun de ces téléchargements n’est une dépendance d’exécution de MailPer
 Lorsque le job réussit réellement, il démontre au minimum sur la version épinglée :
 
 - lancement du binaire Thunderbird ;
+- création d’une vue courrier locale synthétique sans réseau ;
 - chargement du XPI et ID exact `pin-mails@MailPerch.local` ;
-- extension active ;
+- extension active et background MV3 arrivé à `Startup: Complete` ;
 - présence d’un `about:3pane` prêt ;
 - une seule injection `#pin-mails-panel` ;
 - une seule injection `#pin-mails-qfb-toggle` ;
@@ -124,10 +127,11 @@ Après avoir construit l’XPI et installé un binaire Thunderbird + geckodriver
 
 ```bash
 python tests/thunderbird/real_smoke.py \
-  --thunderbird /chemin/vers/thunderbird \
-  --geckodriver /chemin/vers/geckodriver \
+  --binary /chemin/vers/thunderbird \
   --xpi dist/MailPerch_v1.2.1.xpi \
-  --artifacts-dir artifacts/thunderbird-smoke
+  --geckodriver /chemin/vers/geckodriver \
+  --output-dir artifacts/thunderbird-smoke \
+  --timeout 45
 ```
 
 Sur Linux sans écran, lancer la même commande sous `xvfb-run -a`.
@@ -140,14 +144,18 @@ Un échec du smoke doit être classé avant correction :
 
 - **download/checksum** : chaîne de test ou archive distante ;
 - **session WebDriver** : compatibilité geckodriver/Thunderbird ;
-- **installation XPI** : manifeste/Experiment ;
-- **absence about:3pane** : démarrage/profil ou changement Thunderbird ;
+- **préparation vue locale** : profil synthétique ou évolution `about:3pane` ;
+- **installation XPI / Startup** : manifeste, background ou Experiment ;
 - **panneau absent/dupliqué** : intégration MailPerch ;
 - **cleanup** : cycle de vie/désinstallation ;
-- **timeout** : conserver logs/captures avant toute hypothèse.
+- **timeout** : conserver `result.json`, état MV3, logs et captures avant toute hypothèse.
 
 Ne jamais assouplir une assertion pour rendre le job vert sans expliquer la cause. Si geckodriver cesse de permettre ce type de contrôle, le banc doit échouer clairement et la voie `mach` doit devenir la preuve runtime principale.
 
 ## État de preuve de la branche
 
-Le code du banc et ses gardes statiques sont validés localement. Le statut **runtime réel** doit être mis à jour uniquement après exécution du workflow GitHub sur le binaire officiel ; tant que cette exécution n’a pas réussi, ne pas présenter le smoke comme une validation Thunderbird acquise.
+Le 8 août 2026, le workflow GitHub a réussi sur le binaire officiel **Thunderbird 153.0.1 ESR** sous Linux avec geckodriver 0.37.1. L’artefact a confirmé le cycle complet : vue locale prête, XPI actif, background `Startup: Complete`, une injection du panneau et du bouton, nettoyage total après désinstallation, puis réinstallation propre sans duplication.
+
+Le banc a également détecté pendant sa mise au point un vrai crash de bootstrap introduit par la consolidation : `ReferenceError: ExtensionError is not defined`. La cause était une dépendance privilégiée devenue immédiate lors de la création des adaptateurs. Le correctif importe désormais explicitement `ExtensionError` depuis `ExtensionUtils.sys.mjs`, une garde statique protège cet invariant et le smoke réel est passé après correction.
+
+Cette preuve couvre **le démarrage et le cycle de vie de l’intégration sur ce scénario local synthétique**. Elle ne remplace pas les tests utilisateur avec comptes/fournisseurs réels ni la matrice multi-versions/multi-OS.
