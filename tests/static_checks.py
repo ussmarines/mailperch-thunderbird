@@ -93,7 +93,7 @@ for needle in [
     "_checkCompatibility", "_registerFolderListener", "msgsMoveCopyCompleted", "msgKeyChanged",
     "_toggleConversationSelectedByTab", "_getDashboardData", "_createCalendarItem",
     "_syncReferenceToCalendar", "_applyCustomRules", "_simulateRules", "_scheduleCounterRegressionCheck",
-    "MailUtils.displayMessageInFolderTab", "pin-mails-independent-button", "about3Pane.messagePane.displayMessage",
+    "this._thunderbird?.messages?.displayMessageInFolderTab", "pin-mails-independent-button", "about3Pane.messagePane.displayMessage",
     "onDashboardRequested", "event.stopImmediatePropagation()", 'event.key === "ContextMenu"',
     'document.createXULElement("menupopup")', 'contextMenu.openPopupAtScreen',
     "clearDropTargets", "startupcache-invalidate"
