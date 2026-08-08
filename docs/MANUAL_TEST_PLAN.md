@@ -1,8 +1,8 @@
-# Plan de test manuel MailPerch — 1.2.1 et branche de consolidation
+# Plan de test manuel MailPerch — 1.3.0
 
 Utiliser de préférence un profil Thunderbird jetable avec des messages synthétiques pour les scénarios destructifs ou de migration. Pour une validation utilisateur finale, un profil réel peut être utilisé après sauvegarde, en évitant toute opération destructive non nécessaire.
 
-La version publique 1.2.1 a déjà fait l’objet le 8 août 2026 d’une passe utilisateur réelle sans anomalie signalée. Le présent plan sert surtout à valider la future release issue de `refactor/thunderbird-integration-and-ux` et à couvrir les zones modifiées.
+La version 1.2.1 a déjà fait l’objet le 8 août 2026 d’une passe utilisateur réelle sans anomalie signalée. Le présent plan sert à valider la release 1.3.0 issue de `refactor/thunderbird-integration-and-ux` et à couvrir les zones modifiées.
 
 ## Priorité A — intégration Thunderbird consolidée
 

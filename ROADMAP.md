@@ -1,6 +1,6 @@
 # Feuille de route
 
-## En cours — consolidation post-1.2.1
+## 1.3.0 — consolidation Thunderbird et interface
 
 Branche : `refactor/thunderbird-integration-and-ux`
 Base stable : `main` / `385815f546968acf721c8cd8486ff48f55f78a32`
@@ -42,10 +42,10 @@ Base stable : `main` / `385815f546968acf721c8cd8486ff48f55f78a32`
 
 - [x] documenter la frontière Thunderbird et le banc runtime ;
 - [x] remettre la mémoire projet, l’état machine, l’architecture, la sécurité et le handoff au niveau de la branche ;
-- [ ] exécuter la passe finale `npm run ci` et l’audit du diff ;
-- [ ] synchroniser la branche GitHub et obtenir QA/CodeQL/smoke verts ;
-- [ ] faire relire/corriger la branche par Codex avec les outils choisis par l’utilisateur ;
-- [ ] seulement ensuite préparer PR, fusion et nouvelle release.
+- [x] exécuter la passe finale `npm run ci` et l’audit du diff ;
+- [x] synchroniser la branche GitHub et obtenir QA/smoke verts ; CodeQL reste le gate de PR ;
+- [x] faire relire/corriger la branche par Codex avec Thunderbird, Fluent 2, Playwright, Context7 et Security Diff Scan ;
+- [x] préparer la release 1.3.0 ; PR, CodeQL, fusion et publication constituent les derniers gates GitHub.
 
 ## Validation de la 1.2.1 stable
 

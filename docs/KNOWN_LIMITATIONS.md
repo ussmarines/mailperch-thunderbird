@@ -1,10 +1,10 @@
 # Limites connues
 
-## Version publique et branche de consolidation
+## Version 1.3.0 et portée de validation
 
-La version publique reste **1.2.1**. L’utilisateur a effectué le 8 août 2026 une passe réelle de la 1.2.1 sur son Thunderbird sans anomalie signalée. Cette observation est une validation utile du fonctionnement courant, mais elle ne remplace pas une matrice exhaustive par système, version, fournisseur, type de dossier et calendrier.
+La version **1.3.0** livre la consolidation Thunderbird et Options. L’utilisateur a effectué le 8 août 2026 une passe réelle de la 1.2.1 sur son Thunderbird sans anomalie signalée ; la 1.3.0 bénéficie en plus des validations automatisées, de la revue Codex et du smoke Thunderbird 153.0.1 ESR. Cela ne remplace pas une matrice exhaustive par système, version, fournisseur, type de dossier et calendrier.
 
-La branche `refactor/thunderbird-integration-and-ux` modifie l’architecture interne et les Options. Tant qu’elle n’a pas été revue, exécutée par la CI GitHub puis publiée, elle ne doit pas être assimilée à la 1.2.1 stable.
+La branche `refactor/thunderbird-integration-and-ux` a été revue par Codex et validée par la CI GitHub ainsi que par le smoke Thunderbird réel. Les scénarios fournisseurs/OS/zoom/accessibilité qui restent manuels sont détaillés ci-dessous et doivent être distingués de cette validation automatisée.
 
 ## Compatibilité Thunderbird
 

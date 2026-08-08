@@ -128,7 +128,7 @@ Après avoir construit l’XPI et installé un binaire Thunderbird + geckodriver
 ```bash
 python tests/thunderbird/real_smoke.py \
   --binary /chemin/vers/thunderbird \
-  --xpi dist/MailPerch_v1.2.1.xpi \
+  --xpi dist/MailPerch_v1.3.0.xpi \
   --geckodriver /chemin/vers/geckodriver \
   --output-dir artifacts/thunderbird-smoke \
   --timeout 45
