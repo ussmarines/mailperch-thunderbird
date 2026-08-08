@@ -1,0 +1,74 @@
+name: One-shot Recommended mode copy fix
+
+on:
+  push:
+    branches:
+      - refactor/thunderbird-integration-and-ux
+    paths:
+      - ".github/workflows/one-shot-recommended-copy-fix.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Clarify Recommended mode without changing behavior
+        shell: python
+        run: |
+          from pathlib import Path
+
+          replacements = {
+              Path("extension/_locales/fr/messages.json"): (
+                  '"message": "Les réglages recommandés sont déjà actifs. Modifiez uniquement ce qui correspond à votre façon de travailler."',
+                  '"message": "Le mode Recommandé masque les réglages techniques avancés. Utilisez « Appliquer les réglages recommandés » pour préparer un brouillon, puis Enregistrer pour le confirmer."',
+              ),
+              Path("extension/_locales/en/messages.json"): (
+                  '"message": "Recommended settings are already enabled. Change only what matches your workflow."',
+                  '"message": "Recommended mode hides advanced technical settings. Use “Apply recommended settings” to prepare a draft, then Save to confirm it."',
+              ),
+              Path("extension/options/options.html"): (
+                  'Les réglages recommandés sont déjà actifs. Modifiez uniquement ce qui correspond à votre façon de travailler.',
+                  'Le mode Recommandé masque les réglages techniques avancés. Utilisez « Appliquer les réglages recommandés » pour préparer un brouillon, puis Enregistrer pour le confirmer.',
+              ),
+          }
+          for path, (old, new) in replacements.items():
+              text = path.read_text(encoding="utf-8")
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f"Unexpected replacement count for {path}: {count}")
+              path.write_text(text.replace(old, new, 1), encoding="utf-8")
+
+          test_path = Path("tests/test_recommended_options_ux.py")
+          text = test_path.read_text(encoding="utf-8")
+          anchor = '''assert EN["settingsGuided"]["message"] == "Recommended"\n'''
+          addition = anchor + '''assert "préparer un brouillon" in FR["guidedTipText"]["message"]\nassert "prepare a draft" in EN["guidedTipText"]["message"]\nassert "déjà actifs" not in FR["guidedTipText"]["message"]\nassert "already enabled" not in EN["guidedTipText"]["message"]\n'''
+          if text.count(anchor) != 1:
+              raise SystemExit(f"Unexpected test anchor count: {text.count(anchor)}")
+          test_path.write_text(text.replace(anchor, addition, 1), encoding="utf-8")
+
+      - name: Verify focused UX copy change
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m json.tool extension/_locales/fr/messages.json >/dev/null
+          python -m json.tool extension/_locales/en/messages.json >/dev/null
+          python tests/test_recommended_options_ux.py
+          git diff --check
+          git diff --exit-code -- .github/workflows/one-shot-recommended-copy-fix.yml
+
+      - name: Commit copy fix to work branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add extension/_locales/fr/messages.json extension/_locales/en/messages.json extension/options/options.html tests/test_recommended_options_ux.py
+          git commit -m "fix(ux): clarify Recommended mode behavior"
+          git push origin HEAD:refs/heads/refactor/thunderbird-integration-and-ux
