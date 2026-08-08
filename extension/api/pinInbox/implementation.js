@@ -12,6 +12,10 @@ var { MessageArchiver } = ChromeUtils.importESModule(
 var { Management } = ChromeUtils.importESModule(
   "resource://gre/modules/Extension.sys.mjs"
 );
+var { ExtensionUtils } = ChromeUtils.importESModule(
+  "resource://gre/modules/ExtensionUtils.sys.mjs"
+);
+var { ExtensionError } = ExtensionUtils;
 
 const lazy = {};
 ChromeUtils.defineESModuleGetters(lazy, {

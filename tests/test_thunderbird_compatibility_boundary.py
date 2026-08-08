@@ -34,6 +34,8 @@ for forbidden in (
 ):
     assert forbidden not in IMPLEMENTATION, f"Thunderbird boundary regression: {forbidden}"
 
+assert 'resource://gre/modules/ExtensionUtils.sys.mjs' in IMPLEMENTATION
+assert "var { ExtensionError } = ExtensionUtils;" in IMPLEMENTATION
 assert "PinCompatibility?.create" in IMPLEMENTATION
 assert "this._thunderbird?.messages" in IMPLEMENTATION
 assert "this._thunderbird?.tags" in IMPLEMENTATION
