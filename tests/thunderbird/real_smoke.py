@@ -310,6 +310,9 @@ const done = arguments[arguments.length - 1];
 const { AddonManager } = ChromeUtils.importESModule(
   "resource://gre/modules/AddonManager.sys.mjs"
 );
+const { ExtensionParent } = ChromeUtils.importESModule(
+  "resource://gre/modules/ExtensionParent.sys.mjs"
+);
 const { MailServices } = ChromeUtils.importESModule(
   "resource:///modules/MailServices.sys.mjs"
 );
@@ -318,6 +321,26 @@ const windowMediator = Cc["@mozilla.org/appshell/window-mediator;1"].getService(
   Ci.nsIWindowMediator
 );
 const addon = await AddonManager.getAddonByID("pin-mails@MailPerch.local");
+let extensionInternals = null;
+try {
+  const extension = ExtensionParent.GlobalManager.getExtension(
+    "pin-mails@MailPerch.local"
+  );
+  if (extension) {
+    extensionInternals = {
+      state: String(extension.state || ""),
+      startupReason: String(extension.startupReason || ""),
+      backgroundState: String(extension.backgroundState || ""),
+      manifestVersion: Number(extension.manifestVersion || 0),
+      hasWakeupBackground: typeof extension.wakeupBackground === "function",
+      startupStates: extension.startupStates
+        ? Array.from(extension.startupStates, value => String(value))
+        : [],
+    };
+  }
+} catch (error) {
+  extensionInternals = {error: String(error?.name || error)};
+}
 const windows = [];
 for (const win of windowMediator.getEnumerator("mail:3pane")) {
   windows.push(win);
@@ -390,6 +413,7 @@ done({
     version: String(addon.version || ""),
     temporarilyInstalled: Boolean(addon.temporarilyInstalled),
   } : null,
+  extensionInternals,
   accountCount: Array.from(MailServices.accounts.accounts || []).length,
   localFoldersAvailable: Boolean(localServer),
   windowCount: windows.length,
@@ -557,6 +581,9 @@ def run(args: argparse.Namespace) -> int:
 
             addon_id = client.install_addon(xpi)
             result["checks"].append("temporary-addon-install")
+            after_install = client.execute_async(RUNTIME_STATE_SCRIPT)
+            if isinstance(after_install, dict):
+                result["afterInstallRuntime"] = after_install
 
             first = _wait_for_state(
                 client,
