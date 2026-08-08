@@ -1,0 +1,72 @@
+name: One-shot ExtensionError bootstrap fix
+
+on:
+  push:
+    branches:
+      - refactor/thunderbird-integration-and-ux
+    paths:
+      - ".github/workflows/one-shot-extensionerror-fix.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Apply exact bootstrap and guard fix
+        shell: python
+        run: |
+          from pathlib import Path
+
+          implementation = Path("extension/api/pinInbox/implementation.js")
+          text = implementation.read_text(encoding="utf-8")
+          anchor = '''var { Management } = ChromeUtils.importESModule(
+            "resource://gre/modules/Extension.sys.mjs"
+          );
+          '''
+          replacement = anchor + '''var { ExtensionUtils } = ChromeUtils.importESModule(
+            "resource://gre/modules/ExtensionUtils.sys.mjs"
+          );
+          var { ExtensionError } = ExtensionUtils;
+          '''
+          if text.count(anchor) != 1:
+              raise SystemExit(f"Unexpected Management import anchor count: {text.count(anchor)}")
+          if "ExtensionUtils.sys.mjs" in text:
+              raise SystemExit("ExtensionUtils import already present")
+          implementation.write_text(text.replace(anchor, replacement, 1), encoding="utf-8")
+
+          guard = Path("tests/test_thunderbird_compatibility_boundary.py")
+          text = guard.read_text(encoding="utf-8")
+          anchor = '''assert "PinCompatibility?.create" in IMPLEMENTATION
+          '''
+          replacement = '''assert 'resource://gre/modules/ExtensionUtils.sys.mjs' in IMPLEMENTATION
+          assert "var { ExtensionError } = ExtensionUtils;" in IMPLEMENTATION
+          ''' + anchor
+          if text.count(anchor) != 1:
+              raise SystemExit(f"Unexpected compatibility guard anchor count: {text.count(anchor)}")
+          guard.write_text(text.replace(anchor, replacement, 1), encoding="utf-8")
+
+      - name: Verify focused fix
+        shell: bash
+        run: |
+          set -euo pipefail
+          python tests/test_thunderbird_compatibility_boundary.py
+          node --check extension/api/pinInbox/implementation.js
+          git diff --check
+          git diff --exit-code -- .github/workflows/one-shot-extensionerror-fix.yml
+
+      - name: Commit fix to work branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add extension/api/pinInbox/implementation.js tests/test_thunderbird_compatibility_boundary.py
+          git commit -m "fix: import ExtensionError for compatibility bootstrap"
+          git push origin HEAD:refs/heads/refactor/thunderbird-integration-and-ux
