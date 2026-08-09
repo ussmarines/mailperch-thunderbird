@@ -371,6 +371,7 @@ h1 {
 .settings-family-heading { display: flex; align-items: center; gap: var(--space-3); margin: var(--space-6) 0 var(--space-3); padding-block-start: var(--space-2); border-block-start: 1px solid var(--border); }
 .settings-family-heading:first-of-type { margin-block-start: 0; border-block-start: 0; }
 .settings-family-heading h2 { margin: 0; color: var(--accent-foreground); font-size: max(.82rem, 12px); font-weight: var(--mp-font-weight-bold); letter-spacing: .08em; text-transform: uppercase; }
+.setting-help { margin: var(--space-3) 0 0; color: var(--muted); font-size: max(.84rem, 12px); line-height: 1.45; }
 .settings-section::before { content: ""; position: absolute; inset: 0 auto 0 0; inline-size: 3px; background: var(--accent-foreground); opacity: .72; }
 .settings-section:hover { border-color: color-mix(in srgb, var(--accent-foreground) 20%, var(--border)); }
 .section-header { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-3); margin-bottom: var(--space-5); }
