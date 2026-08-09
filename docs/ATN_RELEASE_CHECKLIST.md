@@ -54,14 +54,14 @@ Les cases cochées sont vérifiées automatiquement ou directement dans les sour
 - [x] Dashboard : 7 vues, 9 statistiques, action groupée et absence de débordement à 720 px validés avant intégration ;
 - [x] inspection visuelle Dashboard et Options réalisée avant intégration ;
 - [x] logo actuel, fonctions, permissions, dépendances runtime et politique réseau inchangés ;
-- [ ] contrôles UI ciblés après intégration de `main` 1.4.0 et préparation 1.5.0.
+- [x] contrôles UI ciblés après intégration de `main` 1.4.0 et préparation 1.5.0.
 
 ## Livrables
 
-- [ ] `npm run ci` final sur l’arbre 1.5.0 ;
-- [ ] XPI 1.5.0 reproductible ;
-- [ ] archive source reviewer 1.5.0 ;
-- [ ] `SHA256SUMS.txt` 1.5.0 ;
+- [x] `npm run ci` final sur l’arbre 1.5.0 ;
+- [x] XPI 1.5.0 reproductible ;
+- [x] archive source reviewer 1.5.0 ;
+- [x] `SHA256SUMS.txt` 1.5.0 ;
 - [x] CHANGELOG et déclarations de version préparés ;
 - [ ] installation du XPI 1.5.0 depuis un profil propre ;
 - [ ] test de remplacement d’une build interne 3.2.x ;
