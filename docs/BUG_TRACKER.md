@@ -1,6 +1,6 @@
 # Registre des bugs MailPerch
 
-Version publique : **1.5.0**
+Version publique : **1.5.1**
 
 Les entrées corrigées des versions antérieures restent disponibles dans l’historique Git et les rapports d’audit archivés. Ce registre courant conserve les validations encore utiles à la prochaine passe.
 
@@ -8,6 +8,10 @@ Les entrées corrigées des versions antérieures restent disponibles dans l’h
 
 | ID | Introduit | Symptôme | Cause | Fichiers | Test | Statut | Correction | Validation |
 |---|---|---|---|---|---|---|---|---|
+| MP-2026-024 | 1.5.0 | L’action Modifier d’une carte échoue avec `ReferenceError: assignment to undeclared variable checklistItems`. | État checklist et fonction de rendu déclarés dans `createEditor()` mais utilisés par son sibling `openEditor()`. | `extension/api/pinInbox/implementation.js` | `tests/test_calendar_and_card_actions.py` | CORRIGÉ | 1.5.1 | État/rendu remontés dans la closure `about:3pane` et garde de portée ajoutée. |
+| MP-2026-025 | 1.5.0 | Le diagnostic fournisseur peut afficher `secure: false` pour un compte IMAP sécurisé. | `_getAccountsMetadata()` ne transmettait pas l’état sécurisé/offline réel du serveur à `PinProviders`. | `extension/api/pinInbox/implementation.js` | `tests/test_productivity_1_2_features.py`, `tests/productivity_1_2_model_tests.mjs` | CORRIGÉ | 1.5.1 | `server.isSecure` et `offlineSupportLevel` alimentent désormais la matrice expurgée. |
+| MP-2026-026 | 1.5.0 | La migration legacy pouvait réassigner temporairement le schéma paramètres à 7 alors que le module courant est en 8. | Constante de migration restée en dur après passage du schéma Settings à 8. | `extension/api/pinInbox/implementation.js`, `docs/DATA_MODEL.md`, `docs/PROJECT_STATE.json` | `tests/test_productivity_1_2_features.py`, `tests/settings_defaults.mjs` | CORRIGÉ | 1.5.1 | La migration utilise `PinSettings.SCHEMA_VERSION`; données restent en schéma 7. |
+| MP-2026-027 | 1.5.0 | Plusieurs opérations Messages natives restaient dans l’orchestrateur malgré la frontière `PinCompatibility`. | Extraction 1.3.0 incomplète pour énumération, drapeaux, lu/non-lu, suppression et accès DB. | `extension/api/pinInbox/implementation.js`, `extension/api/pinInbox/modules/thunderbird-messages.js` | `tests/test_thunderbird_compatibility_boundary.py`, `tests/thunderbird_compatibility_contract.mjs` | CORRIGÉ | 1.5.1 | Opérations centralisées dans l’adaptateur Messages avec énumérations bornées et garde anti-régression. |
 | MP-2026-018 | 1.1.1 | L’empreinte binaire du ZIP peut différer entre Windows et Linux malgré des contenus extraits identiques. | Différences de conteneur ZIP entre plateformes. | `scripts/build.py`, tests de reproductibilité | `tests/test_build_reproducible.py` | À VALIDER | — | Comparer les artefacts Linux de release aux builds Windows en contrôlant aussi les entrées décompressées. |
 
 ## Bugs corrigés ou en validation
