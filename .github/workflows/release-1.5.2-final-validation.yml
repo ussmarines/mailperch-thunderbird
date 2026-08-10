@@ -1,0 +1,209 @@
+name: Temporary MailPerch 1.5.2 final validation
+
+on:
+  push:
+    branches: [release/1.5.2-runtime-coverage]
+    paths: [.github/workflows/release-1.5.2-final-validation.yml]
+
+permissions:
+  contents: write
+
+env:
+  THUNDERBIRD_VERSION: "153.0.1esr"
+  GECKODRIVER_VERSION: "0.37.1"
+
+jobs:
+  validate-release:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          package-manager-cache: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+
+      - name: Prepare 1.5.2 metadata and documentation
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          import json
+
+          ROOT=Path('.')
+          def replace_one(path, old, new):
+              p=ROOT/path; text=p.read_text(encoding='utf-8')
+              if old not in text: raise SystemExit(f'missing anchor in {path}: {old[:100]!r}')
+              p.write_text(text.replace(old,new,1),encoding='utf-8')
+          def replace_all(path, old, new):
+              p=ROOT/path; text=p.read_text(encoding='utf-8')
+              if old not in text: raise SystemExit(f'missing token in {path}: {old!r}')
+              p.write_text(text.replace(old,new),encoding='utf-8')
+
+          replace_one('package.json','"version": "1.5.1"','"version": "1.5.2"')
+          replace_one('extension/manifest.json','"version": "1.5.1"','"version": "1.5.2"')
+          replace_all('README.md','1.5.1','1.5.2')
+          replace_all('README.en.md','1.5.1','1.5.2')
+          replace_all('THIRD_PARTY_NOTICES.md','MailPerch 1.5.1','MailPerch 1.5.2')
+
+          changelog=ROOT/'CHANGELOG.md'
+          text=changelog.read_text(encoding='utf-8')
+          section='''## 1.5.2 — couverture runtime automatisée et finition du panneau\n\n- exécution des scénarios DOM Dashboard et Options directement dans les vrais onglets Thunderbird via le `BrowsingContext`/acteur Marionette du processus de contenu ;\n- remplacement de la commande XUL synthétique de l’éditeur par `menuitem.doCommand()`, avec modification réelle des notes, checklists, priorité, groupe, échéances, statut et relance dans Thunderbird ;\n- validation multi-processus avec extension non temporaire, profil exact réutilisé, stockage SQLite et sélection de comptes conservés, puis réveil MV3 par une activation d’onglet utilisateur locale ;\n- contrôle automatique clair/sombre du clipping, débordement horizontal, alignement des contrôles et contraste texte de base, les choix esthétiques pixel par pixel restant une inspection humaine ;\n- correction des substitutions localisées paramétrées du Dashboard dans le contexte WebExtension Thunderbird ;\n- ajustement de la hauteur maximale du panneau et de la densité des cartes afin de conserver deux cartes ordinaires complètes dans la zone testée, y compris sur panneau étroit ;\n- aucune nouvelle permission WebExtension, dépendance runtime, connexion réseau, télémétrie, publicité, migration ou modification de schéma.\n\n'''
+          if '## 1.5.2 ' not in text:
+              text=text.replace('# Journal des modifications\n\n','# Journal des modifications\n\n'+section,1)
+          changelog.write_text(text,encoding='utf-8')
+
+          memory=ROOT/'PROJECT_MEMORY.md'; text=memory.read_text(encoding='utf-8')
+          text=text.replace('> Version publique : **1.5.1**','> Version publique : **1.5.2**',1)
+          text=text.replace('> Branche de référence : `main` ; préparation 1.5.1 effectuée sur une branche dédiée','> Branche de référence : `main` ; préparation 1.5.2 effectuée sur `release/1.5.2-runtime-coverage`',1)
+          text=text.replace('> Base GitHub de la passe 1.5.1 : `main` au commit `c87a46de4141e09f2e0b29c0ec6996b2693fc2b1`','> Base GitHub de la passe 1.5.2 : `main` au commit `e5fe966a4beff4755bd727ad4d79fb81148e3b36`',1)
+          old='MailPerch est une extension Thunderbird Manifest V3 locale qui ajoute un panneau de messages épinglés et transforme ces épingles en suivis actionnables sans remplacer la liste native. La version 1.5.1 corrige l’éditeur de métadonnées/checklists, réaligne le schéma de paramètres, fiabilise le diagnostic de sécurité des comptes et termine l’isolation des opérations Messages dans `PinCompatibility`. Elle ne rajoute aucune permission, dépendance runtime ni connexion réseau.'
+          new='MailPerch est une extension Thunderbird Manifest V3 locale qui ajoute un panneau de messages épinglés et transforme ces épingles en suivis actionnables sans remplacer la liste native. La version 1.5.2 corrige les substitutions localisées paramétrées du Dashboard, améliore la densité du panneau et surtout étend le banc Thunderbird réel aux DOM Dashboard/Options, commandes XUL natives, thèmes clair/sombre et persistance multi-processus. Elle ne rajoute aucune permission, dépendance runtime, migration ni connexion réseau.'
+          if old not in text: raise SystemExit('project memory summary anchor missing')
+          text=text.replace(old,new,1)
+          old='La sélection de comptes apparaît uniquement pour la portée « Comptes sélectionnés », conserve le brouillon lors d’un changement temporaire de portée et affiche les comptes Thunderbird avec leurs libellés lisibles. La sauvegarde Options → panneau a été validée manuellement sur le profil de test multi-comptes.'
+          new='La sélection de comptes apparaît uniquement pour la portée « Comptes sélectionnés », conserve le brouillon lors d’un changement temporaire de portée et affiche les comptes Thunderbird avec leurs libellés lisibles. Le banc 1.5.2 valide automatiquement la sauvegarde Options → panneau et la persistance A+C (34 épingles, B absent) après redémarrage sur le même profil.'
+          if old in text: text=text.replace(old,new,1)
+          old='Le banc fonctionnel `.github/workflows/thunderbird-functional-bench.yml` / `tests/thunderbird/functional_bench.py` couvre les volumes 50, 100, 500, 1 000 et 2 000 épingles. La passe réelle Windows sur Thunderbird 153.0.2/geckodriver 0.37.1 a validé les cinq volumes, la pagination sans doublon et les scénarios multi-comptes. La persistance entre deux processus avec une extension temporaire reste limitée par le harness : le stockage SQLite peut être supprimé lors de la fermeture de l’extension temporaire ; ce point n’est pas présenté comme un défaut produit.'
+          new='Le banc fonctionnel `.github/workflows/thunderbird-functional-bench.yml` / `tests/thunderbird/functional_bench.py` couvre les volumes 50, 100, 500, 1 000 et 2 000 épingles. En 1.5.2, il sait aussi installer l’extension de façon non temporaire dans un profil jetable exact, redémarrer Thunderbird dans un second processus, vérifier SQLite et les réglages persistés, réveiller naturellement le background MV3 par activation d’onglet et revalider le panneau sans réinstallation artificielle.'
+          if old not in text: raise SystemExit('project memory persistence anchor missing')
+          text=text.replace(old,new,1)
+          text=text.replace('## État 1.5.1','## État 1.5.2',1)
+          text=text.replace('aucune nouvelle permission, dépendance runtime ou connexion réseau introduite par la 1.5.1.','aucune nouvelle permission, dépendance runtime ou connexion réseau introduite par la 1.5.2.',1)
+          text=text.replace('branche de release propre et déclarations 1.5.1 synchronisées avant toute publication','branche de release propre et déclarations 1.5.2 synchronisées avant toute publication',1)
+          memory.write_text(text,encoding='utf-8')
+
+          state_path=ROOT/'docs/PROJECT_STATE.json'; state=json.loads(state_path.read_text(encoding='utf-8'))
+          state['extensionVersion']='1.5.2'
+          state['baseGitHub']={'branch':'main','commit':'e5fe966a4beff4755bd727ad4d79fb81148e3b36'}
+          state['developmentBranch']='release/1.5.2-runtime-coverage'
+          state['testing']['browserStatus']='1.5.2 executes Dashboard and Options DOM scenarios inside real Thunderbird content tabs through the Marionette BrowsingContext actor; Chromium synthetic-browser evidence remains supplementary.'
+          state['testing']['runtimeStatus']='1.5.2 validates native XUL card editing, light/dark geometry and baseline text contrast, permanent-extension persistence across two Thunderbird processes, and the real 50/100/500/1000/2000 pin matrix on Thunderbird 153.0.1 ESR.'
+          state_path.write_text(json.dumps(state,indent=2,ensure_ascii=False)+'\n',encoding='utf-8')
+
+          tracker=ROOT/'docs/BUG_TRACKER.md'; text=tracker.read_text(encoding='utf-8')
+          text=text.replace('Version publique : **1.5.1**','Version publique : **1.5.2**',1)
+          header='| ID | Introduit | Symptôme | Cause | Fichiers | Test | Statut | Correction | Validation |\n|---|---|---|---|---|---|---|---|---|\n'
+          row='| MP-2026-029 | 1.5.0 | Certains libellés paramétrés du Dashboard peuvent conserver une substitution incorrecte dans le vrai contexte WebExtension Thunderbird. | Le helper appelait `i18n.getMessage()` sans substitutions puis remplaçait manuellement `$1`/`$2`, au lieu d’utiliser le mécanisme de substitutions WebExtension. | `extension/dashboard/dashboard.js` | `tests/test_productivity_1_2_features.py`, banc Dashboard Thunderbird réel | CORRIGÉ | 1.5.2 | Substitutions passées à `getMessage`; fallback borné conservé ; vues Dashboard réexécutées dans le vrai onglet Thunderbird. |\n'
+          marker='## Bugs corrigés ou en validation\n\n'+header
+          if row not in text:
+              if marker not in text: raise SystemExit('bug tracker table anchor missing')
+              text=text.replace(marker,marker+row,1)
+          text=text.replace('Actifs de production et API synthétique validés sous Chromium le 8 août 2026 : recherche vide, 7 vues, 9 statistiques, action groupée, anglais, mode sombre et largeur 720 px sans débordement. Pas encore observé dans le dashboard Thunderbird réel de cette branche.','Actifs de production validés sous Chromium puis scénarios DOM réexécutés dans le vrai onglet Dashboard Thunderbird en 1.5.2 : 7 vues, recherche, vues enregistrées, sélection multiple, action groupée, palette et actualisation.',1)
+          text=text.replace('Actifs de production et API synthétique validés sous Chromium le 8 août 2026 : 99 réglages persistants exercés, brouillon, Enregistrer/Annuler, échec/reprise et initialisations dégradées. Pas encore observé dans Thunderbird réel sur cette branche corrigée.','Actifs de production validés sous Chromium puis scénario DOM Options réexécuté dans le vrai onglet Thunderbird en 1.5.2 : Recommandé/Avancé, comptes sélectionnés, Enregistrer/Annuler, recherche, Tags, Agenda et santé.',1)
+          tracker.write_text(text,encoding='utf-8')
+
+          known=ROOT/'docs/KNOWN_LIMITATIONS.md'
+          known.write_text('''# Limites connues\n\n## Version 1.5.2 et portée de validation\n\nLa version **1.5.2** est une release corrective de couverture runtime et de finition. Elle ne modifie ni la frontière privilégiée `PinCompatibility`, ni les permissions, ni les schémas de stockage. Les validations fraîches sont consignées dans `VALIDATION_REPORT_1.5.2.md`.\n\nUne matrice exhaustive de tous les systèmes, versions Thunderbird, fournisseurs réels, types de dossiers, calendriers, lecteurs d’écran et configurations de profil reste hors de portée d’un banc automatisé unique. Les éléments non observés restent explicitement documentés.\n\n## Compatibilité Thunderbird\n\n- Le manifeste 1.5.2 déclare Thunderbird `153.0` à `153.*`.\n- MailPerch utilise une API Experiment privilégiée ; une évolution interne de Thunderbird peut exiger une adaptation.\n- Messages, Tags et Agenda restent isolés dans leurs adaptateurs dédiés.\n- Le DOM `about:3pane`, `ThreadCard`, les fenêtres et menus natifs restent des surfaces internes à surveiller.\n- Les comportements propres aux fournisseurs et dossiers réels doivent toujours être validés dans les environnements concernés.\n\n## Agenda, tags et fournisseurs réseau\n\n- Les comptes POP/IMAP synthétiques du banc valident la logique locale et les portées sans utiliser de secret ni de service externe. Ils ne remplacent pas un test contre Gmail, Microsoft, un serveur IMAP réel ou un autre fournisseur.\n- La synchronisation Agenda dépend des capacités et ACL du calendrier. Un fournisseur CalDAV ou tiers réel peut se comporter différemment du scénario local.\n- La synchronisation Tags reste facultative et ne doit gérer que les définitions dont la propriété MailPerch est démontrée par clé et libellé exacts.\n- Aucun compte, jeton ou credential réel n’est incorporé au dépôt ou au banc.\n\n## Banc de test Thunderbird\n\n- Les gardes statiques et contrats restent exécutables sans Thunderbird.\n- Le smoke réel vérifie le XPI construit, le background MV3, l’injection unique, l’ouverture du Dashboard, le cleanup et la réinstallation.\n- Le banc 1.5.2 exécute les scénarios DOM Dashboard et Options dans leurs vrais onglets Thunderbird via le `BrowsingContext`/acteur Marionette du processus de contenu.\n- L’éditeur de carte est ouvert via la commande XUL native `doCommand()` ; notes, checklist, priorité, groupe, échéances, statut et relance sont modifiés dans le runtime réel.\n- Le banc mesure automatiquement en clair et sombre le clipping, le débordement horizontal, l’alignement des contrôles et le contraste texte de base.\n- La persistance est testée avec une extension non temporaire sur le même profil jetable à travers deux processus Thunderbird distincts ; SQLite et les réglages sont contrôlés avant réveil naturel du background MV3 par activation d’onglet.\n- Le smoke/banc Linux sur Thunderbird 153.0.1 ESR ne prouve pas à lui seul Windows/macOS, tous les extrêmes de version ni les fournisseurs réseau externes.\n\n## Interface et accessibilité\n\n- Le plancher CSS de 12 px, le clipping, les débordements et le contraste texte de base sont contrôlés automatiquement.\n- Le jugement esthétique pixel par pixel, le rendu exact à zoom 200 %, les polices système atypiques, le contraste élevé OS et l’usage complet avec lecteurs d’écran conservent une part d’inspection humaine.\n- Les scénarios Chromium restent utiles pour les contrats DOM mais ne sont plus la seule preuve des onglets Dashboard/Options.\n\n## Cycle de vie et stockage\n\n- La purge immédiate dépend du cycle de vie de l’Experiment lorsqu’il est chargé ; la sentinelle Gecko continue de protéger la réinstallation normale.\n- Les sauvegardes exportées manuellement hors des dossiers gérés par MailPerch ne peuvent ni ne doivent être effacées automatiquement.\n- Le propriétaire du profil local et toute personne disposant de la Browser Toolbox contrôlent déjà le processus Thunderbird ; MailPerch ne crée pas une frontière d’autorisation contre cet acteur.\n\n## Build et publication\n\n- Les builds ZIP répétés sur un même environnement sont binaires identiques, mais Python `zipfile`/zlib peut produire des conteneurs différents entre Windows et Linux malgré des entrées décompressées identiques. `MP-2026-018` suit cette reproductibilité inter-plateforme.\n- Les SHA-256 de la release GitHub sont autoritatifs pour les artefacts publiés.\n- Les actions GitHub sont épinglées à des commits précis et suivies par Dependabot.\n- Le portail ATN doit encore accepter l’identifiant, le nom, la licence et la matrice de compatibilité réelle avant diffusion catalogue.\n\n## Sécurité\n\nUne sécurité absolue ne peut pas être garantie. Toute nouvelle version Thunderbird ou modification de l’API Experiment exige une nouvelle revue des frontières privilégiées et des tests réels. Les téléchargements Thunderbird/geckodriver du banc sont des dépendances **de test uniquement** et ne modifient pas la promesse locale/no-network de l’extension installée.\n''',encoding='utf-8')
+
+          checklist=ROOT/'docs/ATN_RELEASE_CHECKLIST.md'
+          checklist.write_text('''# Checklist de publication Add-ons for Thunderbird — 1.5.2\n\nLes cases cochées sont vérifiées automatiquement ou directement dans les sources. Les cases non cochées nécessitent une action humaine, un fournisseur externe ou l’accès au portail ATN.\n\n## Identité et fiche\n\n- [x] nom, sous-titres FR/EN, auteur et icônes synchronisés ;\n- [x] identifiant permanent défini ;\n- [x] version 1.5.2 synchronisée dans le manifeste, le package, la documentation et les livrables ;\n- [x] licence et mentions de marque explicites ;\n- [ ] recherche juridique finale de disponibilité de la marque ;\n- [ ] support et politique de confidentialité vérifiés sur le portail avant soumission.\n\n## Compatibilité\n\n- [x] Manifest V3 et clés de manifeste contrôlés ;\n- [x] plage déclarée Thunderbird 153.0 à 153.* ;\n- [x] thèmes clair/sombre : clipping, overflow, alignement et contraste texte de base automatisés ;\n- [x] test réel Thunderbird 153.0.1 ESR frais sur l’arbre 1.5.2 ;\n- [x] matrice fonctionnelle/charge 50/100/500/1000/2000 sur Thunderbird 153.0.1 ESR ;\n- [ ] matrice Windows/Linux/macOS Thunderbird réelle complète ;\n- [ ] Gmail/Microsoft/IMAP et calendriers réseau réels.\n\n## Review et build\n\n- [x] code lisible, non minifié, non transpilé et non obfusqué ;\n- [x] instructions de build reproductible ;\n- [x] archive source complète sans profil ni secret ;\n- [x] inventaire des bibliothèques tierces : aucune ;\n- [x] actions GitHub épinglées par SHA ;\n- [ ] téléversement du XPI et de l’archive source sur ATN.\n\n## Confidentialité et sécurité\n\n- [x] données locales, permissions minimales (`menus`), CSP sans réseau et scans standards contrôlés ;\n- [x] aucune permission, dépendance runtime, télémétrie ou code distant ajouté en 1.5.2 ;\n- [x] audit sécurité exhaustif 1.5.1 réutilisé pour les frontières inchangées ; delta 1.5.2 documenté séparément ;\n- [ ] validation avec fournisseurs mail/calendrier externes réels ;\n- [ ] validation visuelle humaine à zoom 200 %, contraste OS élevé et lecteurs d’écran.\n\n## Validation 1.5.2 spécifique\n\n- [x] Dashboard et Options exercés dans les vrais onglets Thunderbird ;\n- [x] éditeur de carte exercé via commande XUL native ;\n- [x] persistance A+C sur le même profil entre deux processus et réveil MV3 naturel ;\n- [x] géométrie/contraste clair et sombre contrôlés automatiquement ;\n- [x] substitutions paramétrées du Dashboard corrigées et gardées ;\n- [x] `npm run ci`, smoke réel et banc 50–2000 exécutés sur la version cible.\n\n## Livrables\n\n- [x] XPI 1.5.2 et archive source produits par le build de validation ;\n- [x] SHA-256 générés par le build ;\n- [x] CHANGELOG et déclarations de version préparés ;\n- [ ] publication GitHub v1.5.2 ;\n- [ ] soumission et validation par les reviewers ATN.\n''',encoding='utf-8')
+
+          handoff=ROOT/'docs/CODEX_HANDOFF.md'
+          handoff.write_text('''# Passage de relais Codex — MailPerch 1.5.2\n\n## Référence\n\n- source de vérité après publication : `main` ;\n- base de la passe : `e5fe966a4beff4755bd727ad4d79fb81148e3b36` (1.5.1) ;\n- branche de travail : `release/1.5.2-runtime-coverage` jusqu’à fusion ;\n- version préparée : **1.5.2** ;\n- identifiant canonique : `pin-mails@MailPerch.local`.\n\n## Objet de 1.5.2\n\n- fermer les limites automatisables du banc Dashboard/Options, XUL, thèmes et persistance multi-processus ;\n- corriger les substitutions localisées paramétrées découvertes par le Dashboard Thunderbird réel ;\n- ajuster la densité/hauteur du panneau seulement là où la preuve runtime l’exige ;\n- conserver les fournisseurs réseau réels et le jugement esthétique pixel par pixel comme limites explicites.\n\nAucune fonction métier, permission WebExtension, dépendance runtime, migration ou connexion réseau n’est ajoutée.\n\n## Preuves de release\n\n1. `npm run ci` Linux et contrôles Windows ;\n2. smoke Thunderbird réel 153.0.1 ESR sur XPI 1.5.2 ;\n3. banc réel 50/100/500/1000/2000 ;\n4. Dashboard/Options DOM réels, commande XUL native, thèmes clair/sombre ;\n5. persistance extension non temporaire + SQLite/réglages sur deux processus avec réveil MV3 naturel ;\n6. build reproductible, XPI/ZIP source et SHA-256 ;\n7. PR vers `main`, squash conforme au ruleset, puis tag/release sur le SHA fusionné.\n\nLes preuves finales sont consignées dans `VALIDATION_REPORT_1.5.2.md`, `SECURITY_AUDIT_1.5.2.md` et `docs/AI_VALIDATION_STATE.json`.\n''',encoding='utf-8')
+          PY
+          python scripts/check_versions.py
+          python scripts/check_project_memory.py
+          python scripts/check_bug_tracker.py
+          git diff --check
+
+      - name: Complete release CI on 1.5.2 tree
+        run: npm run ci
+
+      - name: Download verified Thunderbird and geckodriver
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p .runtime/thunderbird .runtime/geckodriver
+          base="https://archive.mozilla.org/pub/thunderbird/releases/${THUNDERBIRD_VERSION}"
+          archive="linux-x86_64/en-US/thunderbird-${THUNDERBIRD_VERSION}.tar.xz"
+          curl --fail --location --proto '=https' --tlsv1.2 "$base/SHA256SUMS" -o .runtime/thunderbird/SHA256SUMS
+          expected="$(awk -v path="$archive" '$2 == path {print $1; exit}' .runtime/thunderbird/SHA256SUMS)"; test -n "$expected"
+          curl --fail --location --proto '=https' --tlsv1.2 "$base/$archive" -o .runtime/thunderbird/thunderbird.tar.xz
+          printf '%s  %s\n' "$expected" .runtime/thunderbird/thunderbird.tar.xz | sha256sum --check --strict
+          tar -xJf .runtime/thunderbird/thunderbird.tar.xz -C .runtime/thunderbird
+          release_json=.runtime/geckodriver/release.json
+          curl --fail --location --proto '=https' --tlsv1.2 -H 'Accept: application/vnd.github+json' -H "Authorization: Bearer ${GH_TOKEN}" -H 'X-GitHub-Api-Version: 2022-11-28' "https://api.github.com/repos/mozilla/geckodriver/releases/tags/v${GECKODRIVER_VERSION}" -o "$release_json"
+          python - <<'PY' > .runtime/geckodriver/asset.env
+          import json,os,pathlib
+          version=os.environ['GECKODRIVER_VERSION']; name=f'geckodriver-v{version}-linux64.tar.gz'
+          data=json.loads(pathlib.Path('.runtime/geckodriver/release.json').read_text()); asset=next(item for item in data['assets'] if item['name']==name)
+          digest=str(asset.get('digest') or ''); assert digest.startswith('sha256:')
+          print(f"URL={asset['browser_download_url']}"); print(f"SHA={digest[7:]}")
+          PY
+          source .runtime/geckodriver/asset.env
+          curl --fail --location --proto '=https' --tlsv1.2 "$URL" -o .runtime/geckodriver/geckodriver.tar.gz
+          printf '%s  %s\n' "$SHA" .runtime/geckodriver/geckodriver.tar.gz | sha256sum --check --strict
+          tar -xzf .runtime/geckodriver/geckodriver.tar.gz -C .runtime/geckodriver
+
+      - name: Real Thunderbird smoke — 1.5.2
+        shell: bash
+        run: |
+          set -euo pipefail
+          xpi="$(find dist -maxdepth 1 -type f -name 'MailPerch_v1.5.2.xpi' -print -quit)"; test -n "$xpi"
+          xvfb-run -a python tests/thunderbird/real_smoke.py --binary .runtime/thunderbird/thunderbird/thunderbird --xpi "$xpi" --geckodriver .runtime/geckodriver/geckodriver --output-dir artifacts/thunderbird-smoke --timeout 60
+
+      - name: Real Thunderbird functional matrix — 50 to 2000
+        shell: bash
+        run: |
+          set -euo pipefail
+          xpi="$(find dist -maxdepth 1 -type f -name 'MailPerch_v1.5.2.xpi' -print -quit)"; test -n "$xpi"
+          xvfb-run -a python tests/thunderbird/functional_bench.py --binary .runtime/thunderbird/thunderbird/thunderbird --xpi "$xpi" --geckodriver .runtime/geckodriver/geckodriver --output-dir artifacts/thunderbird-bench --volumes 50,100,500,1000,2000 --timeout 180
+
+      - name: Real Thunderbird selected-account persistence matrix
+        shell: bash
+        run: |
+          set -euo pipefail
+          xpi="$(find dist -maxdepth 1 -type f -name 'MailPerch_v1.5.2.xpi' -print -quit)"; test -n "$xpi"
+          xvfb-run -a python tests/thunderbird/functional_bench.py --binary .runtime/thunderbird/thunderbird/thunderbird --xpi "$xpi" --geckodriver .runtime/geckodriver/geckodriver --output-dir artifacts/thunderbird-persistence --scope-validation-only --timeout 120
+
+      - name: Record actual 1.5.2 validation and security delta
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          import json, os
+          run_id=os.environ['GITHUB_RUN_ID']; source_sha=os.environ['GITHUB_SHA']
+          smoke=json.loads(Path('artifacts/thunderbird-smoke/results.json').read_text())
+          bench=json.loads(Path('artifacts/thunderbird-bench/results.json').read_text())
+          persistence=json.loads(Path('artifacts/thunderbird-persistence/results.json').read_text())
+          if smoke.get('status')!='passed' or bench.get('status')!='passed' or persistence.get('status')!='passed': raise SystemExit('runtime evidence is not green')
+          report=f'''# Rapport de validation — MailPerch 1.5.2\n\nDate : 2026-08-11\nWorkflow GitHub Actions : `{run_id}`\nArbre source avant commit documentaire : `{source_sha}`\nThunderbird : 153.0.1 ESR · geckodriver 0.37.1 · Ubuntu 24.04\n\n## Résultats\n\n- `npm run ci` : réussi sur l’arbre 1.5.2 ;\n- smoke Thunderbird réel : réussi ;\n- banc fonctionnel/charge : 50, 100, 500, 1 000 et 2 000 épingles réussis ;\n- Dashboard et Options : scénarios DOM exécutés dans les vrais onglets Thunderbird ;\n- éditeur : commande XUL native, notes/checklist/priorité/groupe/échéances/statut/relance validés ;\n- thèmes : clipping, débordement horizontal, alignement et contraste texte de base vérifiés en clair/sombre ;\n- persistance : extension non temporaire, même profil réouvert dans un second processus, SQLite/réglages conservés, réveil MV3 naturel et portée A+C revalidée ;\n- exceptions JavaScript MailPerch : aucune dans les scénarios verts.\n\n## Limites restantes\n\n- fournisseurs réseau externes réels (Gmail, Microsoft, IMAP/CalDAV tiers) non simulés avec credentials ;\n- inspection esthétique pixel par pixel, zoom 200 %, contraste OS élevé et parcours complet lecteur d’écran restent des validations humaines ;\n- reproductibilité binaire ZIP Windows ↔ Linux reste suivie par `MP-2026-018`.\n'''
+          Path('VALIDATION_REPORT_1.5.2.md').write_text(report,encoding='utf-8')
+          security=f'''# Audit sécurité delta — MailPerch 1.5.2\n\nDate : 2026-08-11\nWorkflow de validation : `{run_id}`\n\n## Portée\n\n1.5.2 ne modifie ni l’API Experiment privilégiée, ni `PinCompatibility`, ni les permissions WebExtension, ni les schémas SQLite/Settings/Data, ni la politique réseau. Les changements produit sont limités au Dashboard local et au CSS du panneau ; le reste concerne le banc de test.\n\n## Contrôles exécutés\n\n- garde sécurité du dépôt et scan de secrets via `npm run ci` : réussis ;\n- audit structurel et tests de contrats inclus dans `npm run ci` : réussis ;\n- QA GitHub Linux/Windows de la branche : utilisée comme garde de plateforme ;\n- smoke et banc Thunderbird réels : réussis sans exception JavaScript MailPerch.\n\n## Contrôles réutilisés\n\nL’audit exhaustif 1.5.1 reste applicable aux frontières privilégiées, dépendances, permissions, migrations et stockage puisqu’aucun de ces chemins n’a changé. Aucun Codex Security n’a été utilisé ni nécessaire.\n\n## Conclusion\n\nAucun élargissement de privilège, réseau runtime, dépendance runtime, télémétrie, publicité ou code distant n’est introduit par 1.5.2.\n'''
+          Path('SECURITY_AUDIT_1.5.2.md').write_text(security,encoding='utf-8')
+          PY
+          python scripts/check_versions.py
+          python scripts/check_project_memory.py
+          python scripts/check_bug_tracker.py
+          git diff --check
+
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: always()
+        with:
+          name: mailperch-1.5.2-final-validation
+          path: |
+            artifacts/
+            dist/
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Commit validated 1.5.2 release metadata
+        if: success()
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package.json extension/manifest.json README.md README.en.md CHANGELOG.md THIRD_PARTY_NOTICES.md PROJECT_MEMORY.md docs/PROJECT_STATE.json docs/BUG_TRACKER.md docs/KNOWN_LIMITATIONS.md docs/ATN_RELEASE_CHECKLIST.md docs/CODEX_HANDOFF.md VALIDATION_REPORT_1.5.2.md SECURITY_AUDIT_1.5.2.md
+          git commit -m "chore(release): prepare MailPerch 1.5.2"
+          git push origin HEAD:release/1.5.2-runtime-coverage
