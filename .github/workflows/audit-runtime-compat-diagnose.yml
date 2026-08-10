@@ -93,7 +93,7 @@ jobs:
           set -euo pipefail
           xpi="$(find dist -maxdepth 1 -type f -name 'MailPerch_v*.xpi' -print -quit)"
           mkdir -p "artifacts/compat-${THUNDERBIRD_VERSION}"
-          python - "$PWD/.runtime/thunderbird/thunderbird/thunderbird" "$xpi" "$PWD/.runtime/geckodriver/geckodriver" "artifacts/compat-${THUNDERBIRD_VERSION}" <<'PY'
+          xvfb-run -a python - "$PWD/.runtime/thunderbird/thunderbird/thunderbird" "$xpi" "$PWD/.runtime/geckodriver/geckodriver" "artifacts/compat-${THUNDERBIRD_VERSION}" <<'PY'
           import argparse, pathlib, sys
           sys.path.insert(0, str(pathlib.Path('tests/thunderbird').resolve()))
           import real_smoke as rs
