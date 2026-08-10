@@ -1,0 +1,110 @@
+name: Temporary persistent dashboard validation
+
+on:
+  push:
+    branches: [audit/full-release-hardening-2026-08-10]
+    paths: [.github/workflows/audit-persistent-dashboard.yml]
+
+permissions:
+  contents: read
+
+env:
+  GECKODRIVER_VERSION: "0.37.1"
+
+jobs:
+  dashboard:
+    name: Persistent dashboard on Thunderbird ${{ matrix.thunderbird }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        thunderbird: ["128.0esr", "140.13.0esr"]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          package-manager-cache: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+      - name: Apply persistent event candidate and activate mail tab
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('extension/api/pinInbox/implementation.js')
+          s=p.read_text()
+          old='var pinInbox = class extends ExtensionCommon.ExtensionAPI {'
+          new='''var pinInbox = class extends ExtensionCommon.ExtensionAPIPersistent {\n  PERSISTENT_EVENTS = {\n    onDashboardRequested: ({fire}) => {\n      let currentFire = fire;\n      const listener = () => currentFire.async();\n      this._dashboardRequestListeners ??= new Set();\n      this._dashboardRequestListeners.add(listener);\n      if (this._dashboardRequestPending) {\n        this._dashboardRequestPending = false;\n        Services.tm.dispatchToMainThread(() => {\n          if (this._dashboardRequestListeners?.has(listener)) listener();\n        });\n      }\n      return {\n        unregister: () => this._dashboardRequestListeners?.delete(listener),\n        convert: newFire => { currentFire = newFire; }\n      };\n    }\n  };'''
+          if old not in s: raise SystemExit('class anchor missing')
+          s=s.replace(old,new,1)
+          old_event='''        onDashboardRequested: new ExtensionCommon.EventManager({\n          context,\n          name: "pinInbox.onDashboardRequested",\n          register: fire => {\n            const listener = () => fire.async();\n            this._dashboardRequestListeners ??= new Set();\n            this._dashboardRequestListeners.add(listener);\n            if (this._dashboardRequestPending) {\n              this._dashboardRequestPending = false;\n              Services.tm.dispatchToMainThread(() => {\n                if (this._dashboardRequestListeners?.has(listener)) listener();\n              });\n            }\n            return () => this._dashboardRequestListeners?.delete(listener);\n          }\n        }).api(),'''
+          new_event='''        onDashboardRequested: new ExtensionCommon.EventManager({\n          context,\n          module: "pinInbox",\n          event: "onDashboardRequested",\n          extensionApi: this\n        }).api(),'''
+          if old_event not in s: raise SystemExit('event anchor missing')
+          p.write_text(s.replace(old_event,new_event,1))
+
+          smoke=Path('tests/thunderbird/real_smoke.py')
+          t=smoke.read_text()
+          anchor='''            addon_id = client.install_addon(xpi)\n            result["checks"].append("temporary-addon-install")\n'''
+          insert='''            addon_id = client.install_addon(xpi)\n            result["checks"].append("temporary-addon-install")\n            result["activationAfterInstall"] = client.execute_async(r"""\nconst done = arguments[arguments.length - 1];\n(async () => {\n  const win = Services.wm.getMostRecentWindow("mail:3pane");\n  const tabmail = win?.document.getElementById("tabmail");\n  const mailTab = Array.from(tabmail?.tabInfo || []).find(tab => tab?.mode?.name === "mail3PaneTab");\n  if (!mailTab) throw new Error("mail3PaneTab unavailable");\n  tabmail.switchToTab(mailTab);\n  await new Promise(resolve => win.setTimeout(resolve, 250));\n  done({activated: tabmail.currentTabInfo === mailTab});\n})().catch(error => done({__mailperchSmokeError: String(error?.message || error)}));\n""")\n'''
+          if anchor not in t: raise SystemExit('smoke anchor missing')
+          smoke.write_text(t.replace(anchor,insert,1))
+          PY
+      - name: Check and build candidate
+        run: npm run check && npm run build
+      - name: Download verified Thunderbird
+        shell: bash
+        env:
+          THUNDERBIRD_VERSION: ${{ matrix.thunderbird }}
+        run: |
+          set -euo pipefail
+          mkdir -p .runtime/thunderbird
+          base="https://archive.mozilla.org/pub/thunderbird/releases/${THUNDERBIRD_VERSION}"
+          curl -fsSL "$base/SHA256SUMS" -o .runtime/thunderbird/SHA256SUMS
+          archive=""
+          for candidate in "linux-x86_64/en-US/thunderbird-${THUNDERBIRD_VERSION}.tar.xz" "linux-x86_64/en-US/thunderbird-${THUNDERBIRD_VERSION}.tar.bz2"; do
+            if awk -v path="$candidate" '$2 == path {found=1} END {exit !found}' .runtime/thunderbird/SHA256SUMS; then archive="$candidate"; break; fi
+          done
+          test -n "$archive"
+          expected="$(awk -v path="$archive" '$2 == path {print $1; exit}' .runtime/thunderbird/SHA256SUMS)"
+          curl -fsSL "$base/$archive" -o .runtime/thunderbird/archive
+          printf '%s  %s\n' "$expected" .runtime/thunderbird/archive | sha256sum -c --strict
+          case "$archive" in *.xz) tar -xJf .runtime/thunderbird/archive -C .runtime/thunderbird;; *.bz2) tar -xjf .runtime/thunderbird/archive -C .runtime/thunderbird;; esac
+      - name: Download verified geckodriver
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p .runtime/geckodriver
+          curl -fsSL -H 'Accept: application/vnd.github+json' -H "Authorization: Bearer ${GH_TOKEN}" -H 'X-GitHub-Api-Version: 2022-11-28' "https://api.github.com/repos/mozilla/geckodriver/releases/tags/v${GECKODRIVER_VERSION}" -o .runtime/geckodriver/release.json
+          python - <<'PY' > .runtime/geckodriver/asset.env
+          import json, os, pathlib
+          v=os.environ['GECKODRIVER_VERSION']; n=f'geckodriver-v{v}-linux64.tar.gz'; d=json.loads(pathlib.Path('.runtime/geckodriver/release.json').read_text()); a=next(x for x in d['assets'] if x['name']==n); dg=str(a.get('digest') or '')
+          if not dg.startswith('sha256:'): raise SystemExit('missing digest')
+          print(f"URL={a['browser_download_url']}"); print(f"SHA={dg[7:]}")
+          PY
+          source .runtime/geckodriver/asset.env
+          curl -fsSL "$URL" -o .runtime/geckodriver/geckodriver.tar.gz
+          printf '%s  %s\n' "$SHA" .runtime/geckodriver/geckodriver.tar.gz | sha256sum -c --strict
+          tar -xzf .runtime/geckodriver/geckodriver.tar.gz -C .runtime/geckodriver
+      - name: Run real smoke
+        shell: bash
+        env:
+          THUNDERBIRD_VERSION: ${{ matrix.thunderbird }}
+        run: |
+          set -euo pipefail
+          xpi="$(find dist -maxdepth 1 -name 'MailPerch_v*.xpi' -print -quit)"
+          mkdir -p "artifacts/persistent-${THUNDERBIRD_VERSION}"
+          xvfb-run -a python tests/thunderbird/real_smoke.py --binary .runtime/thunderbird/thunderbird/thunderbird --xpi "$xpi" --geckodriver .runtime/geckodriver/geckodriver --output-dir "artifacts/persistent-${THUNDERBIRD_VERSION}" --timeout 60
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: always()
+        with:
+          name: persistent-${{ matrix.thunderbird }}
+          path: artifacts/persistent-${{ matrix.thunderbird }}/
+          if-no-files-found: warn
+          retention-days: 1
