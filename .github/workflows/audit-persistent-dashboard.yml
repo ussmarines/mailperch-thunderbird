@@ -1,4 +1,4 @@
-name: Temporary persistent dashboard validation
+name: Temporary dashboard wake-race validation
 
 on:
   push:
@@ -13,13 +13,13 @@ env:
 
 jobs:
   dashboard:
-    name: Persistent dashboard on Thunderbird ${{ matrix.thunderbird }}
+    name: Dashboard wake retry on Thunderbird ${{ matrix.thunderbird }}
     runs-on: ubuntu-24.04
     timeout-minutes: 25
     strategy:
       fail-fast: false
       matrix:
-        thunderbird: ["128.0esr", "140.13.0esr"]
+        thunderbird: ["128.0esr", "140.13.0esr", "153.0.1esr"]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -31,28 +31,26 @@ jobs:
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: "3.12"
-      - name: Apply persistent event candidate and activate mail tab
+      - name: Apply bounded background-listener retry candidate
         shell: bash
         run: |
           python - <<'PY'
           from pathlib import Path
-          p=Path('extension/api/pinInbox/implementation.js')
-          s=p.read_text()
-          old='var pinInbox = class extends ExtensionCommon.ExtensionAPI {'
-          new='''var pinInbox = class extends ExtensionCommon.ExtensionAPIPersistent {\n  PERSISTENT_EVENTS = {\n    onDashboardRequested: ({fire}) => {\n      let currentFire = fire;\n      const listener = () => currentFire.async();\n      this._dashboardRequestListeners ??= new Set();\n      this._dashboardRequestListeners.add(listener);\n      if (this._dashboardRequestPending) {\n        this._dashboardRequestPending = false;\n        Services.tm.dispatchToMainThread(() => {\n          if (this._dashboardRequestListeners?.has(listener)) listener();\n        });\n      }\n      return {\n        unregister: () => this._dashboardRequestListeners?.delete(listener),\n        convert: newFire => { currentFire = newFire; }\n      };\n    }\n  };'''
-          if old not in s: raise SystemExit('class anchor missing')
-          s=s.replace(old,new,1)
-          old_event='''        onDashboardRequested: new ExtensionCommon.EventManager({\n          context,\n          name: "pinInbox.onDashboardRequested",\n          register: fire => {\n            const listener = () => fire.async();\n            this._dashboardRequestListeners ??= new Set();\n            this._dashboardRequestListeners.add(listener);\n            if (this._dashboardRequestPending) {\n              this._dashboardRequestPending = false;\n              Services.tm.dispatchToMainThread(() => {\n                if (this._dashboardRequestListeners?.has(listener)) listener();\n              });\n            }\n            return () => this._dashboardRequestListeners?.delete(listener);\n          }\n        }).api(),'''
-          new_event='''        onDashboardRequested: new ExtensionCommon.EventManager({\n          context,\n          module: "pinInbox",\n          event: "onDashboardRequested",\n          extensionApi: this\n        }).api(),'''
-          if old_event not in s: raise SystemExit('event anchor missing')
-          p.write_text(s.replace(old_event,new_event,1))
+          p = Path('extension/api/pinInbox/implementation.js')
+          s = p.read_text()
+          old = '''        if (!notifyBackground()) {\n          Promise.resolve(this._extension?.wakeupBackground?.())\n            .then(() => { notifyBackground(); })\n            .catch(error => this._recordDiagnostic("warning", "Réveil du tableau de bord impossible", error));\n        }'''
+          new = '''        if (!notifyBackground()) {\n          Promise.resolve(this._extension?.wakeupBackground?.())\n            .then(async () => {\n              const deadline = Date.now() + 2000;\n              while (Date.now() < deadline) {\n                if (notifyBackground()) return;\n                await new Promise(resolve => about3Pane.setTimeout(resolve, 50));\n              }\n              notifyBackground();\n            })\n            .catch(error => this._recordDiagnostic("warning", "Réveil du tableau de bord impossible", error));\n        }'''
+          if old not in s:
+              raise SystemExit('dashboard wake anchor missing')
+          p.write_text(s.replace(old, new, 1))
 
-          smoke=Path('tests/thunderbird/real_smoke.py')
-          t=smoke.read_text()
-          anchor='''            addon_id = client.install_addon(xpi)\n            result["checks"].append("temporary-addon-install")\n'''
-          insert='''            addon_id = client.install_addon(xpi)\n            result["checks"].append("temporary-addon-install")\n            result["activationAfterInstall"] = client.execute_async(r"""\nconst done = arguments[arguments.length - 1];\n(async () => {\n  const win = Services.wm.getMostRecentWindow("mail:3pane");\n  const tabmail = win?.document.getElementById("tabmail");\n  const mailTab = Array.from(tabmail?.tabInfo || []).find(tab => tab?.mode?.name === "mail3PaneTab");\n  if (!mailTab) throw new Error("mail3PaneTab unavailable");\n  tabmail.switchToTab(mailTab);\n  await new Promise(resolve => win.setTimeout(resolve, 250));\n  done({activated: tabmail.currentTabInfo === mailTab});\n})().catch(error => done({__mailperchSmokeError: String(error?.message || error)}));\n""")\n'''
-          if anchor not in t: raise SystemExit('smoke anchor missing')
-          smoke.write_text(t.replace(anchor,insert,1))
+          smoke = Path('tests/thunderbird/real_smoke.py')
+          t = smoke.read_text()
+          anchor = '''            addon_id = client.install_addon(xpi)\n            result["checks"].append("temporary-addon-install")\n'''
+          insert = '''            addon_id = client.install_addon(xpi)\n            result["checks"].append("temporary-addon-install")\n            result["activationAfterInstall"] = client.execute_async(r"""\nconst done = arguments[arguments.length - 1];\n(async () => {\n  const win = Services.wm.getMostRecentWindow("mail:3pane");\n  const tabmail = win?.document.getElementById("tabmail");\n  const mailTab = Array.from(tabmail?.tabInfo || []).find(tab => tab?.mode?.name === "mail3PaneTab");\n  if (!mailTab) throw new Error("mail3PaneTab unavailable");\n  tabmail.switchToTab(mailTab);\n  await new Promise(resolve => win.setTimeout(resolve, 250));\n  done({activated: tabmail.currentTabInfo === mailTab});\n})().catch(error => done({__mailperchSmokeError: String(error?.message || error)}));\n""")\n'''
+          if anchor not in t:
+              raise SystemExit('smoke activation anchor missing')
+          smoke.write_text(t.replace(anchor, insert, 1))
           PY
       - name: Check and build candidate
         run: npm run check && npm run build
@@ -99,12 +97,12 @@ jobs:
         run: |
           set -euo pipefail
           xpi="$(find dist -maxdepth 1 -name 'MailPerch_v*.xpi' -print -quit)"
-          mkdir -p "artifacts/persistent-${THUNDERBIRD_VERSION}"
-          xvfb-run -a python tests/thunderbird/real_smoke.py --binary .runtime/thunderbird/thunderbird/thunderbird --xpi "$xpi" --geckodriver .runtime/geckodriver/geckodriver --output-dir "artifacts/persistent-${THUNDERBIRD_VERSION}" --timeout 60
+          mkdir -p "artifacts/retry-${THUNDERBIRD_VERSION}"
+          xvfb-run -a python tests/thunderbird/real_smoke.py --binary .runtime/thunderbird/thunderbird/thunderbird --xpi "$xpi" --geckodriver .runtime/geckodriver/geckodriver --output-dir "artifacts/retry-${THUNDERBIRD_VERSION}" --timeout 60
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: always()
         with:
-          name: persistent-${{ matrix.thunderbird }}
-          path: artifacts/persistent-${{ matrix.thunderbird }}/
+          name: retry-${{ matrix.thunderbird }}
+          path: artifacts/retry-${{ matrix.thunderbird }}/
           if-no-files-found: warn
           retention-days: 1
