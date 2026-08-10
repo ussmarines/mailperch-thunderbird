@@ -1,25 +1,31 @@
 # Rapport de validation — MailPerch 1.5.1
 
-> État pendant préparation : **EN COURS — ne pas utiliser comme preuve de publication avant les contrôles finaux**.
+> Statut : **VALIDATION TECHNIQUE PRÉ-PUBLICATION OK**. La publication reste conditionnée aux checks de PR, au squash sur `main`, au tag `v1.5.1` et au workflow Release.
 
-## Changements validés localement à ce stade
+## Changements validés
 
-- correction de la portée checklist de l’éditeur ;
+- correction de la portée `checklistItems` / `renderChecklist` dans l’éditeur de carte ;
 - extraction des opérations Messages restantes vers `PinCompatibility.messages` ;
 - propagation de `server.isSecure` et `offlineSupportLevel` dans les métadonnées de diagnostic ;
-- migration Settings basée sur `PinSettings.SCHEMA_VERSION` ;
+- migration Settings basée sur `PinSettings.SCHEMA_VERSION` : Settings 8, Data 7, SQLite physique 5 ;
 - smoke GitHub rattaché à `main` ;
-- déclarations 1.5.1 et documents actifs resynchronisés.
+- compatibilité déclarée resserrée à Thunderbird `153.0`–`153.*` après essais réels 128/140/153 ;
+- correction du banc Thunderbird qui comparait à tort le compteur total de portée au nombre de cartes filtrées par la recherche ;
+- documentation, README, checklist ATN, rapports et métadonnées 1.5.1 resynchronisés.
+
+Aucune nouvelle permission WebExtension, dépendance runtime, connexion réseau du produit, télémétrie, publicité ou code distant n’a été ajouté.
+
+## Audits exhaustifs
+
+Deux passes indépendantes sur l’intégralité de l’arbre suivi ont été réalisées pendant cette préparation. La passe finale sur l’arbre nettoyé a contrôlé **228 fichiers suivis deux fois**, avec **0 erreur et 0 avertissement**. Les contrats manifest/API, schémas, appels Thunderbird, ressources, assets, liens, workflows permanents, packaging et documents ont été recroisés.
+
+Les éléments inchangés dont la dernière preuve restait valide n’ont pas été relancés après chaque commit documentaire ou suppression de workflow temporaire ; les contrôles complets ont été réservés aux jalons finaux conformément aux règles du dépôt.
 
 ## Tests réellement exécutés
 
-### Base 1.5.0 avant correction
+### Tests ciblés des corrections
 
-`npm run ci` a été exécuté sur le snapshot source de 1.5.0 et était vert. Cette preuve a démontré que la suite précédente ne détectait pas le crash `checklistItems` observé dans Thunderbird.
-
-### Après corrections runtime ciblées
-
-Ont été exécutés avec succès :
+Ont notamment réussi :
 
 - `python tests/test_calendar_and_card_actions.py` ;
 - `python tests/test_thunderbird_compatibility_boundary.py` ;
@@ -27,19 +33,64 @@ Ont été exécutés avec succès :
 - `node tests/productivity_1_2_model_tests.mjs` ;
 - `python tests/test_productivity_1_2_features.py` ;
 - `node tests/settings_defaults.mjs` ;
-- inventaire exhaustif fichier-par-fichier : 0 erreur, 0 avertissement après les premières corrections.
+- `python tests/test_thunderbird_test_bench.py` ;
+- compilation Python du banc et `git diff --check` lors de la correction du harness.
 
-Une exécution de `npm test` après passage en 1.5.1 a validé toutes les suites jusqu’au test de packaging, lequel s’est arrêté uniquement parce que les nouveaux rapports `SECURITY_AUDIT_1.5.1.md` et `VALIDATION_REPORT_1.5.1.md` n’existaient pas encore. Aucun test runtime/code antérieur dans cette séquence n’a échoué.
+### QA complète du dépôt
 
-## Contrôles finaux encore obligatoires
+La QA permanente GitHub Actions a été relancée sur l’arbre nettoyé au commit `494e157d01d04d360c851583ca026439756f381b`, run **31427496745** :
 
-- `npm run ci` complet avec les rapports présents et finalisés ;
-- seconde passe exhaustive indépendante sur tous les fichiers ;
-- audit sécurité standard complet sur l’arbre final ;
-- smoke Thunderbird réel ;
-- banc Thunderbird fonctionnel/charge réel 50/100/500/1000/2000 ;
-- CI GitHub Linux/Windows et checks de PR ;
-- build release et vérification des SHA-256 ;
-- fusion, tag et workflow Release.
+- **Security guard regression** : succès ;
+- **Full verification (Linux)** : succès, incluant `npm run ci`, vérification du layout XPI et génération des artefacts ;
+- **Source and model checks (Windows)** : succès, incluant `npm run check && npm test`.
 
-La version finale de ce rapport doit contenir uniquement les preuves réellement obtenues et les limites restantes.
+Une exécution de build utilisée pour la preuve runtime a produit :
+
+- `MailPerch_v1.5.1.xpi` — SHA-256 `d5de5d4061659ffe014ac27cf888eba72cf0a98329a659dcd03ea1183ab2b327` ;
+- `MailPerch_GitHub_Repository_v1.5.1.zip` — SHA-256 `ee76b7fa91eca14cd0eca4bffbc7a652e142fa37aebcd16b45cbaf0082dd5609`.
+
+Les artefacts de release seront reconstruits sur le SHA fusionné par le workflow Release ; ces empreintes servent donc de preuve du build de branche, pas de substitution aux checksums de la release finale.
+
+## Thunderbird réel
+
+### Smoke 153
+
+Le smoke réel sur Thunderbird **153.0.1 ESR** a validé le bootstrap, le background MV3, l’injection unique du panneau et du bouton Quick Filter, l’ouverture du Dashboard, le cleanup après désinstallation et la réinstallation propre.
+
+Les essais sur 128/140 ont montré que le panneau peut s’injecter après activation, mais que le pont MV3 Experiment → background utilisé pour ouvrir le Dashboard n’y est pas fiable. Plusieurs variantes ont été testées, y compris le modèle persistant `ExtensionAPIPersistent`/`EventEmitter`. La release ne revendique donc plus ces versions : le manifeste 1.5.1 déclare Thunderbird `153.0`–`153.*`.
+
+### Banc fonctionnel et charge 50 → 2000
+
+La première tentative finale a révélé un défaut du **harness**, pas du produit : `.pin-mails-count` représente volontairement le total de la portée, tandis que la recherche filtre uniquement les cartes rendues. Le banc attendait à tort que ce compteur devienne le nombre de résultats filtrés.
+
+Le harness a été corrigé sans assouplir la validation : il contrôle désormais séparément le total de portée, l’appartenance des cartes au résultat recherché, le nombre exact de cartes après pagination et l’absence de doublons.
+
+Preuve runtime finale : GitHub Actions run **31426885156**, Thunderbird **153.0.1 ESR**, geckodriver **0.37.1**.
+
+- cas ciblé 50 épingles : **succès** ;
+- 50 : **succès** ;
+- 100 : **succès** ;
+- 500 : **succès** ;
+- 1000 : **succès** ;
+- 2000 : **succès** ;
+- timeouts : **0** ;
+- exceptions JavaScript : **0** ;
+- pagination complète vérifiée à 500, 1000 et 2000 ;
+- positions début/milieu/fin présentes ;
+- à 50 épingles, l’éditeur notes/checklist/priorité/échéance/statut/suivi est exercé sans reproduire l’exception `checklistItems` ;
+- cycle cleanup/réinstallation propre validé sur le scénario fonctionnel.
+
+Artefact de preuve : ID **9077569989**, SHA-256 de l’archive d’artefact `55f0593c8c385f5336f664fd6f6fcf1c0a14d3bc992621b8fba0f732a0c82dac`.
+
+## Limites restantes
+
+Ces limites ne sont pas des tests rouges de la release :
+
+- les onglets internes Dashboard/Options ne sont pas exposés comme handles de contenu Marionette ; leur ouverture réelle est observée, leurs scénarios DOM restent couverts séparément ;
+- les commandes synthétiques non fiables de `menuitem` XUL ne remplacent pas toutes les interactions manuelles ;
+- les fournisseurs mail et calendriers réseau réels ne sont pas simulés par le banc hors ligne ;
+- la persistance automatisée multi-processus avec une extension installée temporairement reste limitée par le cycle de vie du profil de test ;
+- les captures clair/sombre restent une preuve visuelle à inspecter humainement pour contraste/clipping ;
+- aucune compatibilité n’est revendiquée en dehors de Thunderbird `153.0`–`153.*`.
+
+Aucun de ces points n’annule les validations automatiques et runtime réellement obtenues pour le périmètre déclaré de 1.5.1.
