@@ -1,0 +1,77 @@
+name: Temporary final Thunderbird 153 bench
+
+on:
+  push:
+    branches: [audit/full-release-hardening-2026-08-10]
+    paths: [.github/workflows/audit-final-bench.yml]
+
+permissions:
+  contents: read
+
+env:
+  THUNDERBIRD_VERSION: "153.0.1esr"
+  GECKODRIVER_VERSION: "0.37.1"
+
+jobs:
+  bench:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          package-manager-cache: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+      - name: QA and build
+        run: npm run check && npm run build
+      - name: Download verified Thunderbird
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p .runtime/thunderbird
+          base="https://archive.mozilla.org/pub/thunderbird/releases/${THUNDERBIRD_VERSION}"
+          archive="linux-x86_64/en-US/thunderbird-${THUNDERBIRD_VERSION}.tar.xz"
+          curl -fsSL "$base/SHA256SUMS" -o .runtime/thunderbird/SHA256SUMS
+          expected="$(awk -v path="$archive" '$2 == path {print $1; exit}' .runtime/thunderbird/SHA256SUMS)"
+          test -n "$expected"
+          curl -fsSL "$base/$archive" -o .runtime/thunderbird/thunderbird.tar.xz
+          printf '%s  %s\n' "$expected" .runtime/thunderbird/thunderbird.tar.xz | sha256sum -c --strict
+          tar -xJf .runtime/thunderbird/thunderbird.tar.xz -C .runtime/thunderbird
+      - name: Download verified geckodriver
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p .runtime/geckodriver
+          curl -fsSL -H 'Accept: application/vnd.github+json' -H "Authorization: Bearer ${GH_TOKEN}" -H 'X-GitHub-Api-Version: 2022-11-28' "https://api.github.com/repos/mozilla/geckodriver/releases/tags/v${GECKODRIVER_VERSION}" -o .runtime/geckodriver/release.json
+          python - <<'PY' > .runtime/geckodriver/asset.env
+          import json, os, pathlib
+          v=os.environ['GECKODRIVER_VERSION']; n=f'geckodriver-v{v}-linux64.tar.gz'; d=json.loads(pathlib.Path('.runtime/geckodriver/release.json').read_text()); a=next(x for x in d['assets'] if x['name']==n); dg=str(a.get('digest') or '')
+          if not dg.startswith('sha256:'): raise SystemExit('missing digest')
+          print(f"URL={a['browser_download_url']}"); print(f"SHA={dg[7:]}")
+          PY
+          source .runtime/geckodriver/asset.env
+          curl -fsSL "$URL" -o .runtime/geckodriver/geckodriver.tar.gz
+          printf '%s  %s\n' "$SHA" .runtime/geckodriver/geckodriver.tar.gz | sha256sum -c --strict
+          tar -xzf .runtime/geckodriver/geckodriver.tar.gz -C .runtime/geckodriver
+      - name: Run functional and scale bench
+        shell: bash
+        run: |
+          set -euo pipefail
+          xpi="$(find dist -maxdepth 1 -type f -name 'MailPerch_v*.xpi' -print -quit)"
+          test -n "$xpi"
+          mkdir -p artifacts/final-bench
+          xvfb-run -a python tests/thunderbird/functional_bench.py --binary .runtime/thunderbird/thunderbird/thunderbird --xpi "$xpi" --geckodriver .runtime/geckodriver/geckodriver --output-dir artifacts/final-bench --volumes 50,100,500,1000,2000 --timeout 180
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: always()
+        with:
+          name: final-bench-153
+          path: artifacts/final-bench/
+          if-no-files-found: error
+          retention-days: 1
