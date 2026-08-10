@@ -7,6 +7,8 @@
 - correction de la matrice de diagnostic comptes afin de refléter `isSecure` et le support hors-ligne réellement exposés par Thunderbird ;
 - migration Settings réalignée sur le schéma courant 8, tandis que le schéma données reste 7 et SQLite physique 5 ;
 - smoke Thunderbird rattaché à `main` plutôt qu’à une ancienne branche de consolidation supprimée ;
+- plage de compatibilité déclarée resserrée à Thunderbird `153.0`–`153.*` après essais réels : 128/140 injectent le panneau mais ne garantissent pas l’ouverture fiable du Dashboard via le pont MV3 Experiment → background ;
+- banc Thunderbird corrigé pour distinguer le total de portée des résultats filtrés, puis matrice réelle 50/100/500/1000/2000 revalidée sans timeout ni exception JavaScript sur Thunderbird 153.0.1 ESR ;
 - documentation, rapports sécurité/validation, notes reviewers et métadonnées de publication resynchronisés ;
 - aucune nouvelle permission WebExtension, dépendance runtime, connexion réseau, télémétrie, publicité ou code distant.
 
