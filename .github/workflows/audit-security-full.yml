@@ -56,10 +56,12 @@ jobs:
           install -m 0755 trivy "$RUNNER_TEMP/trivy"
       - name: Trivy vulnerabilities and configuration
         shell: bash
-        run: "$RUNNER_TEMP/trivy" filesystem --scanners vuln,misconfig --severity MEDIUM,HIGH,CRITICAL --format json --output .security-reports/trivy.json --exit-code 1 .
+        run: |
+          "$RUNNER_TEMP/trivy" filesystem --scanners vuln,misconfig --severity MEDIUM,HIGH,CRITICAL --format json --output .security-reports/trivy.json --exit-code 1 .
       - name: CycloneDX SBOM
         shell: bash
-        run: "$RUNNER_TEMP/trivy" filesystem --scanners vuln --format cyclonedx --output .security-reports/sbom.cdx.json .
+        run: |
+          "$RUNNER_TEMP/trivy" filesystem --scanners vuln --format cyclonedx --output .security-reports/sbom.cdx.json .
       - name: Install and run verified zizmor 1.26.1 offline
         shell: bash
         run: |
