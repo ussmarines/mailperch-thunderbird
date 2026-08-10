@@ -31,7 +31,7 @@ MailPerch ajoute à Thunderbird un panneau d’épingles distinct au-dessus de l
 ## Compatibilité
 
 - **MailPerch :** `1.5.1` ;
-- **Thunderbird :** `128.0` à `153.*` ;
+- **Thunderbird :** `153.0` à `153.*` ;
 - **Format :** MailExtension Manifest V3 ;
 - **Langues :** français et anglais ;
 - **Systèmes ciblés :** Windows, Linux et macOS.

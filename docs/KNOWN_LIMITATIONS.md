@@ -8,7 +8,7 @@ Une matrice exhaustive de tous les systèmes, versions Thunderbird, fournisseurs
 
 ## Compatibilité Thunderbird
 
-- Le manifeste déclare Thunderbird `128.0` à `153.*`, mais tous les points internes ne sont pas automatiquement prouvés sur chaque version de cette plage.
+- Le manifeste 1.5.1 déclare Thunderbird `153.0` à `153.*`. Les essais exhaustifs du 10 août 2026 ont volontairement retiré 128/140 de la plage supportée : le panneau s’y injecte après activation, mais l’ouverture du Dashboard via le pont MV3 Experiment → background n’y est pas fiable. La release ne revendique donc pas ces versions.
 - MailPerch utilise une API Experiment privilégiée. Une évolution interne de Thunderbird peut donc exiger une adaptation même si les APIs WebExtension publiques restent compatibles.
 - Les opérations Messages, Tags et Agenda sont désormais isolées dans des adaptateurs dédiés ; cela réduit la surface d’adaptation future mais ne supprime pas la nécessité des tests réels.
 - Le DOM `about:3pane`, la structure `ThreadCard`, les fenêtres et menus natifs restent orchestrés dans `implementation.js`. Cette zone est volontairement extraite progressivement plutôt que réécrite en bloc.

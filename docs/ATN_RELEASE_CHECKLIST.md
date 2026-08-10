@@ -14,10 +14,9 @@ Les cases cochées sont vérifiées automatiquement ou directement dans les sour
 ## Compatibilité
 
 - [x] Manifest V3 et clés de manifeste contrôlés ;
-- [x] plage déclarée Thunderbird 128.0 à 153.* ;
+- [x] plage déclarée Thunderbird 153.0 à 153.* ;
 - [x] thèmes clair/sombre et réduction de mouvement couverts par les gardes automatisées ;
 - [ ] test réel Thunderbird 153.* frais sur l’arbre 1.5.1 ;
-- [ ] test réel Thunderbird 128 ESR ;
 - [ ] test réel Thunderbird 140 ESR ou branche ESR actuellement ciblée ;
 - [ ] matrice Windows, Linux et macOS complète ;
 - [ ] IMAP, POP, Gmail, dossiers locaux, boîte unifiée et dossiers virtuels réels.

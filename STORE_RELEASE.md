@@ -9,7 +9,7 @@
 - **Subtitle EN:** Pin, organize and follow up on your emails in Thunderbird.
 - **Auteur public :** ussmarines
 - **Identifiant permanent :** `pin-mails@MailPerch.local`
-- **Compatibilité déclarée :** Thunderbird 128.0 à 153.*
+- **Compatibilité déclarée :** Thunderbird 153.0 à 153.*
 - **Licence :** MailPerch Source-Available License 1.1
 
 L’identifiant propre au produit doit conserver exactement la même casse et ne plus être modifié après signature ou publication.

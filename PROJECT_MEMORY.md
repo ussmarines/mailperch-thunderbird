@@ -100,7 +100,7 @@ Diagnostiquer l’environnement avec `npx skills ls -g` et le hook avec `node C:
 ## État 1.5.1
 
 - schéma SQLite : 5 ; schéma paramètres : 8 ; schéma données : 7 ;
-- compatibilité déclarée : Thunderbird 128.0 à 153.* ;
+- compatibilité déclarée : Thunderbird 153.0 à 153.* ;
 - permission WebExtension : `menus` uniquement ;
 - notes : 4 000 caractères maximum ; checklist : 50 éléments de 240 caractères maximum ; vues enregistrées : 30 maximum ;
 - recherche globale limitée aux métadonnées déjà accessibles, jamais au corps ou aux pièces jointes ;

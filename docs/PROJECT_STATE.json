@@ -9,7 +9,7 @@
   },
   "extensionId": "pin-mails@MailPerch.local",
   "thunderbird": {
-    "min": "128.0",
+    "min": "153.0",
     "max": "153.*"
   },
   "schemas": {

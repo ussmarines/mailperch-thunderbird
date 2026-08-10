@@ -6,7 +6,7 @@
 - **Nom court :** MailPerch
 - **Version :** 1.5.1
 - **ID :** `pin-mails@MailPerch.local`
-- **Compatibilité :** Thunderbird 128.0 à 153.*
+- **Compatibilité :** Thunderbird 153.0 à 153.*
 - **Langues :** français et anglais
 
 ## Fonction principale

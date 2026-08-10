@@ -31,7 +31,7 @@ MailPerch adds a dedicated pinned-message panel above Thunderbird’s native mes
 ## Compatibility
 
 - **MailPerch:** `1.5.1`;
-- **Thunderbird:** `128.0` through `153.*`;
+- **Thunderbird:** `153.0` through `153.*`;
 - **Format:** Manifest V3 MailExtension;
 - **Languages:** French and English;
 - **Target systems:** Windows, Linux, and macOS.
