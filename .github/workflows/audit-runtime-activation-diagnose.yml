@@ -31,7 +31,7 @@ jobs:
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: "3.12"
-      - name: Instrument smoke to activate the mail tab after install
+      - name: Instrument activation and dashboard diagnostics
         shell: bash
         run: |
           python - <<'PY'
@@ -41,8 +41,12 @@ jobs:
           old = '''            addon_id = client.install_addon(xpi)\n            result["checks"].append("temporary-addon-install")\n'''
           new = '''            addon_id = client.install_addon(xpi)\n            result["checks"].append("temporary-addon-install")\n            activation = client.execute_async(r"""\nconst done = arguments[arguments.length - 1];\n(async () => {\n  const win = Services.wm.getMostRecentWindow("mail:3pane");\n  const tabmail = win?.document.getElementById("tabmail");\n  const mailTab = Array.from(tabmail?.tabInfo || []).find(tab => tab?.mode?.name === "mail3PaneTab");\n  if (!mailTab) throw new Error("mail3PaneTab unavailable");\n  tabmail.switchToTab(mailTab);\n  await new Promise(resolve => win.setTimeout(resolve, 250));\n  done({activated: tabmail.currentTabInfo === mailTab});\n})().catch(error => done({__mailperchSmokeError: String(error?.message || error)}));\n""")\n            result["activationAfterInstall"] = activation\n'''
           if old not in s:
-              raise SystemExit('instrumentation anchor missing')
-          p.write_text(s.replace(old, new, 1))
+              raise SystemExit('activation instrumentation anchor missing')
+          s = s.replace(old, new, 1)
+          s = s.replace('''  let dashboardTabs = [];\n  while (Date.now() < deadline) {\n    const tabs = Array.from(win?.document.getElementById("tabmail")?.tabInfo || []);\n    dashboardTabs = tabs.filter(tab => String(\n''','''  let dashboardTabs = [];\n  let observedTabs = [];\n  while (Date.now() < deadline) {\n    const tabs = Array.from(win?.document.getElementById("tabmail")?.tabInfo || []);\n    observedTabs = tabs.map(tab => ({\n      modeName: String(tab?.mode?.name || ""),\n      browserHref: String(tab?.browser?.currentURI?.spec || ""),\n      chromeHref: String(tab?.chromeBrowser?.currentURI?.spec || ""),\n      current: win?.document.getElementById("tabmail")?.currentTabInfo === tab,\n    }));\n    dashboardTabs = tabs.filter(tab => String(\n''', 1)
+          s = s.replace('''  done({opened: dashboardTabs.length === 1, dashboardTabCount: dashboardTabs.length});\n''','''  done({opened: dashboardTabs.length === 1, dashboardTabCount: dashboardTabs.length, observedTabs});\n''', 1)
+          s = s.replace('''            dashboard_open = client.execute_async(OPEN_DASHBOARD_SCRIPT)\n            if not dashboard_open.get("opened"):\n''','''            dashboard_open = client.execute_async(OPEN_DASHBOARD_SCRIPT)\n            result["dashboardOpenAttempt"] = dashboard_open\n            if not dashboard_open.get("opened"):\n''', 1)
+          p.write_text(s)
           PY
       - name: Build XPI
         run: npm run check && npm run build
