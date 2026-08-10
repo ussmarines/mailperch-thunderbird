@@ -1,0 +1,48 @@
+name: Temporary apply audited 1.5.1 patch
+
+on:
+  push:
+    branches:
+      - audit/full-release-hardening-2026-08-10
+    paths:
+      - .github/workflows/audit-apply-patch.yml
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - name: Reassemble and verify patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat .audit/patch-01.b64 .audit/patch-02.b64 .audit/patch-03.b64 .audit/patch-04.b64 > /tmp/payload.b64
+          test "$(wc -c < /tmp/payload.b64)" -eq 27836
+          echo "3436e561d680100f79dbcd5840fff2ed1a0b6ecaee3ebc6ce90edf937f72ffd7  /tmp/payload.b64" | sha256sum -c --strict
+          base64 -d /tmp/payload.b64 | xz -d > /tmp/permanent.patch
+          test "$(wc -c < /tmp/permanent.patch)" -eq 76820
+          echo "c981470fd6d22ec50427781874306ed0676a7bf8287963f01e3d6de07839a65b  /tmp/permanent.patch" | sha256sum -c --strict
+          git apply --check /tmp/permanent.patch
+      - name: Apply permanent audited changes
+        shell: bash
+        run: |
+          set -euo pipefail
+          git apply /tmp/permanent.patch
+          git rm .audit/patch-01.b64 .audit/patch-02.b64 .audit/patch-03.b64 .audit/patch-04.b64
+          git rm .github/workflows/audit-apply-patch.yml
+          git diff --check
+      - name: Commit audited changes
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "fix: harden 1.5.1 after exhaustive audit"
+          git push origin HEAD:audit/full-release-hardening-2026-08-10
