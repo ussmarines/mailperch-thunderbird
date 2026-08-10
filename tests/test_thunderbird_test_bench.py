@@ -107,7 +107,9 @@ assert '"args": ["-profile", str(profile)]' in BENCH
 assert "session-1-selected-account-runtime" in BENCH
 assert "const searchExpected = Number(scopeExpected.searchCount || 0);" in BENCH
 assert 'while (cards().length < searchExpected && list.querySelector(".pin-mails-load-more"))' in BENCH
-assert "selected-account search count ${searchable}" in BENCH
+assert "selected-account search rendered ${searchable}" in BENCH
+assert "selected-account total preserved during search" in BENCH
+assert "selected-account search count ${searchable}" not in BENCH
 assert '("none", ())' in BENCH
 assert "selected-account-runtime-after-process-restart" in BENCH
 assert "A-and-C-settings-and-render-persistence" in BENCH
