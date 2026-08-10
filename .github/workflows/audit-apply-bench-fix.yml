@@ -31,9 +31,9 @@ jobs:
 
           guard = Path('tests/test_thunderbird_test_bench.py')
           g = guard.read_text()
-          anchor = '''    assert 'selected-account search ${searchable}' in BENCH\n'''
-          extra = '''    assert "const searchExpected = Number(scopeExpected.searchCount || 0);" in BENCH\n    assert 'while (cards().length < searchExpected && list.querySelector(".pin-mails-load-more"))' in BENCH\n    assert "selected-account search count ${searchable}" in BENCH\n'''
+          extra = '''assert "const searchExpected = Number(scopeExpected.searchCount || 0);" in BENCH\nassert 'while (cards().length < searchExpected && list.querySelector(".pin-mails-load-more"))' in BENCH\nassert "selected-account search count ${searchable}" in BENCH\n'''
           if extra not in g:
+              anchor = '''assert "session-1-selected-account-runtime" in BENCH\n'''
               if anchor not in g:
                   raise SystemExit('test guard anchor missing')
               g = g.replace(anchor, anchor + extra, 1)
