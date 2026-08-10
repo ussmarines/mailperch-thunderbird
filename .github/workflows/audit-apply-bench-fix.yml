@@ -1,0 +1,52 @@
+name: Temporary apply functional bench pagination fix
+
+on:
+  push:
+    branches: [audit/full-release-hardening-2026-08-10]
+    paths: [.github/workflows/audit-apply-bench-fix.yml]
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - name: Apply exact harness fix
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          bench = Path('tests/thunderbird/functional_bench.py')
+          text = bench.read_text()
+          old = '''search.value = `Scope-${searchable}`;\nsearch.dispatchEvent(new pane.Event("input", {bubbles:true}));\nawait waitFor(() => cards().length === Number(scopeExpected.searchCount || 0), `selected-account search ${searchable}`);'''
+          new = '''search.value = `Scope-${searchable}`;\nsearch.dispatchEvent(new pane.Event("input", {bubbles:true}));\nconst searchExpected = Number(scopeExpected.searchCount || 0);\nawait waitFor(() => count() === searchExpected, `selected-account search count ${searchable}`);\nwhile (cards().length < searchExpected && list.querySelector(".pin-mails-load-more")) {\n  list.querySelector(".pin-mails-load-more").click();\n  await sleep(30);\n}\nawait waitFor(() => cards().length === searchExpected, `selected-account search ${searchable}`, 60000);'''
+          if old not in text:
+              raise SystemExit('functional bench anchor missing')
+          bench.write_text(text.replace(old, new, 1))
+
+          guard = Path('tests/test_thunderbird_test_bench.py')
+          g = guard.read_text()
+          anchor = '''    assert 'selected-account search ${searchable}' in BENCH\n'''
+          extra = '''    assert "const searchExpected = Number(scopeExpected.searchCount || 0);" in BENCH\n    assert 'while (cards().length < searchExpected && list.querySelector(".pin-mails-load-more"))' in BENCH\n    assert "selected-account search count ${searchable}" in BENCH\n'''
+          if extra not in g:
+              if anchor not in g:
+                  raise SystemExit('test guard anchor missing')
+              g = g.replace(anchor, anchor + extra, 1)
+              guard.write_text(g)
+          PY
+          python tests/test_thunderbird_test_bench.py
+          python -m py_compile tests/thunderbird/functional_bench.py
+          git diff --check
+      - name: Commit and push harness fix
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add tests/thunderbird/functional_bench.py tests/test_thunderbird_test_bench.py
+          git commit -m "test: load paginated search results in Thunderbird bench"
+          git push origin HEAD:audit/full-release-hardening-2026-08-10
