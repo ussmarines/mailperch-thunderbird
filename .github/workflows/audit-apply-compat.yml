@@ -1,0 +1,61 @@
+name: Temporary apply verified 153 compatibility boundary
+
+on:
+  push:
+    branches: [audit/full-release-hardening-2026-08-10]
+    paths: [.github/workflows/audit-apply-compat.yml]
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - name: Apply compatibility and documentation corrections
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          import json
+          repls={
+            'extension/manifest.json':[('"strict_min_version": "128.0"','"strict_min_version": "153.0"')],
+            'release/manifest-store-template.json':[('"strict_min_version": "128.0"','"strict_min_version": "153.0"')],
+            'tests/static_checks.py':[('== "128.0"','== "153.0"')],
+            'README.md':[('`128.0` à `153.*`','`153.0` à `153.*`')],
+            'README.en.md':[('`128.0` through `153.*`','`153.0` through `153.*`')],
+            'STORE_RELEASE.md':[('Thunderbird 128.0 à 153.*','Thunderbird 153.0 à 153.*')],
+            'release/ATN_REVIEW_NOTES_TEMPLATE.md':[('Thunderbird 128.0 à 153.*','Thunderbird 153.0 à 153.*')],
+            'PROJECT_MEMORY.md':[('Thunderbird 128.0 à 153.*','Thunderbird 153.0 à 153.*')],
+            'docs/ATN_RELEASE_CHECKLIST.md':[('Thunderbird 128.0 à 153.*','Thunderbird 153.0 à 153.*'),('- [ ] test réel Thunderbird 128 ESR ;\n',''),('- [ ] test réel Thunderbird 140 ESR ;\n','')],
+            'docs/KNOWN_LIMITATIONS.md':[('Le manifeste déclare Thunderbird `128.0` à `153.*`, mais tous les points internes ne sont pas automatiquement prouvés sur chaque version de cette plage.','Le manifeste 1.5.1 déclare Thunderbird `153.0` à `153.*`. Les essais exhaustifs du 10 août 2026 ont volontairement retiré 128/140 de la plage supportée : le panneau s’y injecte après activation, mais l’ouverture du Dashboard via le pont MV3 Experiment → background n’y est pas fiable. La release ne revendique donc pas ces versions.')],
+            'docs/THUNDERBIRD_COMPATIBILITY.md':[('Le manifeste déclare Thunderbird `128.0` à `153.*`. Cette déclaration n’est pas une preuve que chaque point interne est identique sur toute la plage. La couche de compatibilité rend les dépendances plus faciles à adapter, mais la matrice réelle reste à établir avec le banc runtime et les tests manuels.','Depuis 1.5.1, le manifeste déclare Thunderbird `153.0` à `153.*`. Cette plage a été resserrée après des essais réels : 128/140 injectent le panneau après activation mais ne garantissent pas l’ouverture du Dashboard via le pont MV3 Experiment → background. La release 1.5.1 ne revendique donc que la branche 153 réellement validée.'),('Cela valide le bootstrap et le cycle de vie de la frontière sur cette version, pas les fournisseurs réels ni toute la plage 128–153.','Cela valide le bootstrap et le cycle de vie de la frontière sur la branche 153 déclarée, pas les fournisseurs réels.')],
+            'docs/THUNDERBIRD_TEST_BENCH.md':[('- la totalité de la plage Thunderbird 128–153 ;','- toute extension future de la plage Thunderbird au-delà de 153 ;')],
+            '.agents/skills/mailperch-project-knowledge/chapters/architecture.md':[('Thunderbird 128.0 through 153.*','Thunderbird 153.0 through 153.*')],
+            '.agents/skills/mailperch-project-knowledge/chapters/testing-and-release.md':[('The current repository declares Thunderbird 128.0-153.*.','The current repository declares Thunderbird 153.0-153.*.')],
+          }
+          for path,pairs in repls.items():
+            p=Path(path); s=p.read_text(); before=s
+            for a,b in pairs:
+              if a not in s and b not in s:
+                raise SystemExit(f'missing expected compatibility text in {path}: {a}')
+              s=s.replace(a,b)
+            if s != before: p.write_text(s)
+          p=Path('docs/PROJECT_STATE.json'); d=json.loads(p.read_text()); d.setdefault('thunderbird',{})['min']='153.0'; p.write_text(json.dumps(d,ensure_ascii=False,indent=2)+'\n')
+          PY
+          npm run check
+          git diff --check
+      - name: Commit compatibility correction
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add extension/manifest.json release/manifest-store-template.json tests/static_checks.py README.md README.en.md STORE_RELEASE.md release/ATN_REVIEW_NOTES_TEMPLATE.md PROJECT_MEMORY.md docs/ATN_RELEASE_CHECKLIST.md docs/KNOWN_LIMITATIONS.md docs/THUNDERBIRD_COMPATIBILITY.md docs/THUNDERBIRD_TEST_BENCH.md docs/PROJECT_STATE.json .agents/skills/mailperch-project-knowledge/chapters/architecture.md .agents/skills/mailperch-project-knowledge/chapters/testing-and-release.md
+          git commit -m "fix: align declared Thunderbird compatibility with runtime proof"
+          git push origin HEAD:audit/full-release-hardening-2026-08-10
