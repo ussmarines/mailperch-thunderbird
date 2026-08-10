@@ -212,4 +212,6 @@ Le 9 août 2026, la PR #24 a repassé avec succès le workflow sur le binaire of
 
 La passe fonctionnelle Windows du 9 août 2026 sur Thunderbird 153.0.2/geckodriver 0.37.1 a validé les volumes 50/100/500/1000/2000 et la sélection multi-comptes dans la première session. La sauvegarde Options → panneau et les icônes clair/sombre ont ensuite été confirmées manuellement. La persistance automatisée entre processus avec une extension temporaire reste la limite du harness décrite plus haut.
 
+Le 10 août 2026, le banc a été relancé sous Linux avec Thunderbird 153.0.1 ESR et geckodriver 0.37.1 après correction d’une fausse assertion du harness : `.pin-mails-count` représente le total de la portée et ne doit pas devenir le nombre de cartes filtrées par la recherche. Le test contrôle désormais séparément la stabilité de ce total, l’appartenance de chaque carte au résultat recherché et le nombre exact de cartes après pagination. Le cas ciblé 50 épingles puis la matrice complète 50/100/500/1000/2000 ont tous réussi, avec zéro timeout et zéro exception JavaScript. À 500, 1000 et 2000, la pagination complète a rendu respectivement 500, 1000 et 2000 cartes sans doublon et les contrôles début/milieu/fin sont positifs.
+
 Ces preuves ne remplacent pas les tests utilisateur avec fournisseurs réels ni la matrice multi-versions/multi-OS.

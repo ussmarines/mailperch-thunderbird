@@ -91,6 +91,8 @@ Le workflow `.github/workflows/thunderbird-smoke.yml` télécharge un binaire Th
 
 Le banc fonctionnel `.github/workflows/thunderbird-functional-bench.yml` / `tests/thunderbird/functional_bench.py` couvre les volumes 50, 100, 500, 1 000 et 2 000 épingles. La passe réelle Windows sur Thunderbird 153.0.2/geckodriver 0.37.1 a validé les cinq volumes, la pagination sans doublon et les scénarios multi-comptes. La persistance entre deux processus avec une extension temporaire reste limitée par le harness : le stockage SQLite peut être supprimé lors de la fermeture de l’extension temporaire ; ce point n’est pas présenté comme un défaut produit.
 
+Le 10 août 2026, une nouvelle passe Linux sur Thunderbird 153.0.1 ESR/geckodriver 0.37.1 a revalidé la matrice 50/100/500/1000/2000 après correction d’une assertion erronée du harness : le compteur du panneau reste volontairement le total de la portée pendant une recherche, tandis que seules les cartes rendues sont filtrées. Les cinq volumes passent sans timeout ni exception JavaScript ; à 500/1000/2000, toute la pagination est chargée sans doublon et les positions début/milieu/fin sont présentes.
+
 ### Outillage UI Codex
 
 La source de vérité visuelle demeure `docs/UI_SPEC.md`; aucun `PRODUCT.md` ou `DESIGN.md` concurrent n’est nécessaire. Le skill global Impeccable pilote l’UX/UI produit et ses finitions, UI UX Pro Max sert à la recherche de système, et `design-taste-frontend` à une direction artistique explicitement demandée. Le hook projet est silencieux sur les résultats propres, limité aux fichiers UI modifiés et réserve sa passe profonde à la fin de session.
