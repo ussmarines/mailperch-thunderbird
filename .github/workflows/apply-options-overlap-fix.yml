@@ -1,0 +1,75 @@
+name: Apply options overlap fix
+
+on:
+  push:
+    branches:
+      - fix/options-automation-text-overlap
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: fix/options-automation-text-overlap
+          persist-credentials: false
+
+      - name: Apply direct CSS fix and validate
+        shell: bash
+        run: |
+          set -euo pipefail
+          expected_blob='eb93430bbf38ad443be9a3e00ec0a7b52e7e22fd'
+          actual_blob="$(git hash-object extension/options/options.css)"
+          test "$actual_blob" = "$expected_blob"
+
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('extension/options/options.css')
+          text = path.read_text(encoding='utf-8')
+          needle = '.setting-toggle.featured { border-color: var(--border); background: var(--surface-2); }\n'
+          insert = '''.setting-toggle.featured { border-color: var(--border); background: var(--surface-2); }
+.setting-toggle.featured > span {
+  display: grid;
+  gap: .2rem;
+}
+.setting-toggle.featured > span > small {
+  color: var(--muted);
+  font-weight: 400;
+  line-height: 1.4;
+}
+'''
+          if text.count(needle) != 1:
+              raise SystemExit('Expected featured toggle anchor exactly once')
+          text = text.replace(needle, insert, 1)
+          path.write_text(text, encoding='utf-8')
+          PY
+
+          python tests/test_recommended_options_ux.py
+          python tests/test_options_controls.py
+          python tests/test_dynamic_options_localization.py
+          node tests/options_browser_test_contract.mjs
+          git diff --check
+
+          git diff -- extension/options/options.css
+          git rm -- .github/workflows/apply-options-overlap-fix.yml
+
+      - name: Commit final source change
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- extension/options/options.css
+          git diff --cached --check
+          git diff --cached --name-only
+          test "$(git diff --cached --name-only | sort | tr '\n' ' ')" = 'extension/options/options.css '
+          git commit -m 'fix(ui): prevent automation rule text overlap'
+          gh auth setup-git
+          git push origin HEAD:fix/options-automation-text-overlap
