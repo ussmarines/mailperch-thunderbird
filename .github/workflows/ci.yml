@@ -1,47 +1,88 @@
-name: Apply MailPerch import hardening
+name: QA
 
 on:
   push:
-    branches:
-      - fix/import-safe-mode-hardening
+  pull_request:
+  workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
-  group: mailperch-import-hardening-${{ github.ref }}
-  cancel-in-progress: false
+  group: mailperch-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  apply:
+  security-guard:
+    name: Security guard regression
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
-      - name: Checkout patch branch
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
           persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+      - name: Unit tests
+        run: python -m unittest discover -s tests/security -p "test_*.py"
+      - name: Full-history identity guard
+        run: python .github/scripts/security_guard.py --history
 
-      - name: Apply validated security patch and publish final branch state
-        env:
-          GH_TOKEN: ${{ github.token }}
-        shell: bash
+  verify:
+    name: Full verification (Linux)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          package-manager-cache: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+      - name: Complete CI
+        run: npm run ci
+      - name: Verify XPI layout
         run: |
-          set -euo pipefail
-          gh auth setup-git
-          git fetch --no-tags origin main:refs/remotes/origin/main
-          git apply --check .mailperch-import-hardening.patch
-          git apply .mailperch-import-hardening.patch
-          git checkout origin/main -- .github/workflows/ci.yml
-          git rm -- .mailperch-import-hardening.patch
-          python tests/test_security_hardening_3_2_4.py
-          python tests/test_data_integrity_guards.py
-          python tests/static_checks.py
-          git diff --check
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -- extension/api/pinInbox/implementation.js tests/test_security_hardening_3_2_4.py .github/workflows/ci.yml
-          git diff --cached --check
-          git commit -m "fix(security): harden imported automation settings"
-          git push origin HEAD:${GITHUB_REF}
+          python - <<'PY'
+          import json, pathlib, zipfile
+          xpi = next(pathlib.Path('dist').glob('*.xpi'))
+          with zipfile.ZipFile(xpi) as z:
+              assert 'manifest.json' in z.namelist()
+              json.loads(z.read('manifest.json'))
+              assert all(not name.startswith('extension/') for name in z.namelist())
+          print('XPI layout: OK')
+          PY
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: development-build
+          if-no-files-found: error
+          retention-days: 14
+          include-hidden-files: false
+          path: |
+            dist/*.xpi
+            dist/*Repository*.zip
+            dist/SHA256SUMS.txt
+
+  windows-smoke:
+    name: Source and model checks (Windows)
+    runs-on: windows-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          package-manager-cache: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+      - name: Cross-platform checks
+        run: npm run check && npm test
