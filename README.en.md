@@ -69,8 +69,8 @@ MailPerch is local-first: no network calls, telemetry, advertising, or remotely 
 
 - [Privacy policy](PRIVACY.md)
 - [Security policy](SECURITY.md)
-- [1.5.2 security audit](SECURITY_AUDIT_1.5.2.md)
-- [1.5.2 validation report](VALIDATION_REPORT_1.5.2.md)
+- [1.5.3 security audit](SECURITY_AUDIT_1.5.3.md)
+- [1.5.3 validation report](VALIDATION_REPORT_1.5.3.md)
 - [Known limitations](docs/KNOWN_LIMITATIONS.md)
 
 ## Documentation and support
