@@ -69,8 +69,8 @@ MailPerch fonctionne localement : aucun appel réseau, aucune télémétrie, auc
 
 - [Politique de confidentialité](PRIVACY.md)
 - [Politique de sécurité](SECURITY.md)
-- [Audit de sécurité 1.5.2](SECURITY_AUDIT_1.5.2.md)
-- [Rapport de validation 1.5.2](VALIDATION_REPORT_1.5.2.md)
+- [Audit de sécurité 1.5.3](SECURITY_AUDIT_1.5.3.md)
+- [Rapport de validation 1.5.3](VALIDATION_REPORT_1.5.3.md)
 - [Limites connues](docs/KNOWN_LIMITATIONS.md)
 
 ## Documentation et support
