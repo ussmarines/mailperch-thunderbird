@@ -25,14 +25,13 @@ jobs:
           set -euo pipefail
           python - <<'PY'
           from pathlib import Path
-
           def replace_once(path_str, old, new):
               path = Path(path_str)
               text = path.read_text(encoding='utf-8')
-              if text.count(old) != 1:
-                  raise SystemExit(f'{path_str}: expected exactly one occurrence of {old!r}, got {text.count(old)}')
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f'{path_str}: expected exactly one occurrence of {old!r}, got {count}')
               path.write_text(text.replace(old, new, 1), encoding='utf-8')
-
           replace_once('package.json', '"version": "1.5.2"', '"version": "1.5.3"')
           replace_once('extension/manifest.json', '"version": "1.5.2"', '"version": "1.5.3"')
           replace_once('README.md', '**MailPerch :** `1.5.2`', '**MailPerch :** `1.5.3`')
@@ -43,35 +42,36 @@ jobs:
           replace_once('PROJECT_MEMORY.md', 'Version publique : **1.5.2**', 'Version publique : **1.5.3**')
           replace_once('docs/PROJECT_STATE.json', '"extensionVersion": "1.5.2"', '"extensionVersion": "1.5.3"')
           replace_once('docs/BUG_TRACKER.md', 'Version publique : **1.5.2**', 'Version publique : **1.5.3**')
-
           changelog = Path('CHANGELOG.md')
           text = changelog.read_text(encoding='utf-8')
           anchor = '# Journal des modifications\n\n'
           if text.count(anchor) != 1:
               raise SystemExit('CHANGELOG.md: unexpected title anchor')
-          section = '''## 1.5.3 — durcissement des imports et correction de lisibilité des automatisations
-
-- neutralisation, lors d’un import de sauvegarde, des réglages automatiques ou destructifs `autoRemoveCompleted`, rétention des terminés, désépinglage après suppression et sauvegardes automatiques ;
-- `safeMode` bloque désormais la rétention des éléments terminés avant toute mutation locale des données importées ;
-- conservation explicite des épingles lors d’un déplacement importé et maintien des confirmations destructives existantes ;
-- correction du chevauchement entre le titre « Activer les règles » et son texte d’aide dans Options → Automatisation → Règles et actions automatiques ;
-- les cartes de réglage mises en avant empilent désormais titre et aide avec une hiérarchie typographique lisible sur les largeurs testées de 360 à 1 200 px ;
-- aucune nouvelle permission WebExtension, dépendance runtime, connexion réseau, télémétrie, publicité, migration de schéma ou extension d’API Thunderbird.
-
-'''
+          section = '\n'.join([
+              '## 1.5.3 — durcissement des imports et correction de lisibilité des automatisations',
+              '',
+              '- neutralisation, lors d’un import de sauvegarde, des réglages automatiques ou destructifs `autoRemoveCompleted`, rétention des terminés, désépinglage après suppression et sauvegardes automatiques ;',
+              '- `safeMode` bloque désormais la rétention des éléments terminés avant toute mutation locale des données importées ;',
+              '- conservation explicite des épingles lors d’un déplacement importé et maintien des confirmations destructives existantes ;',
+              '- correction du chevauchement entre le titre « Activer les règles » et son texte d’aide dans Options → Automatisation → Règles et actions automatiques ;',
+              '- les cartes de réglage mises en avant empilent désormais titre et aide avec une hiérarchie typographique lisible sur les largeurs testées de 360 à 1 200 px ;',
+              '- aucune nouvelle permission WebExtension, dépendance runtime, connexion réseau, télémétrie, publicité, migration de schéma ou extension d’API Thunderbird.',
+              '',
+              '',
+          ])
           changelog.write_text(text.replace(anchor, anchor + section, 1), encoding='utf-8')
-
           tracker = Path('docs/BUG_TRACKER.md')
           text = tracker.read_text(encoding='utf-8')
           anchor = '| MP-2026-029 | 1.5.0 |'
           if text.count(anchor) != 1:
               raise SystemExit('docs/BUG_TRACKER.md: corrected-bug anchor missing')
-          rows = '''| MP-2026-031 | antérieur à 1.5.3 | Une sauvegarde importée peut restaurer des comportements automatiques ou destructifs avant validation explicite du profil. | Le durcissement des imports ne neutralisait pas plusieurs réglages automatiques et `_checkReminders()` appliquait la rétention avant de vérifier `safeMode`. | `extension/api/pinInbox/implementation.js`, `tests/test_security_hardening_3_2_4.py` | `tests/test_security_hardening_3_2_4.py`, `tests/test_data_integrity_guards.py`, QA et smoke Thunderbird de la PR #29 | CORRIGÉ | 1.5.3 | Les réglages importés concernés sont neutralisés et `safeMode` court-circuite désormais avant toute rétention ; QA et smoke Thunderbird verts sur le HEAD validé. |
-| MP-2026-030 | 1.5.0 | Dans Options → Automatisation → Règles et actions automatiques, le titre « Activer les règles » chevauche son texte d’aide. | Le `<strong>` et le `<small>` d’une carte `.setting-toggle.featured` restaient dans le même flux inline. | `extension/options/options.css` | tests Options ciblés, contrôle responsive 360–1200 px, QA et smoke Thunderbird de la PR #30 | CORRIGÉ | 1.5.3 | Le conteneur texte des cartes `featured` est maintenant une grille verticale ; aucun chevauchement mesuré sur les largeurs vérifiées et les checks PR sont verts. |
-'''
+          rows = '\n'.join([
+              '| MP-2026-031 | antérieur à 1.5.3 | Une sauvegarde importée peut restaurer des comportements automatiques ou destructifs avant validation explicite du profil. | Le durcissement des imports ne neutralisait pas plusieurs réglages automatiques et `_checkReminders()` appliquait la rétention avant de vérifier `safeMode`. | `extension/api/pinInbox/implementation.js`, `tests/test_security_hardening_3_2_4.py` | `tests/test_security_hardening_3_2_4.py`, `tests/test_data_integrity_guards.py`, QA et smoke Thunderbird de la PR #29 | CORRIGÉ | 1.5.3 | Les réglages importés concernés sont neutralisés et `safeMode` court-circuite désormais avant toute rétention ; QA et smoke Thunderbird verts sur le HEAD validé. |',
+              '| MP-2026-030 | 1.5.0 | Dans Options → Automatisation → Règles et actions automatiques, le titre « Activer les règles » chevauche son texte d’aide. | Le `<strong>` et le `<small>` d’une carte `.setting-toggle.featured` restaient dans le même flux inline. | `extension/options/options.css` | tests Options ciblés, contrôle responsive 360–1200 px, QA et smoke Thunderbird de la PR #30 | CORRIGÉ | 1.5.3 | Le conteneur texte des cartes `featured` est maintenant une grille verticale ; aucun chevauchement mesuré sur les largeurs vérifiées et les checks PR sont verts. |',
+              '',
+          ])
           tracker.write_text(text.replace(anchor, rows + anchor, 1), encoding='utf-8')
           PY
-
           python scripts/check_versions.py
           python scripts/check_project_memory.py
           python scripts/check_bug_tracker.py
