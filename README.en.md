@@ -46,12 +46,12 @@ Internal Messages, Tags, and Calendar access is isolated behind a dedicated comp
 
 ### From a GitHub release
 
-1. Download `MailPerch_v1.5.3.xpi` from release `v1.5.2`.
+1. Download `MailPerch_v1.5.3.xpi` from release `v1.5.3`.
 2. In Thunderbird, open **Add-ons and Themes**.
 3. From the gear menu, select **Install Add-on From File**.
 4. Select the XPI and restart Thunderbird if required.
 
-> Internal `3.2.x` development builds used a version number higher than the current public versions. To test `1.5.2` after a development build, use a clean test profile or uninstall the previous build after exporting your MailPerch data.
+> Internal `3.2.x` development builds used a version number higher than the current public versions. To test `1.5.3` after a development build, use a clean test profile or uninstall the previous build after exporting your MailPerch data.
 
 ### From source
 
