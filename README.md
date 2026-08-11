@@ -46,12 +46,12 @@ Les accès internes Messages, Tags et Agenda sont isolés derrière une couche d
 
 ### Depuis une release GitHub
 
-1. Téléchargez `MailPerch_v1.5.3.xpi` depuis la release `v1.5.2`.
+1. Téléchargez `MailPerch_v1.5.3.xpi` depuis la release `v1.5.3`.
 2. Dans Thunderbird, ouvrez **Extensions et thèmes**.
 3. Dans le menu de l’engrenage, choisissez **Installer un module depuis un fichier**.
 4. Sélectionnez le fichier XPI, puis redémarrez Thunderbird si nécessaire.
 
-> Les anciennes builds internes `3.2.x` utilisaient un numéro supérieur aux versions publiques actuelles. Pour tester `1.5.2` après une build de développement, utilisez un profil de test propre ou désinstallez d’abord l’ancienne build après avoir exporté vos données MailPerch.
+> Les anciennes builds internes `3.2.x` utilisaient un numéro supérieur aux versions publiques actuelles. Pour tester `1.5.3` après une build de développement, utilisez un profil de test propre ou désinstallez d’abord l’ancienne build après avoir exporté vos données MailPerch.
 
 ### Depuis les sources
 
