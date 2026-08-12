@@ -1,12 +1,13 @@
 {
   "schema_version": 1,
   "purpose": "Cache machine-readable des dernières preuves de validation réutilisables. Ce fichier ne remplace ni AGENTS.md ni les règles de sécurité et ne doit jamais servir à inventer un test non exécuté.",
-  "recorded_at": "2026-08-11T00:58:00+02:00",
+  "recorded_at": "2026-08-12T15:46:00+02:00",
   "baseline": {
     "repository": "ussmarines/mailperch-thunderbird",
-    "branch": "release/1.5.2-runtime-coverage",
-    "commit_sha": "9dc1ed4037362f42841f7fc4ed8fbd3dd75c9c80",
-    "tree_sha": "9b424390a9f906ca79d70e8c22690bd5c0607103"
+    "branch": "audit/pre-store-release-1.5.3",
+    "commit_sha": "afff4b6338f19c45e6c949d1d4628fcd58373ebc",
+    "tree_sha": "6d0bd13b15477eafddf94997c42c253b4301e517",
+    "working_tree_patch_id": "8555f6cfb94e0b95a323f967d9f0730f734ec3c4"
   },
   "policy": {
     "mode": "latest-valid-evidence-only",
@@ -31,35 +32,91 @@
   },
   "repository_checks": [
     {
-      "id": "github-linux-release-ci-1.5.2",
+      "id": "local-windows-release-ci-1.5.3",
       "result": "success",
-      "validated_commit": "9dc1ed4037362f42841f7fc4ed8fbd3dd75c9c80",
-      "validated_tree": "9b424390a9f906ca79d70e8c22690bd5c0607103",
-      "validated_at": "2026-08-11T00:53:42+02:00",
-      "command": "npm run ci",
+      "validated_commit": "afff4b6338f19c45e6c949d1d4628fcd58373ebc",
+      "validated_tree": "6d0bd13b15477eafddf94997c42c253b4301e517",
+      "working_tree_patch_id": "8555f6cfb94e0b95a323f967d9f0730f734ec3c4",
+      "validated_at": "2026-08-12T15:45:55+02:00",
+      "command": "npm run ci; after evidence-only documentation updates: npm run check && py tests/test_cross_platform_ci.py && py tests/test_thunderbird_test_bench.py",
       "environment": {
-        "os": "Ubuntu 24.04.4",
-        "node": "24.18.0",
-        "npm": "11.16.0",
-        "python": "3.12.13"
+        "os": "Microsoft Windows 11 Professionnel 10.0.26200 64 bits",
+        "node": "24.19.0",
+        "npm": "11.17.0",
+        "python": "3.14.6"
       },
       "invalidates_on": [
         "**"
       ],
       "evidence": {
-        "kind": "github-actions",
-        "run_id": 31440019097,
-        "summary": "Full check, complete test suite, reproducible build and 1.5.2 packaging passed before the real Thunderbird smoke and functional matrices."
+        "kind": "local-release-gate",
+        "summary": "Repository checks, 242-file deep audit, secrets guard, full static/model/SQLite suite, reproducible-build test and final XPI/source build passed. The two prior attempts exposed and then drove fixes for ignored Graphify files being scanned as repository sources. After evidence-only documentation updates, repository checks and the Thunderbird bench contract passed again; product/build inputs were unchanged.",
+        "xpi_sha256": "7c21918c97f758e432be39d1f99a6acc0789d45bd835b0ac9afb82bf1b22bd13"
       }
+    },
+    {
+      "id": "local-standard-security-full-1.5.3",
+      "result": "success",
+      "validated_commit": "afff4b6338f19c45e6c949d1d4628fcd58373ebc",
+      "validated_tree": "6d0bd13b15477eafddf94997c42c253b4301e517",
+      "working_tree_patch_id": "f978426944b3b43f620de61192c720ad90074e9c",
+      "validated_at": "2026-08-12T15:44:00+02:00",
+      "command": ".\\tools\\security\\security-scan.ps1 -Profile Full",
+      "environment": {
+        "os": "Microsoft Windows 11 Professionnel 10.0.26200 64 bits",
+        "profile": "full",
+        "safe_output": true
+      },
+      "invalidates_on": [
+        "extension/**",
+        "scripts/**",
+        "tests/**",
+        ".github/**",
+        "package.json",
+        "SECURITY*.md",
+        "docs/SECURITY_BOUNDARY.md",
+        "docs/THREAT_MODEL.md"
+      ],
+      "evidence": {
+        "kind": "local-standard-security-scan",
+        "summary": "Identity guard, Gitleaks, Opengrep, Trivy, SBOM and zizmor all passed; failed_checks=0 and matched_values_included=false. Codex Security was not used."
+      }
+    },
+    {
+      "id": "github-release-1.5.3",
+      "result": "success",
+      "validated_commit": "897c1611ebc3671e0eb66af82dd3d2a19224017d",
+      "validated_tree": "d42154b061e09d3db4fba6fcddb08f6a363ff8e9",
+      "validated_at": "2026-08-11T16:31:46+02:00",
+      "command": "GitHub Actions Release workflow_dispatch",
+      "environment": {
+        "platform": "GitHub Actions",
+        "run_id": 31501979783
+      },
+      "invalidates_on": [
+        "extension/**",
+        "scripts/build.py",
+        "package.json",
+        ".github/workflows/release.yml"
+      ],
+      "evidence": {
+        "kind": "github-actions-release",
+        "run_id": 31501979783,
+        "summary": "Verify/build and GitHub publication succeeded for v1.5.3.",
+        "published_xpi_sha256": "edd2ea3c9e01f081aa1c9d075d712273510fca11f35141dfc0676b803890689e",
+        "published_source_zip_sha256": "e6920309dff3f943ef6565e3e8f2d8f622c4c5dfb3308d3072609cef289b58c6",
+        "sha256sums_asset_sha256": "754604ab7d9102435e66aad4fc213624eea7f11a016ef01e5327e02ee18843d0"
+      },
+      "notes": "The current Windows XPI and published Linux XPI contain identical entry names and decompressed bytes. Their container hashes differ because ZIP creator/compression metadata is platform-dependent; MP-2026-018 remains open."
     }
   ],
   "targeted_checks": [
     {
       "id": "options-playwright-dom-flow",
       "result": "success",
-      "validated_commit": "11aeff3eeff9234f46624c95489c5474cf003ff3",
-      "validated_tree": "1fd7aac42ea85981b2ce0ba45a5cc66a322e71b2",
-      "validated_at": "2026-08-09T19:14:00+02:00",
+      "validated_commit": "afff4b6338f19c45e6c949d1d4628fcd58373ebc",
+      "validated_tree": "6d0bd13b15477eafddf94997c42c253b4301e517",
+      "validated_at": "2026-08-12T15:25:19+02:00",
       "command": "playwright-cli -s=mailperch-options run-code --filename tests/options_dom_flow.playwright.js",
       "environment": {
         "os": "Microsoft Windows 11 Professionnel 10.0.26200 64 bits",
@@ -75,99 +132,130 @@
       ],
       "evidence": {
         "kind": "local-browser-flow",
-        "summary": "106 controls exercised through real form interactions; save, cancel, retry and bounded startup failures passed; no horizontal overflow at 720 px; final screenshot visually inspected"
-      },
-      "notes": "The repository test temporarily used an isolated local server on port 8766 because port 8765 belonged to an unrelated user process. Only the base URL constant changed during execution and was restored immediately afterward."
-    },
-    {
-      "result": "success",
-      "validated_commit": "9dc1ed4037362f42841f7fc4ed8fbd3dd75c9c80",
-      "validated_tree": "9b424390a9f906ca79d70e8c22690bd5c0607103",
-      "validated_at": "2026-08-11T00:53:42+02:00",
-      "environment": {
-        "os": "Ubuntu 24.04.4",
-        "thunderbird": "153.0.1esr",
-        "geckodriver": "0.37.1",
-        "python": "3.12.13",
-        "node": "24.18.0"
-      },
-      "id": "thunderbird-153-runtime-coverage-1.5.2",
-      "command": "GitHub Actions real Thunderbird smoke + functional --volumes 50",
-      "invalidates_on": [
-        "extension/**",
-        "tests/thunderbird/real_smoke.py",
-        "tests/thunderbird/functional_bench.py",
-        "tests/test_thunderbird_test_bench.py",
-        "tests/test_productivity_1_2_features.py",
-        "tests/test_ui_regressions.py",
-        "scripts/build.py",
-        "package.json"
-      ],
-      "evidence": {
-        "kind": "github-actions-real-thunderbird",
-        "run_id": 31440019097,
-        "artifact_id": 9082531880,
-        "artifact_sha256": "d007ed1287bc563021566ab1231c343b8cc37d0aff1458fc6ccd7773f4cb97e0",
-        "summary": "Real 1.5.2 XPI smoke passed; 50-pin run exercised Dashboard/Options DOM, native XUL editor actions, cleanup/reinstall, light/dark clipping/alignment and baseline text contrast with zero MailPerch JavaScript exceptions."
+        "summary": "106 controls exercised; save/cancel/retry and bounded startup failures passed; FR/EN and selected accounts passed; no horizontal overflow at 720 px; screenshot visually inspected."
       }
     },
     {
+      "id": "dashboard-playwright-dom-flow",
       "result": "success",
-      "validated_commit": "9dc1ed4037362f42841f7fc4ed8fbd3dd75c9c80",
-      "validated_tree": "9b424390a9f906ca79d70e8c22690bd5c0607103",
-      "validated_at": "2026-08-11T00:53:42+02:00",
+      "validated_commit": "afff4b6338f19c45e6c949d1d4628fcd58373ebc",
+      "validated_tree": "6d0bd13b15477eafddf94997c42c253b4301e517",
+      "validated_at": "2026-08-12T15:25:33+02:00",
+      "command": "playwright-cli -s=mailperch-dashboard run-code --filename tests/dashboard_dom_flow.playwright.js",
       "environment": {
-        "os": "Ubuntu 24.04.4",
-        "thunderbird": "153.0.1esr",
-        "geckodriver": "0.37.1",
-        "python": "3.12.13",
-        "node": "24.18.0"
+        "os": "Microsoft Windows 11 Professionnel 10.0.26200 64 bits",
+        "browser": "Chromium",
+        "playwright_cli": "0.1.18"
       },
-      "id": "thunderbird-153-scale-bench-1.5.2",
-      "command": "GitHub Actions runtime --volumes 50,100,500,1000,2000",
       "invalidates_on": [
-        "extension/**",
-        "tests/thunderbird/functional_bench.py",
-        "tests/test_thunderbird_test_bench.py",
-        "scripts/build.py",
-        "package.json"
+        "extension/dashboard/**",
+        "extension/styles/tokens.css",
+        "extension/_locales/**",
+        "tests/dashboard_dom_flow.playwright.js"
       ],
       "evidence": {
-        "kind": "github-actions-real-thunderbird",
-        "run_id": 31440019097,
-        "artifact_id": 9082531880,
-        "artifact_sha256": "d007ed1287bc563021566ab1231c343b8cc37d0aff1458fc6ccd7773f4cb97e0",
-        "summary": "50/100/500/1000/2000 pin matrix passed; pagination fully loaded 500/1000/2000 without duplicates and with zero timeouts or MailPerch JavaScript exceptions."
+        "kind": "local-browser-flow",
+        "summary": "Seven views, nine stats, eleven cards and an action flow passed in EN with dark/reduced-motion state; no horizontal overflow at 720 px; screenshot visually inspected."
       }
     },
     {
+      "id": "thread-card-playwright-geometry",
       "result": "success",
-      "validated_commit": "9dc1ed4037362f42841f7fc4ed8fbd3dd75c9c80",
-      "validated_tree": "9b424390a9f906ca79d70e8c22690bd5c0607103",
-      "validated_at": "2026-08-11T00:53:42+02:00",
+      "validated_commit": "afff4b6338f19c45e6c949d1d4628fcd58373ebc",
+      "validated_tree": "6d0bd13b15477eafddf94997c42c253b4301e517",
+      "validated_at": "2026-08-12T15:25:32+02:00",
+      "command": "playwright-cli -s=mailperch-threadcard run-code --filename tests/thread_card_geometry.playwright.js",
       "environment": {
-        "os": "Ubuntu 24.04.4",
-        "thunderbird": "153.0.1esr",
-        "geckodriver": "0.37.1",
-        "python": "3.12.13",
-        "node": "24.18.0"
+        "os": "Microsoft Windows 11 Professionnel 10.0.26200 64 bits",
+        "browser": "Chromium",
+        "playwright_cli": "0.1.18"
       },
-      "id": "thunderbird-153-persistence-1.5.2",
-      "command": "GitHub Actions runtime --scope-validation-only",
+      "invalidates_on": [
+        "extension/styles/pin.css",
+        "extension/styles/tokens.css",
+        "tests/fixtures/thread_card_153.html",
+        "tests/thread_card_geometry.playwright.js"
+      ],
+      "evidence": {
+        "kind": "local-browser-geometry",
+        "summary": "Normal, compact, touch, 125-percent zoom and native-star scenarios passed with aligned controls, non-overlapping hit targets and visually inspected capture."
+      }
+    },
+    {
+      "id": "thunderbird-153-runtime-smoke-1.5.3",
+      "result": "success",
+      "validated_commit": "afff4b6338f19c45e6c949d1d4628fcd58373ebc",
+      "validated_tree": "6d0bd13b15477eafddf94997c42c253b4301e517",
+      "validated_at": "2026-08-12T15:34:30+02:00",
+      "command": "py tests/thunderbird/real_smoke.py --binary <Thunderbird 153.0.2> --xpi dist/MailPerch_v1.5.3.xpi --geckodriver <0.37.1> --timeout 60",
+      "environment": {
+        "os": "Microsoft Windows 11 Professionnel 10.0.26200 64 bits",
+        "thunderbird": "153.0.2",
+        "geckodriver": "0.37.1",
+        "python": "3.14.6"
+      },
       "invalidates_on": [
         "extension/**",
         "tests/thunderbird/real_smoke.py",
+        "scripts/build.py",
+        "package.json"
+      ],
+      "evidence": {
+        "kind": "local-real-thunderbird",
+        "artifact_sha256": "8f6bdb6fa5913a9e4d4d42d52715c9a6903524c934d785553b117ebdce18656941",
+        "summary": "Real XPI install, Startup Complete, unique panel/toggle injection, single Dashboard opening, cleanup after uninstall and clean reinstall all passed in an offline disposable profile."
+      }
+    },
+    {
+      "id": "thunderbird-153-scale-bench-1.5.3",
+      "result": "success",
+      "validated_commit": "afff4b6338f19c45e6c949d1d4628fcd58373ebc",
+      "validated_tree": "6d0bd13b15477eafddf94997c42c253b4301e517",
+      "validated_at": "2026-08-12T15:35:32+02:00",
+      "command": "py tests/thunderbird/functional_bench.py --volumes 50,100,500,1000,2000 --timeout 180",
+      "environment": {
+        "os": "Microsoft Windows 11 Professionnel 10.0.26200 64 bits",
+        "thunderbird": "153.0.2",
+        "geckodriver": "0.37.1",
+        "python": "3.14.6"
+      },
+      "invalidates_on": [
+        "extension/**",
         "tests/thunderbird/functional_bench.py",
         "tests/test_thunderbird_test_bench.py",
         "scripts/build.py",
         "package.json"
       ],
       "evidence": {
-        "kind": "github-actions-real-thunderbird",
-        "run_id": 31440019097,
-        "artifact_id": 9082531880,
-        "artifact_sha256": "d007ed1287bc563021566ab1231c343b8cc37d0aff1458fc6ccd7773f4cb97e0",
-        "summary": "none/A-only/B-only/A+C/A+B+C all passed across two distinct Thunderbird processes on the same exact disposable profile with permanent add-on persistence, SQLite/settings preservation and natural MV3 wake; A+C restored 34 pins with B absent."
+        "kind": "local-real-thunderbird",
+        "artifact_sha256": "34922ba6679ba41cf36a044bd9c955720081ff31366aba31a00fcd6fa72148ad",
+        "summary": "50/100/500/1000/2000 all passed in 65.082 seconds; pagination rendered all 500/1000/2000 items; zero timeouts and zero MailPerch JavaScript exceptions. Dashboard/Options runtime, native card editor, light/dark geometry and baseline contrast passed at volume 50."
+      }
+    },
+    {
+      "id": "thunderbird-153-persistence-1.5.3",
+      "result": "success",
+      "validated_commit": "afff4b6338f19c45e6c949d1d4628fcd58373ebc",
+      "validated_tree": "6d0bd13b15477eafddf94997c42c253b4301e517",
+      "validated_at": "2026-08-12T15:36:10+02:00",
+      "command": "py tests/thunderbird/functional_bench.py --scope-validation-only --timeout 180",
+      "environment": {
+        "os": "Microsoft Windows 11 Professionnel 10.0.26200 64 bits",
+        "thunderbird": "153.0.2",
+        "geckodriver": "0.37.1",
+        "python": "3.14.6"
+      },
+      "invalidates_on": [
+        "extension/**",
+        "tests/thunderbird/functional_bench.py",
+        "tests/test_thunderbird_test_bench.py",
+        "scripts/build.py",
+        "package.json"
+      ],
+      "evidence": {
+        "kind": "local-real-thunderbird",
+        "artifact_sha256": "d27aa7759bb213e75d78f7e37ff6f6b7dc59dea735dc464b9b913c96653d7d03",
+        "summary": "none/A-only/B-only/A+C/A+B+C passed across two distinct Thunderbird processes on each exact disposable profile. SQLite/settings, permanent add-on load and natural MV3 wake persisted; observed counts were 0/18/16/34/50 with no duplicates, timeouts or JavaScript exceptions."
       }
     }
   ]

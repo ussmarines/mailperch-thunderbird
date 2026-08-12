@@ -5,7 +5,7 @@
   "extensionVersion": "1.5.3",
   "baseGitHub": {
     "branch": "main",
-    "commit": "e5fe966a4beff4755bd727ad4d79fb81148e3b36"
+    "commit": "afff4b6338f19c45e6c949d1d4628fcd58373ebc"
   },
   "extensionId": "pin-mails@MailPerch.local",
   "thunderbird": {
@@ -109,7 +109,7 @@
     "uiDependencyPolicy": "native HTML plus local Fluent 2 CSS tokens; no npm runtime dependency, bundler, CDN or remote asset",
     "runtimeTestSupplyChain": "test-only Thunderbird/geckodriver downloads are checksum-verified and are not runtime dependencies of the extension"
   },
-  "developmentBranch": "release/1.5.2-runtime-coverage",
+  "developmentBranch": "audit/pre-store-release-1.5.3",
   "testing": {
     "contract": [
       "tests/test_thunderbird_compatibility_boundary.py",
@@ -119,7 +119,7 @@
     ],
     "runtimeWorkflow": ".github/workflows/thunderbird-smoke.yml",
     "runtimeScript": "tests/thunderbird/real_smoke.py",
-    "browserStatus": "1.5.2 executes Dashboard and Options DOM scenarios inside real Thunderbird content tabs through the Marionette BrowsingContext actor; Chromium synthetic-browser evidence remains supplementary.",
-    "runtimeStatus": "1.5.2 validates native XUL card editing, light/dark geometry and baseline text contrast, permanent-extension persistence across two Thunderbird processes, and the real 50/100/500/1000/2000 pin matrix on Thunderbird 153.0.1 ESR."
+    "browserStatus": "1.5.3 has current Chromium DOM-flow evidence for Dashboard, Options and thread-card geometry; real Thunderbird content-tab evidence remains authoritative for privileged integration.",
+    "runtimeStatus": "1.5.3 passed a fresh Windows Thunderbird 153.0.2 smoke, the real 50/100/500/1000/2000 matrix, and permanent-extension selected-account persistence across two distinct processes during the pre-store audit."
   }
 }

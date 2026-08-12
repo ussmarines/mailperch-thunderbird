@@ -1,8 +1,8 @@
-# Plan de test manuel MailPerch — 1.5.1
+# Plan de test manuel MailPerch — 1.5.3
 
 Utiliser de préférence un profil Thunderbird jetable avec des messages synthétiques pour les scénarios destructifs ou de migration. Pour une validation utilisateur finale, un profil réel peut être utilisé après sauvegarde, en évitant toute opération destructive non nécessaire.
 
-Le présent plan sert à compléter les validations automatisées de la release 1.5.1. Les preuves historiques restent utiles uniquement pour les surfaces inchangées ; toute zone runtime modifiée en 1.5.1 doit disposer d’une preuve fraîche avant publication.
+Le présent plan complète les validations automatisées de la release 1.5.3. Les preuves historiques restent utiles uniquement pour les surfaces inchangées ; toute zone runtime modifiée doit disposer d’une preuve fraîche avant publication.
 
 ## Priorité A — intégration Thunderbird consolidée
 

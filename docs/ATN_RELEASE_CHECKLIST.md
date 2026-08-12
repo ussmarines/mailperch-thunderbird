@@ -1,4 +1,4 @@
-# Checklist de publication Add-ons for Thunderbird — 1.5.2
+# Checklist de publication Add-ons for Thunderbird — 1.5.3
 
 Les cases cochées sont vérifiées automatiquement ou directement dans les sources. Les cases non cochées nécessitent une action humaine, un fournisseur externe ou l’accès au portail ATN.
 
@@ -6,7 +6,7 @@ Les cases cochées sont vérifiées automatiquement ou directement dans les sour
 
 - [x] nom, sous-titres FR/EN, auteur et icônes synchronisés ;
 - [x] identifiant permanent défini ;
-- [x] version 1.5.2 synchronisée dans le manifeste, le package, la documentation et les livrables ;
+- [x] version 1.5.3 synchronisée dans le manifeste, le package, la documentation et les livrables ;
 - [x] licence et mentions de marque explicites ;
 - [ ] recherche juridique finale de disponibilité de la marque ;
 - [ ] support et politique de confidentialité vérifiés sur le portail avant soumission.
@@ -16,8 +16,8 @@ Les cases cochées sont vérifiées automatiquement ou directement dans les sour
 - [x] Manifest V3 et clés de manifeste contrôlés ;
 - [x] plage déclarée Thunderbird 153.0 à 153.* ;
 - [x] thèmes clair/sombre : clipping, overflow, alignement et contraste texte de base automatisés ;
-- [x] test réel Thunderbird 153.0.1 ESR frais sur l’arbre 1.5.2 ;
-- [x] matrice fonctionnelle/charge 50/100/500/1000/2000 sur Thunderbird 153.0.1 ESR ;
+- [x] tests réels Thunderbird 153 frais sur l’arbre produit 1.5.3 ;
+- [x] matrice fonctionnelle/charge 50/100/500/1000/2000 sur Thunderbird 153.0.1 ESR et 153.0.2 ;
 - [ ] matrice Windows/Linux/macOS Thunderbird réelle complète ;
 - [ ] Gmail/Microsoft/IMAP et calendriers réseau réels.
 
@@ -33,12 +33,12 @@ Les cases cochées sont vérifiées automatiquement ou directement dans les sour
 ## Confidentialité et sécurité
 
 - [x] données locales, permissions minimales (`menus`), CSP sans réseau et scans standards contrôlés ;
-- [x] aucune permission, dépendance runtime, télémétrie ou code distant ajouté en 1.5.2 ;
-- [x] audit sécurité exhaustif 1.5.1 réutilisé pour les frontières inchangées ; delta 1.5.2 documenté séparément ;
+- [x] aucune permission, dépendance runtime, télémétrie ou code distant ajouté en 1.5.3 ;
+- [x] audit sécurité exhaustif 1.5.1 réutilisé pour les frontières inchangées ; delta 1.5.3 et scan standard frais documentés séparément ;
 - [ ] validation avec fournisseurs mail/calendrier externes réels ;
 - [ ] validation visuelle humaine à zoom 200 %, contraste OS élevé et lecteurs d’écran.
 
-## Validation 1.5.2 spécifique
+## Validation 1.5.3 spécifique
 
 - [x] Dashboard et Options exercés dans les vrais onglets Thunderbird ;
 - [x] éditeur de carte exercé via commande XUL native ;
@@ -49,8 +49,8 @@ Les cases cochées sont vérifiées automatiquement ou directement dans les sour
 
 ## Livrables
 
-- [x] XPI 1.5.2 et archive source produits par le build de validation ;
+- [x] XPI 1.5.3 et archive source produits par le build de validation ;
 - [x] SHA-256 générés par le build ;
 - [x] CHANGELOG et déclarations de version préparés ;
-- [ ] publication GitHub v1.5.2 ;
+- [x] publication GitHub v1.5.3 ;
 - [ ] soumission et validation par les reviewers ATN.
