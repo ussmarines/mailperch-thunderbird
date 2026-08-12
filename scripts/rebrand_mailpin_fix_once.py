@@ -54,9 +54,9 @@ for old, new in palette_replacements.items():
 ui_polish_path.write_text(ui_polish.rstrip() + "\n", encoding="utf-8", newline="\n")
 
 # GitHub Actions' GITHUB_TOKEN cannot push workflow-file changes without workflows permission.
-# Restore workflow files exactly to branch HEAD; permanent workflow branding is updated later
-# through the GitHub connector. This also restores the temporary workflow deleted by the main script.
-subprocess.check_call(["git", "checkout", "HEAD", "--", ".github/workflows"], cwd=ROOT)
+# Restore workflows and their direct contract exactly to branch HEAD. Permanent workflow branding
+# and its contract are updated together later through the GitHub connector.
+subprocess.check_call(["git", "checkout", "HEAD", "--", ".github/workflows", "tests/test_cross_platform_ci.py"], cwd=ROOT)
 
 Path(__file__).unlink()
 print("MailPin targeted localization, SVG, palette and workflow-boundary adjustments complete")
