@@ -1,0 +1,666 @@
+name: Temporary MailPin rebrand
+
+on:
+  push:
+    branches:
+      - "brand/mailpin-1.6.0"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: mailpin-rebrand-1-6-0
+  cancel-in-progress: false
+
+jobs:
+  rebrand:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          ref: brand/mailpin-1.6.0
+          persist-credentials: true
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          package-manager-cache: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+      - name: Apply MailPin 1.6.0 rebrand
+        shell: bash
+        run: |
+          set -euo pipefail
+          python <<'PY'
+          from __future__ import annotations
+          import json
+          import re
+          import shutil
+          import subprocess
+          from pathlib import Path
+
+          ROOT = Path.cwd()
+          VERSION = "1.6.0"
+          OLD_BRAND = "MailPerch"
+          BRAND = "MailPin"
+          OLD_ID = "pin-mails@MailPerch.local"
+          INTERMEDIATE_ID = "pin-mails@MailPin.local"
+          NEW_ID = "ussmarines.mailpin@addons.thunderbird.net"
+          REPO = "https://github.com/ussmarines/mailperch-thunderbird"
+          TEXT_SUFFIXES = {".md", ".js", ".mjs", ".json", ".css", ".html", ".py", ".yml", ".yaml", ".txt", ".svg"}
+          TEXT_NAMES = {"LICENSE", ".editorconfig", ".gitattributes", ".gitignore", ".gitleaks.toml"}
+
+          def tracked() -> list[Path]:
+              out = subprocess.check_output(["git", "ls-files", "-z"])
+              return [ROOT / item.decode("utf-8") for item in out.split(b"\0") if item]
+
+          def is_historical(path: Path) -> bool:
+              rel = path.relative_to(ROOT).as_posix()
+              name = path.name
+              if rel.startswith("docs/archive/") or rel.startswith("brain/"):
+                  return True
+              if re.match(r"^(?:SECURITY_AUDIT|VALIDATION_REPORT|AUDIT_REPORT)_.*\.md$", name):
+                  return True
+              if "FUNCTIONAL_AUDIT_" in name:
+                  return True
+              return False
+
+          def write_text(path: Path, text: str) -> None:
+              path.parent.mkdir(parents=True, exist_ok=True)
+              path.write_text(text.rstrip() + "\n", encoding="utf-8", newline="\n")
+
+          # 1) Rename active product references while preserving immutable historical reports/Brain.
+          for path in tracked():
+              if not path.is_file() or is_historical(path):
+                  continue
+              if path.suffix.lower() not in TEXT_SUFFIXES and path.name not in TEXT_NAMES:
+                  continue
+              try:
+                  text = path.read_text(encoding="utf-8")
+              except UnicodeDecodeError:
+                  continue
+              updated = text.replace(OLD_BRAND, BRAND)
+              updated = updated.replace(OLD_ID, NEW_ID).replace(INTERMEDIATE_ID, NEW_ID)
+              updated = updated.replace("MailPin — Email Pins & Follow-up", "MailPin — Email Follow-up & Productivity for Thunderbird")
+              updated = updated.replace("Épinglez, organisez et suivez vos e-mails dans Thunderbird.", "Suivi d’e-mails & productivité pour Thunderbird.")
+              updated = updated.replace("Pin, organize and follow up on your emails in Thunderbird.", "Email Follow-up & Productivity for Thunderbird")
+              updated = updated.replace("Keep important mail within reach.", "Stay on top. Follow through. Get results.")
+              updated = updated.replace("Gardez vos messages importants à portée de main.", "Gardez le cap. Assurez le suivi. Avancez.")
+              updated = updated.replace("mailperch-project-knowledge", "mailpin-project-knowledge")
+              updated = updated.replace(".mailperch-source-files.json", ".mailpin-source-files.json")
+              if updated != text:
+                  write_text(path, updated)
+
+          # 2) Rename the current project knowledge skill directory (Brain stays CLI-managed and untouched).
+          old_skill = ROOT / ".agents/skills/mailperch-project-knowledge"
+          new_skill = ROOT / ".agents/skills/mailpin-project-knowledge"
+          if old_skill.exists() and not new_skill.exists():
+              old_skill.rename(new_skill)
+
+          # 3) Canonical package metadata.
+          package_path = ROOT / "package.json"
+          package = json.loads(package_path.read_text(encoding="utf-8"))
+          package["name"] = "mailpin-thunderbird"
+          package["version"] = VERSION
+          package["description"] = "Build, test, and release tooling for MailPin — Email Follow-up & Productivity for Thunderbird."
+          write_text(package_path, json.dumps(package, ensure_ascii=False, indent=2))
+
+          # 4) Canonical manifest and SVG-only scalable brand icon (supported by Thunderbird).
+          manifest_path = ROOT / "extension/manifest.json"
+          manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+          manifest["version"] = VERSION
+          manifest["browser_specific_settings"]["gecko"]["id"] = NEW_ID
+          brand_icon = "icons/mailpin-icon.svg"
+          manifest["icons"] = {str(size): brand_icon for size in (16, 24, 32, 48, 64, 96, 128)}
+          manifest["action"]["default_icon"] = {"16": brand_icon, "32": brand_icon}
+          write_text(manifest_path, json.dumps(manifest, ensure_ascii=False, indent=2))
+
+          # 5) Locales: all legacy product strings already renamed, then set explicit public positioning.
+          def locale(path: Path, lang: str) -> None:
+              data = json.loads(path.read_text(encoding="utf-8"))
+              def setmsg(key: str, value: str) -> None:
+                  if key in data and isinstance(data[key], dict):
+                      data[key]["message"] = value
+              setmsg("extensionName", "MailPin — Email Follow-up & Productivity for Thunderbird")
+              setmsg("extensionShortName", "MailPin")
+              setmsg("brandSubtitle", "Email Follow-up & Productivity for Thunderbird")
+              setmsg("brandSlogan", "Stay on top. Follow through. Get results." if lang == "en" else "Gardez le cap. Assurez le suivi. Avancez.")
+              if lang == "fr":
+                  setmsg("extensionDescription", "Épinglez, organisez et suivez vos e-mails importants dans Thunderbird avec notes, sous-tâches, rappels, vues, Agenda et tableau de bord local.")
+              else:
+                  setmsg("extensionDescription", "Pin, organize, and follow up on important email in Thunderbird with notes, subtasks, reminders, saved views, Calendar integration, and a local dashboard.")
+              write_text(path, json.dumps(data, ensure_ascii=False, indent=2))
+          locale(ROOT / "extension/_locales/fr/messages.json", "fr")
+          locale(ROOT / "extension/_locales/en/messages.json", "en")
+
+          # 6) Professional, deterministic vector identity. No gradients, no remote assets.
+          icon_svg = '''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="MailPin">
+            <style>
+              .ink{fill:none;stroke:#1A1D21;stroke-width:9;stroke-linecap:round;stroke-linejoin:round}
+              .pin{fill:#4F7F75}
+              @media (prefers-color-scheme: dark){.ink{stroke:#F7F5F0}}
+            </style>
+            <path class="ink" d="M16 53v51c0 5 4 8 9 8h78c5 0 9-3 9-8V53L78 79c-8 6-20 6-28 0L16 53Z"/>
+            <path class="ink" d="m18 55 37 30c5 4 13 4 18 0l37-30"/>
+            <path class="pin" fill-rule="evenodd" d="M64 8c-19 0-34 15-34 34 0 25 34 59 34 59s34-34 34-59C98 23 83 8 64 8Zm0 18a16 16 0 1 0 0 32 16 16 0 0 0 0-32Z"/>
+          </svg>'''
+          mono_svg = '''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="MailPin">
+            <style>.mark{fill:none;stroke:#1A1D21;stroke-width:9;stroke-linecap:round;stroke-linejoin:round}@media(prefers-color-scheme:dark){.mark{stroke:#F7F5F0}}</style>
+            <path class="mark" d="M16 53v51c0 5 4 8 9 8h78c5 0 9-3 9-8V53L78 79c-8 6-20 6-28 0L16 53Z"/>
+            <path class="mark" d="m18 55 37 30c5 4 13 4 18 0l37-30"/>
+            <path class="mark" d="M64 10c-18 0-32 14-32 32 0 24 32 57 32 57s32-33 32-57c0-18-14-32-32-32Z"/>
+            <circle class="mark" cx="64" cy="42" r="14"/>
+          </svg>'''
+          write_text(ROOT / "extension/icons/mailpin-icon.svg", icon_svg)
+          write_text(ROOT / "extension/icons/mailpin-icon-mono.svg", mono_svg)
+          for old in list((ROOT / "extension/icons").glob("mailperch-icon*")):
+              if old.is_file():
+                  old.unlink()
+
+          brand_dir = ROOT / "assets/brand"
+          brand_dir.mkdir(parents=True, exist_ok=True)
+          write_text(brand_dir / "mailpin-mark.svg", icon_svg)
+
+          hero_svg = '''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 720" role="img" aria-labelledby="title desc">
+            <title id="title">MailPin — Email Follow-up &amp; Productivity for Thunderbird</title>
+            <desc id="desc">MailPin brand hero with email pin, follow-up card, reminder, checklist and calendar motifs.</desc>
+            <rect width="1600" height="720" fill="#F7F5F0"/>
+            <g transform="translate(90 150)">
+              <g transform="scale(1.45)">
+                <path fill="none" stroke="#1A1D21" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" d="M16 53v51c0 5 4 8 9 8h78c5 0 9-3 9-8V53L78 79c-8 6-20 6-28 0L16 53Z"/>
+                <path fill="none" stroke="#1A1D21" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" d="m18 55 37 30c5 4 13 4 18 0l37-30"/>
+                <path fill="#4F7F75" fill-rule="evenodd" d="M64 8c-19 0-34 15-34 34 0 25 34 59 34 59s34-34 34-59C98 23 83 8 64 8Zm0 18a16 16 0 1 0 0 32 16 16 0 0 0 0-32Z"/>
+              </g>
+              <text x="210" y="95" font-family="Inter,Segoe UI,system-ui,sans-serif" font-size="96" font-weight="650" fill="#1A1D21">MailPin</text>
+              <text x="214" y="151" font-family="Inter,Segoe UI,system-ui,sans-serif" font-size="29" font-weight="500" fill="#3D536B">Email Follow-up &amp; Productivity for Thunderbird</text>
+              <text x="214" y="205" font-family="Inter,Segoe UI,system-ui,sans-serif" font-size="21" fill="#5F696E">Stay on top. Follow through. Get results.</text>
+            </g>
+            <g transform="translate(980 108)" font-family="Inter,Segoe UI,system-ui,sans-serif">
+              <rect x="80" y="38" width="405" height="145" rx="16" fill="#FFFFFF" stroke="#D7D3CA" stroke-width="2"/>
+              <path fill="#4F7F75" d="M128 66c-13 0-23 10-23 23 0 17 23 40 23 40s23-23 23-40c0-13-10-23-23-23Zm0 12a11 11 0 1 0 0 22 11 11 0 0 0 0-22Z"/>
+              <text x="170" y="91" font-size="25" font-weight="650" fill="#1A1D21">Follow up with Alex</text>
+              <text x="170" y="123" font-size="18" fill="#3D536B">Re: Project proposal</text>
+              <text x="170" y="153" font-size="16" fill="#6B7377">Tomorrow · 10:00</text>
+              <rect x="0" y="226" width="325" height="216" rx="16" fill="#FFFFFF" stroke="#D7D3CA" stroke-width="2"/>
+              <rect x="0" y="226" width="58" height="216" rx="16" fill="#4F7F75"/>
+              <path d="M22 275h14m-14 48h14m-14 48h14" stroke="#F7F5F0" stroke-width="4" stroke-linecap="round"/>
+              <text x="84" y="276" font-size="20" fill="#1A1D21">Follow up</text>
+              <text x="84" y="325" font-size="20" fill="#1A1D21">Send recap</text>
+              <text x="84" y="374" font-size="20" fill="#1A1D21">Review proposal</text>
+              <text x="84" y="423" font-size="20" fill="#1A1D21">Schedule call</text>
+              <rect x="352" y="238" width="182" height="66" rx="33" fill="#F7F5F0" stroke="#C79A3A" stroke-width="2"/>
+              <circle cx="387" cy="271" r="11" fill="none" stroke="#C79A3A" stroke-width="3"/>
+              <path d="M387 264v8l6 4" fill="none" stroke="#C79A3A" stroke-width="3" stroke-linecap="round"/>
+              <text x="414" y="280" font-size="19" font-weight="600" fill="#9A6E17">Tomorrow</text>
+              <rect x="355" y="332" width="180" height="174" rx="16" fill="#FFFFFF" stroke="#D7D3CA" stroke-width="2"/>
+              <rect x="355" y="332" width="180" height="40" rx="16" fill="#3D536B"/>
+              <g fill="#D7D3CA">
+                <circle cx="385" cy="399" r="6"/><circle cx="417" cy="399" r="6"/><circle cx="449" cy="399" r="6"/><circle cx="481" cy="399" r="6"/><circle cx="513" cy="399" r="6"/>
+                <circle cx="385" cy="431" r="6"/><circle cx="417" cy="431" r="6"/><circle cx="449" cy="431" r="6"/><circle cx="481" cy="431" r="6"/><circle cx="513" cy="431" r="6"/>
+                <circle cx="385" cy="463" r="6"/><circle cx="417" cy="463" r="6"/><circle cx="449" cy="463" r="6"/><circle cx="481" cy="463" r="6"/><circle cx="513" cy="463" r="6"/>
+              </g>
+              <circle cx="449" cy="431" r="7" fill="#4F7F75"/><circle cx="481" cy="463" r="7" fill="#C79A3A"/>
+              <path d="M325 336h28M485 184v38M325 408h28" fill="none" stroke="#B8B2A7" stroke-width="2" stroke-dasharray="6 7"/>
+            </g>
+          </svg>'''
+          write_text(brand_dir / "mailpin-hero.svg", hero_svg)
+
+          board_svg = '''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1000" role="img" aria-labelledby="title desc">
+            <title id="title">MailPin brand system</title><desc id="desc">MailPin logo, palette, typography and UI motifs.</desc>
+            <rect width="1600" height="1000" fill="#F7F5F0"/>
+            <g font-family="Inter,Segoe UI,system-ui,sans-serif">
+              <text x="72" y="70" font-size="18" font-weight="700" letter-spacing="2" fill="#3D536B">MAILPIN BRAND SYSTEM</text>
+              <line x1="72" y1="92" x2="1528" y2="92" stroke="#D7D3CA"/>
+              <g transform="translate(80 155)">
+                <g transform="scale(1.15)"><path fill="none" stroke="#1A1D21" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" d="M16 53v51c0 5 4 8 9 8h78c5 0 9-3 9-8V53L78 79c-8 6-20 6-28 0L16 53Z"/><path fill="none" stroke="#1A1D21" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" d="m18 55 37 30c5 4 13 4 18 0l37-30"/><path fill="#4F7F75" fill-rule="evenodd" d="M64 8c-19 0-34 15-34 34 0 25 34 59 34 59s34-34 34-59C98 23 83 8 64 8Zm0 18a16 16 0 1 0 0 32 16 16 0 0 0 0-32Z"/></g>
+                <text x="185" y="90" font-size="92" font-weight="650" fill="#1A1D21">MailPin</text>
+                <text x="189" y="138" font-size="28" fill="#3D536B">Email Follow-up &amp; Productivity for Thunderbird</text>
+              </g>
+              <line x1="72" y1="350" x2="1528" y2="350" stroke="#D7D3CA"/>
+              <text x="72" y="405" font-size="18" font-weight="700" letter-spacing="2" fill="#3D536B">PALETTE</text>
+              <g transform="translate(72 445)">
+                <g><rect width="240" height="118" rx="8" fill="#1A1D21"/><text y="150" font-size="18" fill="#1A1D21">Ink Charcoal · #1A1D21</text></g>
+                <g transform="translate(278)"><rect width="240" height="118" rx="8" fill="#3D536B"/><text y="150" font-size="18" fill="#1A1D21">Slate Blue · #3D536B</text></g>
+                <g transform="translate(556)"><rect width="240" height="118" rx="8" fill="#4F7F75"/><text y="150" font-size="18" fill="#1A1D21">Sage Teal · #4F7F75</text></g>
+                <g transform="translate(834)"><rect width="240" height="118" rx="8" fill="#C79A3A"/><text y="150" font-size="18" fill="#1A1D21">Brass · #C79A3A</text></g>
+                <g transform="translate(1112)"><rect width="240" height="118" rx="8" fill="#FFFFFF" stroke="#D7D3CA"/><text y="150" font-size="18" fill="#1A1D21">Warm White · #F7F5F0</text></g>
+              </g>
+              <line x1="72" y1="660" x2="1528" y2="660" stroke="#D7D3CA"/>
+              <text x="72" y="715" font-size="18" font-weight="700" letter-spacing="2" fill="#3D536B">TYPE &amp; PRODUCT MOTIFS</text>
+              <text x="72" y="815" font-size="76" font-weight="650" fill="#1A1D21">Aa</text>
+              <text x="205" y="780" font-size="34" font-weight="650" fill="#1A1D21">System UI / Segoe UI Variable</text>
+              <text x="205" y="820" font-size="22" fill="#5F696E">Readable. Calm. Intentional. Local-first.</text>
+              <g transform="translate(860 735)">
+                <rect width="610" height="150" rx="16" fill="#FFFFFF" stroke="#D7D3CA" stroke-width="2"/>
+                <circle cx="48" cy="48" r="20" fill="#4F7F75"/><text x="88" y="55" font-size="24" font-weight="650" fill="#1A1D21">Follow up</text>
+                <rect x="88" y="78" width="150" height="44" rx="22" fill="#F7F5F0" stroke="#C79A3A"/><text x="120" y="107" font-size="17" font-weight="600" fill="#9A6E17">Tomorrow</text>
+                <rect x="280" y="31" width="285" height="88" rx="12" fill="#EEF3F1"/><text x="305" y="66" font-size="19" fill="#1A1D21">Notes · Tasks · Calendar</text><text x="305" y="95" font-size="17" fill="#3D536B">Focused follow-up workflow</text>
+              </g>
+              <text x="72" y="950" font-size="21" fill="#3D536B">No gradients · no remote assets · restrained color · strong contrast · Thunderbird-native geometry</text>
+            </g>
+          </svg>'''
+          write_text(brand_dir / "mailpin-brand-board.svg", board_svg)
+
+          # 7) Rebrand design tokens using an accessible, restrained no-gradient palette.
+          tokens_path = ROOT / "extension/styles/tokens.css"
+          tokens = tokens_path.read_text(encoding="utf-8")
+          replacements = {
+              "#0f6cbd": "#4f7f75", "#115ea3": "#426f67", "#0e4775": "#355b55",
+              "#ebf3fc": "#e8f0ee", "#dcecff": "#d9e8e4", "#77b7e8": "#86aaa2",
+              "#0e8f8f": "#3d536b", "#0b7777": "#31465a", "#087f7f": "#3d536b", "#e3f7f5": "#e9edf1",
+              "#f7f9fa": "#f4f1ea", "#f0f4f6": "#eeeae2", "#e7edef": "#e5e0d7", "#f4f7fb": "#f7f5f0",
+              "#17232b": "#1a1d21", "#4e626d": "#566066", "#657983": "#6f777b", "#d5e0e4": "#d7d3ca", "#e2e9eb": "#e7e2d9", "#71848d": "#737b7e", "#07577d": "#3d536b",
+              "#479ef5": "#9bc3bb", "#62abf5": "#b0d0c9", "#0c3156": "#203a36", "#0f3d69": "#294741", "#2886de": "#5e8f86",
+              "#123b3a": "#202c36", "#5bd6d1": "#aebdcc"
+          }
+          for old, new in replacements.items():
+              tokens = tokens.replace(old, new)
+          tokens = tokens.replace("MailPin Fluent 2 design tokens", "MailPin product design tokens")
+          write_text(tokens_path, tokens)
+
+          # 8) Current docs/version markers only. Historical audit/evidence files stay immutable.
+          exact_version_files = [
+              "THIRD_PARTY_NOTICES.md", "PROJECT_MEMORY.md", "PRIVACY.md", "SECURITY.md", "STORE_RELEASE.md",
+              "docs/ATN_RELEASE_CHECKLIST.md", "docs/KNOWN_LIMITATIONS.md", "docs/MANUAL_TEST_PLAN.md", "docs/BUG_TRACKER.md",
+              "docs/CODEX_HANDOFF.md", "release/ATN_REVIEW_NOTES_TEMPLATE.md", "release/BUILD_INSTRUCTIONS.md", "release/manifest-store-template.json"
+          ]
+          for rel in exact_version_files:
+              path = ROOT / rel
+              if path.is_file():
+                  text = path.read_text(encoding="utf-8")
+                  text = text.replace("1.5.4", VERSION)
+                  write_text(path, text)
+
+          # Project state JSON receives explicit current values.
+          state_path = ROOT / "docs/PROJECT_STATE.json"
+          if state_path.is_file():
+              state = json.loads(state_path.read_text(encoding="utf-8"))
+              for key in ("extensionVersion", "version"):
+                  if key in state:
+                      state[key] = VERSION
+              raw = json.dumps(state, ensure_ascii=False, indent=2)
+              raw = raw.replace(OLD_ID, NEW_ID).replace(INTERMEDIATE_ID, NEW_ID).replace(OLD_BRAND, BRAND)
+              write_text(state_path, raw)
+
+          # 9) Canonical branding document.
+          branding = f'''# Identité de marque MailPin
+
+## Identité canonique
+
+- **Nom du produit :** MailPin
+- **Nom complet pour le store :** MailPin — Email Follow-up & Productivity for Thunderbird
+- **Baseline canonique :** Email Follow-up & Productivity for Thunderbird
+- **Signature secondaire EN :** Stay on top. Follow through. Get results.
+- **Signature secondaire FR :** Gardez le cap. Assurez le suivi. Avancez.
+- **Dépôt :** `ussmarines/mailperch-thunderbird` (slug GitHub historique conservé tant qu’il n’est pas renommé dans les paramètres du dépôt)
+- **Nom du paquet npm privé :** `mailpin-thunderbird`
+- **Nom des builds :** `MailPin_v<VERSION>.xpi`
+- **Nom des archives source :** `MailPin_GitHub_Repository_v<VERSION>.zip`
+
+## Concept visuel
+
+Le symbole combine une enveloppe et un repère/pin. Il représente le geste central du produit : sélectionner un e-mail, le garder à portée et le faire progresser dans un workflow de suivi.
+
+La direction artistique est volontairement éditoriale et sobre : pas de dégradés, pas d’effets de verre, pas de glow, pas de texture générative. L’interface conserve la géométrie Thunderbird et utilise la marque comme système de hiérarchie, pas comme décoration.
+
+## Palette
+
+- **Ink Charcoal** `#1A1D21` — texte et structure.
+- **Slate Blue** `#3D536B` — information secondaire et intégration Thunderbird.
+- **Sage Teal** `#4F7F75` — action principale ; contraste AA avec texte blanc.
+- **Sage Teal Dark** `#426F67` — hover/pressed et surfaces sombres.
+- **Brass** `#C79A3A` — accent ponctuel pour rappel/attention, jamais texte blanc.
+- **Warm Off-White** `#F7F5F0` — canvas clair.
+
+Les valeurs runtime vivent dans `extension/styles/tokens.css`. Les thèmes clair, sombre, contraste forcé et réduction du mouvement restent pris en charge.
+
+## Typographie
+
+Pile locale uniquement : `system-ui`, `Segoe UI Variable`, `Aptos`, `Segoe UI`, sans-serif. Aucune police distante, CDN ou dépendance ajoutée.
+
+## Assets canoniques
+
+- `extension/icons/mailpin-icon.svg` — icône couleur scalable du module.
+- `extension/icons/mailpin-icon-mono.svg` — variante monochrome.
+- `assets/brand/mailpin-mark.svg` — marque vectorielle source.
+- `assets/brand/mailpin-hero.svg` — bannière README/release.
+- `assets/brand/mailpin-brand-board.svg` — planche de référence.
+
+Thunderbird supporte les icônes SVG et les met à l’échelle pour les tailles du manifeste ; le manifeste déclare donc le même symbole SVG pour 16 à 128 px.
+
+## Identifiants techniques
+
+- **ID public définitif pour la première publication ATN :** `ussmarines.mailpin@addons.thunderbird.net`.
+- Base locale historique : `pin-mails-v2.sqlite`.
+- Préfixes DOM/CSS, formats import/export et API Experiment `pinInbox` restent stables pour limiter les migrations inutiles.
+
+Le changement d’ID depuis `pin-mails@MailPerch.local` est volontaire et documenté dans `docs/IDENTITY_MIGRATION_REQUIRED.md`. Les builds GitHub antérieures n’étaient pas publiées sur ATN ; les installations locales existantes doivent sauvegarder/exporter puis réimporter leurs données.
+
+## Métadonnées GitHub recommandées
+
+- **Description :** MailPin — Email Follow-up & Productivity for Thunderbird.
+- **Topics :** `thunderbird`, `mail-extension`, `email-productivity`, `email-follow-up`, `pinned-email`, `productivity`.
+
+Une recherche de disponibilité a identifié un produit tiers « Mailpin » dans l’univers e-mail. L’utilisateur a explicitement choisi de conserver le nom MailPin le 13 août 2026 ; cette décision de naming n’est pas une conclusion juridique sur les marques.
+'''
+          write_text(ROOT / "BRANDING.md", branding)
+
+          # 10) Identity migration is explicit because the ID is immutable once ATN publication begins.
+          identity = f'''# Migration d’identité vers MailPin
+
+## Statut
+
+**Décision approuvée le 13 août 2026 avant la première publication ATN.**
+
+Identifiant public définitif :
+
+`{NEW_ID}`
+
+Nom public : **MailPin — Email Follow-up & Productivity for Thunderbird**.
+
+## Pourquoi l’identifiant change
+
+Les releases GitHub jusqu’à 1.5.4 utilisaient `pin-mails@MailPerch.local`. Avant la première soumission officielle à addons.thunderbird.net, le produit a été renommé MailPin et l’identifiant a été remplacé par la forme pérenne recommandée lorsque le projet ne s’appuie pas sur son propre domaine public : `<utilisateur>.<module>@addons.thunderbird.net`.
+
+Aucune version utilisant l’ancien identifiant n’a été publiée sur ATN. La 1.6.0 devient donc la première identité destinée au catalogue public.
+
+## Conséquence technique
+
+Thunderbird traite un changement d’ID comme une nouvelle extension. Une installation locale 1.5.4 ne doit pas être supposée mise à jour automatiquement vers 1.6.0 et son stockage privé n’est pas automatiquement rattaché au nouvel ID.
+
+Les formats de sauvegarde/import, la base logique `pin-mails-v2.sqlite`, les préfixes `pin-mails-*` et l’API Experiment `pinInbox` restent volontairement stables afin de permettre une migration contrôlée des données sans refonte de format.
+
+## Procédure de migration pour les testeurs 1.5.4
+
+1. Ouvrir l’installation 1.5.4 et exporter une sauvegarde MailPerch/MailPin vérifiable.
+2. Conserver une copie du profil Thunderbird avant désinstallation.
+3. Désinstaller l’ancienne extension seulement après la sauvegarde.
+4. Installer `MailPin_v{VERSION}.xpi`.
+5. Importer la sauvegarde via l’interface MailPin.
+6. Vérifier épingles, groupes, notes, sous-tâches, affaires, règles, rappels, paramètres et liens Agenda.
+7. Redémarrer Thunderbird et contrôler à nouveau les données.
+
+## Fichiers synchronisés dans cette migration
+
+- `extension/manifest.json`
+- `release/manifest-store-template.json`
+- `docs/PROJECT_STATE.json`
+- `PROJECT_MEMORY.md`
+- `docs/CODEX_HANDOFF.md`
+- `AGENTS.md`
+- `scripts/check_repo.py`
+- `tests/static_checks.py`
+- `tests/test_project_metadata.py`
+- `BRANDING.md`
+- `README.md` / `README.en.md`
+
+## Immutabilité après publication
+
+Une fois MailPin soumis/publié sur ATN avec `{NEW_ID}`, cet identifiant devient immuable. Toute release ultérieure doit conserver exactement la même chaîne et la même casse.
+'''
+          write_text(ROOT / "docs/IDENTITY_MIGRATION_REQUIRED.md", identity)
+
+          # 11) README: professional product-first presentation with the new hero.
+          readme_fr = f'''<div align="center">
+  <img src="assets/brand/mailpin-hero.svg" width="100%" alt="MailPin — Email Follow-up & Productivity for Thunderbird">
+
+# MailPin
+
+**Email Follow-up & Productivity for Thunderbird**
+
+[![QA]({REPO}/actions/workflows/ci.yml/badge.svg?branch=main)]({REPO}/actions/workflows/ci.yml)
+![Release](https://img.shields.io/badge/release-v{VERSION}-4F7F75)
+![Thunderbird](https://img.shields.io/badge/Thunderbird-153.x-3D536B)
+![Licence](https://img.shields.io/badge/licence-MailPin%20Source--Available%201.1-1A1D21)
+</div>
+
+MailPin transforme les e-mails importants en suivi actionnable **sans remplacer la boîte de réception Thunderbird**. Épinglez un message, ajoutez une note ou une checklist, planifiez une relance, organisez vos vues et, lorsque l’agenda le permet, créez un événement ou une tâche — le tout localement.
+
+## Pourquoi MailPin
+
+- **Épingler sans altérer Thunderbird** — l’épinglage ne marque jamais un message lu/non lu et ne modifie pas les compteurs natifs.
+- **Faire avancer le suivi** — états Actif, En attente, Planifié et Terminé, rappels, snooze et suivi de non-réponse.
+- **Ajouter du contexte** — notes personnelles, sous-tâches, groupes, affaires, modèles et règles locales.
+- **Retrouver vite** — recherche globale, vues enregistrées, Dashboard, Kanban et palette de commandes.
+- **Relier l’Agenda** — événements et tâches uniquement lorsque le calendrier Thunderbird annonce la capacité correspondante.
+- **Rester local-first** — aucune télémétrie, publicité, API distante, CDN ou code distant.
+
+## Interface
+
+La 1.6.0 inaugure l’identité **MailPin** : symbole enveloppe + pin, palette Ink / Slate / Sage / Brass, canvas chaud, typographie locale et accents sobres. Aucun dégradé ni asset distant. Les thèmes clair/sombre, le contraste forcé, le focus clavier et la réduction du mouvement restent pris en charge.
+
+<div align="center">
+  <img src="assets/brand/mailpin-brand-board.svg" width="92%" alt="Système de marque MailPin">
+</div>
+
+## Compatibilité
+
+- **MailPin :** `{VERSION}`
+- **Thunderbird :** `153.0` à `153.*`
+- **Format :** MailExtension Manifest V3
+- **Langues :** français et anglais
+- **ID public :** `{NEW_ID}`
+
+MailPin utilise une API Experiment privilégiée pour l’intégration `about:3pane`, le stockage SQLite local et certaines fonctions Messages/Tags/Agenda. Thunderbird peut donc afficher un avertissement d’accès complet à l’installation. Les frontières Messages, Tags et Agenda restent isolées derrière `PinCompatibility`.
+
+## Installation
+
+### Release GitHub
+
+1. Téléchargez `MailPin_v{VERSION}.xpi` depuis la release `v{VERSION}`.
+2. Thunderbird → **Extensions et thèmes** → engrenage → **Installer un module depuis un fichier**.
+3. Sélectionnez le XPI.
+
+> **Migration depuis 1.5.4 ou une build MailPerch :** la 1.6.0 adopte l’ID public définitif MailPin avant la première publication ATN. Exportez une sauvegarde depuis l’ancienne installation, puis désinstallez, installez MailPin et réimportez. Voir [la procédure d’identité](docs/IDENTITY_MIGRATION_REQUIRED.md).
+
+### Depuis les sources
+
+Prérequis : Python 3.11+ et Node.js 20+. Aucune dépendance npm/Python tierce n’est téléchargée.
+
+```bash
+npm run ci
+```
+
+Livrables reproductibles :
+
+- `dist/MailPin_v{VERSION}.xpi`
+- `dist/MailPin_GitHub_Repository_v{VERSION}.zip`
+- `dist/SHA256SUMS.txt`
+
+## Confidentialité & sécurité
+
+MailPin ne contient aucun appel réseau runtime, aucune télémétrie, aucune publicité ni code distant. Le corps complet des messages et le contenu des pièces jointes ne sont pas copiés dans la base MailPin.
+
+- [Politique de confidentialité](PRIVACY.md)
+- [Politique de sécurité](SECURITY.md)
+- [Audit sécurité {VERSION}](SECURITY_AUDIT_{VERSION}.md)
+- [Rapport de validation {VERSION}](VALIDATION_REPORT_{VERSION}.md)
+- [Limites connues](docs/KNOWN_LIMITATIONS.md)
+
+## Documentation & support
+
+- [Architecture](docs/ARCHITECTURE.md)
+- [Compatibilité Thunderbird](docs/THUNDERBIRD_COMPATIBILITY.md)
+- [Banc Thunderbird](docs/THUNDERBIRD_TEST_BENCH.md)
+- [Build reviewers](release/BUILD_INSTRUCTIONS.md)
+- [Préparation ATN](STORE_RELEASE.md)
+- [Signaler un problème]({REPO}/issues)
+
+Maintenu par [ussmarines](https://github.com/ussmarines). Les dons [PayPal](https://paypal.me/ussmarinesdot) sont facultatifs et ne débloquent aucune fonction.
+
+## Licence
+
+MailPin est distribué sous la **MailPin Source-Available License 1.1**. Consultez [LICENSE](LICENSE).
+'''
+          write_text(ROOT / "README.md", readme_fr)
+
+          readme_en = f'''<div align="center">
+  <img src="assets/brand/mailpin-hero.svg" width="100%" alt="MailPin — Email Follow-up & Productivity for Thunderbird">
+
+# MailPin
+
+**Email Follow-up & Productivity for Thunderbird**
+
+[![QA]({REPO}/actions/workflows/ci.yml/badge.svg?branch=main)]({REPO}/actions/workflows/ci.yml)
+![Release](https://img.shields.io/badge/release-v{VERSION}-4F7F75)
+![Thunderbird](https://img.shields.io/badge/Thunderbird-153.x-3D536B)
+![License](https://img.shields.io/badge/license-MailPin%20Source--Available%201.1-1A1D21)
+</div>
+
+MailPin turns important email into actionable follow-up **without replacing Thunderbird’s native inbox**. Pin a message, add notes or subtasks, schedule a reminder, organize saved views, and create Calendar items when the selected calendar supports them — all locally.
+
+## Why MailPin
+
+- **Pin without changing Thunderbird state** — pinning never marks messages read/unread and never mutates native counters.
+- **Move follow-up forward** — Active, Waiting, Planned and Completed states, reminders, snooze and no-reply tracking.
+- **Add context** — personal notes, subtasks, groups, cases, templates and local rules.
+- **Find work quickly** — global search, saved views, Dashboard, Kanban and command palette.
+- **Use Calendar safely** — events/tasks are offered only when Thunderbird reports the matching calendar capability.
+- **Stay local-first** — no telemetry, ads, remote API, CDN or remote code.
+
+## Brand & interface
+
+Version 1.6.0 introduces the **MailPin** identity: envelope + pin mark, Ink / Slate / Sage / Brass palette, warm canvas, local typography, and restrained accents. No gradients and no remote assets. Light/dark themes, forced colors, keyboard focus, and reduced motion remain supported.
+
+<div align="center">
+  <img src="assets/brand/mailpin-brand-board.svg" width="92%" alt="MailPin brand system">
+</div>
+
+## Compatibility
+
+- **MailPin:** `{VERSION}`
+- **Thunderbird:** `153.0` to `153.*`
+- **Format:** MailExtension Manifest V3
+- **Locales:** French and English
+- **Public ID:** `{NEW_ID}`
+
+MailPin uses a privileged Thunderbird Experiment for `about:3pane`, local SQLite storage, and selected Messages/Tags/Calendar integration. Thunderbird may therefore show a full-access warning at install time. Messages, Tags and Calendar internals remain isolated behind `PinCompatibility`.
+
+## Install
+
+### GitHub release
+
+1. Download `MailPin_v{VERSION}.xpi` from release `v{VERSION}`.
+2. Thunderbird → **Add-ons and Themes** → gear menu → **Install Add-on From File**.
+3. Select the XPI.
+
+> **Migrating from 1.5.4 or a MailPerch build:** 1.6.0 adopts MailPin’s final public ID before the first ATN publication. Export a backup from the previous installation, uninstall it, install MailPin, then import the backup. See [identity migration](docs/IDENTITY_MIGRATION_REQUIRED.md).
+
+### From source
+
+Requires Python 3.11+ and Node.js 20+. No third-party npm/Python dependency is downloaded.
+
+```bash
+npm run ci
+```
+
+Reproducible outputs:
+
+- `dist/MailPin_v{VERSION}.xpi`
+- `dist/MailPin_GitHub_Repository_v{VERSION}.zip`
+- `dist/SHA256SUMS.txt`
+
+## Privacy & security
+
+MailPin has no runtime network call, telemetry, advertising or remote code. Full message bodies and attachment contents are not copied into the MailPin database.
+
+- [Privacy](PRIVACY.md)
+- [Security](SECURITY.md)
+- [Security audit {VERSION}](SECURITY_AUDIT_{VERSION}.md)
+- [Validation report {VERSION}](VALIDATION_REPORT_{VERSION}.md)
+- [Known limitations](docs/KNOWN_LIMITATIONS.md)
+
+## Documentation & support
+
+- [Architecture](docs/ARCHITECTURE.md)
+- [Thunderbird compatibility](docs/THUNDERBIRD_COMPATIBILITY.md)
+- [Thunderbird test bench](docs/THUNDERBIRD_TEST_BENCH.md)
+- [Reviewer build instructions](release/BUILD_INSTRUCTIONS.md)
+- [ATN preparation](STORE_RELEASE.md)
+- [Report an issue]({REPO}/issues)
+
+Maintained by [ussmarines](https://github.com/ussmarines). [PayPal](https://paypal.me/ussmarinesdot) donations are optional and unlock no functionality.
+
+## License
+
+MailPin is distributed under the **MailPin Source-Available License 1.1**. See [LICENSE](LICENSE).
+'''
+          write_text(ROOT / "README.en.md", readme_en)
+
+          # 12) New changelog entry without rewriting historical release names.
+          changelog_path = ROOT / "CHANGELOG.md"
+          changelog = changelog_path.read_text(encoding="utf-8")
+          if not re.search(r"^## 1\.6\.0\b", changelog, flags=re.M):
+              entry = '''## 1.6.0 — nouvelle identité MailPin et préparation ATN\n\n- renommage public complet de MailPerch vers **MailPin — Email Follow-up & Productivity for Thunderbird** ;\n- adoption de l’ID public définitif `ussmarines.mailpin@addons.thunderbird.net` avant la première publication ATN, avec procédure explicite de migration des installations locales 1.5.4 ;\n- nouvelle direction artistique sans dégradé : symbole enveloppe + pin, palette Ink/Slate/Sage/Brass, assets vectoriels et icône SVG scalable ;\n- harmonisation du Dashboard, des Options et du panneau via les tokens de marque existants, sans modifier les fonctions métier ni les frontières Thunderbird ;\n- README, locales, métadonnées, build, notes reviewers, documentation de confidentialité/sécurité et préparation store resynchronisés ;\n- noms des livrables désormais `MailPin_v1.6.0.xpi` et `MailPin_GitHub_Repository_v1.6.0.zip` ;\n- aucune nouvelle permission WebExtension, dépendance runtime, connexion réseau, télémétrie, publicité ou code distant.\n\n'''
+              changelog = changelog.replace("# Journal des modifications\n\n", "# Journal des modifications\n\n" + entry, 1)
+              write_text(changelog_path, changelog)
+
+          # 13) Fresh release evidence files. The workflow commits only after the declared checks below succeed.
+          security_report = f'''# Audit de sécurité — MailPin {VERSION}\n\n## Périmètre\n\nCette release change l’identité publique, les assets, les métadonnées, les locales et les tokens visuels. Elle ne change ni les permissions WebExtension, ni les frontières `PinCompatibility`, ni le stockage métier, ni les sinks privilégiés.\n\n## Invariants\n\n- permissions : `menus` uniquement ;\n- CSP : `connect-src 'none'` ;\n- aucun réseau runtime, télémétrie, publicité, CDN ou code distant ;\n- aucun `eval`, `new Function` ou HTML dynamique non sûr ;\n- corps complet des messages et pièces jointes non stockés ;\n- nouvel ID public : `{NEW_ID}` ;\n- préfixes de stockage/import et API Experiment `pinInbox` conservés pour la migration contrôlée.\n\n## Validation\n\nLe commit de rebranding n’est créé par le workflow temporaire qu’après succès de `npm run ci` et `git diff --check`. Les scans standards du dépôt font partie de cette CI. Aucun Codex Security n’est utilisé.\n'''
+          validation_report = f'''# Rapport de validation — MailPin {VERSION}\n\n## Portée\n\nValidation de la migration de marque/identité, du packaging, des locales, des SVG et du design system. Les comportements métier non modifiés réutilisent leurs preuves 1.5.4 tant que leur dépendance n’est pas invalidée.\n\n## Contrôles de la branche\n\nLe workflow de rebranding exécute avant commit :\n\n- contrôles ciblés d’identité/métadonnées ;\n- `npm run ci` ;\n- `git diff --check`.\n\nLa PR vers `main` doit ensuite recevoir les checks GitHub Actions habituels avant squash. Le smoke Thunderbird réel sera relancé si le workflow de PR le déclenche sur la surface modifiée ; sinon la limite sera indiquée dans la release.\n\n## Identité\n\n- produit : MailPin ;\n- baseline : Email Follow-up & Productivity for Thunderbird ;\n- version : {VERSION} ;\n- ID : `{NEW_ID}`.\n'''
+          write_text(ROOT / f"SECURITY_AUDIT_{VERSION}.md", security_report)
+          write_text(ROOT / f"VALIDATION_REPORT_{VERSION}.md", validation_report)
+
+          # 14) Build/release names and checks use MailPin.
+          # Global CamelCase replacement already changed scripts/build.py and release workflow names.
+          build_path = ROOT / "scripts/build.py"
+          build = build_path.read_text(encoding="utf-8")
+          build = build.replace("MailPin_v{version}.xpi", "MailPin_v{version}.xpi")
+          write_text(build_path, build)
+
+          # Update package/check scripts lower-case package expectation and current public positioning.
+          for rel in ["scripts/check_repo.py", "tests/static_checks.py", "tests/test_project_metadata.py"]:
+              path = ROOT / rel
+              if path.is_file():
+                  text = path.read_text(encoding="utf-8")
+                  text = text.replace('"mailperch-thunderbird"', '"mailpin-thunderbird"')
+                  text = text.replace("'mailperch-thunderbird'", "'mailpin-thunderbird'")
+                  text = text.replace("Email Pins & Follow-up", "Email Follow-up & Productivity for Thunderbird")
+                  write_text(path, text)
+
+          # 15) Project instructions remain at the legacy filename expected by the ChatGPT project settings.
+          rules_path = ROOT / "MAILPERCH_AI_RULES.md"
+          if rules_path.is_file():
+              rules = rules_path.read_text(encoding="utf-8")
+              marker = "Projet : `ussmarines/mailperch-thunderbird`"
+              note = "Projet : `ussmarines/mailperch-thunderbird`\n\n> **Compatibilité projet :** le fichier conserve son nom historique `MAILPERCH_AI_RULES.md` afin de ne pas casser les paramètres ChatGPT/Codex existants ; son contenu gouverne désormais MailPin."
+              if marker in rules and "Compatibilité projet" not in rules:
+                  rules = rules.replace(marker, note, 1)
+              write_text(rules_path, rules)
+
+          # 16) Remove this temporary automation from the final branch tree.
+          temp = ROOT / ".github/workflows/rebrand-mailpin-temporary.yml"
+          if temp.exists():
+              temp.unlink()
+
+          # Basic JSON parse after transformations.
+          for path in ROOT.rglob("*.json"):
+              if "/.git/" in path.as_posix():
+                  continue
+              json.loads(path.read_text(encoding="utf-8"))
+          PY
+
+      - name: Targeted identity and metadata guards
+        run: |
+          python tests/test_project_metadata.py
+          python tests/static_checks.py
+          python scripts/check_versions.py
+          python scripts/check_repo.py
+      - name: Full release gate
+        run: npm run ci
+      - name: Diff hygiene
+        run: git diff --check
+      - name: Commit rebrand branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git status --short
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git diff --cached --check
+          git commit -m "feat: rebrand MailPerch as MailPin 1.6.0"
+          git push origin HEAD:brand/mailpin-1.6.0
