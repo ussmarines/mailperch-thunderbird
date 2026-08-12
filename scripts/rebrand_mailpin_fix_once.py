@@ -54,9 +54,14 @@ for old, new in palette_replacements.items():
 ui_polish_path.write_text(ui_polish.rstrip() + "\n", encoding="utf-8", newline="\n")
 
 # GitHub Actions' GITHUB_TOKEN cannot push workflow-file changes without workflows permission.
-# Restore workflows and their direct contract exactly to branch HEAD. Permanent workflow branding
-# and its contract are updated together later through the GitHub connector.
-subprocess.check_call(["git", "checkout", "HEAD", "--", ".github/workflows", "tests/test_cross_platform_ci.py"], cwd=ROOT)
+# Restore workflows exactly to branch HEAD. Their direct release-artifact contract keeps the
+# old artifact spelling only for this runner gate; workflow + contract are updated together later
+# through the GitHub connector. All other test expectations stay migrated to MailPin.
+subprocess.check_call(["git", "checkout", "HEAD", "--", ".github/workflows"], cwd=ROOT)
+cross_path = ROOT / "tests/test_cross_platform_ci.py"
+cross = cross_path.read_text(encoding="utf-8")
+cross = cross.replace("MailPin_GitHub_Repository_v${VERSION}.zip", "MailPerch_GitHub_Repository_v${VERSION}.zip")
+cross_path.write_text(cross.rstrip() + "\n", encoding="utf-8", newline="\n")
 
 Path(__file__).unlink()
 print("MailPin targeted localization, SVG, palette and workflow-boundary adjustments complete")
