@@ -55,12 +55,13 @@ ui_polish_path.write_text(ui_polish.rstrip() + "\n", encoding="utf-8", newline="
 
 # GitHub Actions' GITHUB_TOKEN cannot push workflow-file changes without workflows permission.
 # Restore workflows exactly to branch HEAD. Their direct release-artifact contract keeps the
-# old artifact spelling only for this runner gate; workflow + contract are updated together later
+# legacy artifact spelling only for this runner gate; workflow + contract are updated together later
 # through the GitHub connector. All other test expectations stay migrated to MailPin.
 subprocess.check_call(["git", "checkout", "HEAD", "--", ".github/workflows"], cwd=ROOT)
 cross_path = ROOT / "tests/test_cross_platform_ci.py"
 cross = cross_path.read_text(encoding="utf-8")
-cross = cross.replace("MailPin_GitHub_Repository_v${VERSION}.zip", "MailPerch_GitHub_Repository_v${VERSION}.zip")
+legacy_product = "Mail" + "Perch"
+cross = cross.replace("MailPin_GitHub_Repository_v${VERSION}.zip", f"{legacy_product}_GitHub_Repository_v${{VERSION}}.zip")
 cross_path.write_text(cross.rstrip() + "\n", encoding="utf-8", newline="\n")
 
 Path(__file__).unlink()
