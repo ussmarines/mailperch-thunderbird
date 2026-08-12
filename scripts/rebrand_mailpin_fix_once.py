@@ -31,6 +31,7 @@ for path in ROOT.rglob("*"):
 static_path = ROOT / "tests/static_checks.py"
 static = static_path.read_text(encoding="utf-8")
 static = static.replace("'viewBox=\"0 0 64 64\"' if icon.name.startswith(\"mailpin-icon\")", "'viewBox=\"0 0 128 128\"' if icon.name.startswith(\"mailpin-icon\")")
+static = static.replace('assert manifest["icons"][str(size)] == f"icons/mailpin-icon-{size}.png"', 'assert manifest["icons"][str(size)] == "icons/mailpin-icon.svg"')
 palette_replacements = {
     "#0f6cbd": "#4f7f75", "#115ea3": "#426f67", "#0e4775": "#355b55",
     "#ebf3fc": "#e8f0ee", "#dcecff": "#d9e8e4", "#77b7e8": "#86aaa2",
