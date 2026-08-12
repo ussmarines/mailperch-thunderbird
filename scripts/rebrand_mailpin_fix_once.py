@@ -27,11 +27,7 @@ for path in ROOT.rglob("*"):
     if updated != text:
         path.write_text(updated.rstrip() + "\n", encoding="utf-8", newline="\n")
 
-# Keep static regressions strict while aligning them with the new canonical SVG and palette.
-static_path = ROOT / "tests/static_checks.py"
-static = static_path.read_text(encoding="utf-8")
-static = static.replace("'viewBox=\"0 0 64 64\"' if icon.name.startswith(\"mailpin-icon\")", "'viewBox=\"0 0 128 128\"' if icon.name.startswith(\"mailpin-icon\")")
-static = static.replace('assert manifest["icons"][str(size)] == f"icons/mailpin-icon-{size}.png"', 'assert manifest["icons"][str(size)] == "icons/mailpin-icon.svg"')
+# Keep design regressions strict while aligning them with the new canonical SVG and palette.
 palette_replacements = {
     "#0f6cbd": "#4f7f75", "#115ea3": "#426f67", "#0e4775": "#355b55",
     "#ebf3fc": "#e8f0ee", "#dcecff": "#d9e8e4", "#77b7e8": "#86aaa2",
@@ -41,9 +37,20 @@ palette_replacements = {
     "#479ef5": "#9bc3bb", "#62abf5": "#b0d0c9", "#0c3156": "#203a36", "#0f3d69": "#294741", "#2886de": "#5e8f86",
     "#123b3a": "#202c36", "#5bd6d1": "#aebdcc"
 }
+
+static_path = ROOT / "tests/static_checks.py"
+static = static_path.read_text(encoding="utf-8")
+static = static.replace("'viewBox=\"0 0 64 64\"' if icon.name.startswith(\"mailpin-icon\")", "'viewBox=\"0 0 128 128\"' if icon.name.startswith(\"mailpin-icon\")")
+static = static.replace('assert manifest["icons"][str(size)] == f"icons/mailpin-icon-{size}.png"', 'assert manifest["icons"][str(size)] == "icons/mailpin-icon.svg"')
 for old, new in palette_replacements.items():
     static = static.replace(old, new)
 static_path.write_text(static.rstrip() + "\n", encoding="utf-8", newline="\n")
+
+ui_polish_path = ROOT / "tests/test_ui_polish_3_2_3.py"
+ui_polish = ui_polish_path.read_text(encoding="utf-8")
+for old, new in palette_replacements.items():
+    ui_polish = ui_polish.replace(old, new)
+ui_polish_path.write_text(ui_polish.rstrip() + "\n", encoding="utf-8", newline="\n")
 
 Path(__file__).unlink()
 print("MailPin targeted localization, SVG and palette-regression adjustments complete")
