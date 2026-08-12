@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import subprocess
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -52,5 +53,10 @@ for old, new in palette_replacements.items():
     ui_polish = ui_polish.replace(old, new)
 ui_polish_path.write_text(ui_polish.rstrip() + "\n", encoding="utf-8", newline="\n")
 
+# GitHub Actions' GITHUB_TOKEN cannot push workflow-file changes without workflows permission.
+# Restore workflow files exactly to branch HEAD; permanent workflow branding is updated later
+# through the GitHub connector. This also restores the temporary workflow deleted by the main script.
+subprocess.check_call(["git", "checkout", "HEAD", "--", ".github/workflows"], cwd=ROOT)
+
 Path(__file__).unlink()
-print("MailPin targeted localization, SVG and palette-regression adjustments complete")
+print("MailPin targeted localization, SVG, palette and workflow-boundary adjustments complete")
