@@ -1,14 +1,14 @@
 # Limites connues
 
-## Version 1.5.3 et portée de validation
+## Version 1.5.4 et portée de validation
 
-La version **1.5.3** durcit l’import/safe mode et corrige un chevauchement localisé dans les Options. Elle ne modifie ni la frontière privilégiée `PinCompatibility`, ni les permissions, ni les schémas de stockage. Les validations fraîches sont consignées dans `VALIDATION_REPORT_1.5.3.md` et `docs/AI_VALIDATION_STATE.json`.
+Le candidat **1.5.4** modifie l’API Agenda bornée, la résolution des identités d’épinglage et plusieurs surfaces UI. Il ne modifie ni les permissions ni les schémas de stockage. Les validations automatisées fraîches sont consignées dans `VALIDATION_REPORT_1.5.4.md` et `docs/AI_VALIDATION_STATE.json`; la recette manuelle utilisateur reste requise.
 
 Une matrice exhaustive de tous les systèmes, versions Thunderbird, fournisseurs réels, types de dossiers, calendriers, lecteurs d’écran et configurations de profil reste hors de portée d’un banc automatisé unique. Les éléments non observés restent explicitement documentés.
 
 ## Compatibilité Thunderbird
 
-- Le manifeste 1.5.3 déclare Thunderbird `153.0` à `153.*`.
+- Le manifeste 1.5.4 déclare Thunderbird `153.0` à `153.*`.
 - MailPerch utilise une API Experiment privilégiée ; une évolution interne de Thunderbird peut exiger une adaptation.
 - Messages, Tags et Agenda restent isolés dans leurs adaptateurs dédiés.
 - Le DOM `about:3pane`, `ThreadCard`, les fenêtres et menus natifs restent des surfaces internes à surveiller.

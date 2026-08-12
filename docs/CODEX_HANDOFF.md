@@ -1,25 +1,19 @@
-# Passage de relais Codex — audit pré-store MailPerch 1.5.3
+# Passage de relais Codex — candidat local MailPerch 1.5.4
 
 ## Référence
 
-- source de vérité : `main` au commit `afff4b6338f19c45e6c949d1d4628fcd58373ebc` ;
-- branche de travail : `audit/pre-store-release-1.5.3` ;
-- version auditée : **1.5.3** ;
+- base de travail : commit local `038a8df5a9930894e9e6487cf9630c9d13fd399f` ;
+- branche locale : `fix/pre-store-manual-findings-1.5.4` ;
+- version publique inchangée : **1.5.3** ; candidat de retest : **1.5.4** ;
 - identifiant canonique : `pin-mails@MailPerch.local` ;
-- publication GitHub `v1.5.3` déjà disponible ; soumission ATN non effectuée.
+- commit et push de la seule branche `fix/pre-store-manual-findings-1.5.4` autorisés pour consolider le candidat ; aucun PR, merge, tag, release ou téléversement ATN.
 
 ## Objet de la passe
 
-- auditer le produit livré, l’Experiment privilégié, le stockage, le cycle de vie, les interfaces et le dossier store ;
-- synchroniser les documents actifs de soumission avec 1.5.3 ;
-- produire uniquement des preuves réellement exécutées ou vérifiées ;
-- conserver comme limites explicites les fournisseurs externes, la matrice multi-OS et les aides techniques humaines non disponibles.
+Corriger les constats de recette réels de 1.5.3 : règles Options comprimées, modale Agenda et planification, toggle et badges d’attente, délai de relance individuel, doublons message/conversation et responsive du panneau selon le splitter Thunderbird. La passe transversale pré-store aligne désormais les transitions workflow de l'éditeur, des templates, des règles et d'Agenda, supprime les états `noReply*`/relance orphelins et empêche le Dashboard d'annoncer un succès si son état post-mutation n'a pas pu être rechargé. Le dernier constat Agenda est consolidé : toute création commence sur Événement et une tâche sans calendrier compatible est expliquée sans tentative de création.
 
-Aucune fonction métier, permission WebExtension, dépendance runtime, migration, connexion réseau ou donnée produit n’est ajoutée par cette passe.
+Les régressions ciblées couvrent les contrats statiques/modèles, les flux Chromium, la géométrie continue du panneau et les nouveaux parcours panneau/workflow dans Thunderbird réel. Le XPI exact a passé le banc 50 références sous Thunderbird 153.0.3 avec zéro exception JavaScript, cleanup et réinstallation propre. Les preuves fraîches sont enregistrées dans `docs/AI_VALIDATION_STATE.json` et `VALIDATION_REPORT_1.5.4.md`.
 
-## Sources de preuve
+## Readiness
 
-- `VALIDATION_REPORT_1.5.3.md` et `SECURITY_AUDIT_1.5.3.md` pour le delta publié ;
-- `docs/AI_VALIDATION_STATE.json` pour les dernières preuves réutilisables ;
-- `docs/ATN_RELEASE_CHECKLIST.md` et `docs/MANUAL_TEST_PLAN.md` pour les limites et actions humaines restantes ;
-- `STORE_RELEASE.md` et `release/` pour le dossier reviewer.
+**NO-GO publication.** Le XPI local 1.5.4 doit être retesté manuellement par l’utilisateur sur les scénarios signalés avant toute décision de publication. Les fournisseurs et calendriers réseau réels, la matrice multi-OS et les validations d’accessibilité humaines restent aussi hors preuve automatisée.
