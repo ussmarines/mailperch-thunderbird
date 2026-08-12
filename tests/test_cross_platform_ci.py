@@ -52,7 +52,7 @@ assert release.count("persist-credentials: false") == 1
 assert "retention-days: 14" in ci
 assert "--latest" in release
 assert "include-hidden-files: false" in ci
-assert "MailPerch_GitHub_Repository_v${VERSION}.zip" in release
+assert "MailPin_GitHub_Repository_v${VERSION}.zip" in release
 assert "package-ecosystem: github-actions" in dependabot
 assert "default-days: 7" in dependabot
 assert 'targetRules = ["private-key"]' in gitleaks
