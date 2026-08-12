@@ -31,7 +31,9 @@ jobs:
         with:
           python-version: "3.12"
       - name: Apply MailPin 1.6.0 rebrand
-        run: python scripts/rebrand_mailpin_once.py
+        run: |
+          python scripts/rebrand_mailpin_once.py
+          python scripts/rebrand_mailpin_fix_once.py
       - name: Targeted identity and metadata guards
         run: |
           python tests/test_project_metadata.py
