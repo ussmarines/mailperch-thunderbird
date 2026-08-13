@@ -24,6 +24,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          python -m pip install --disable-pip-version-check -q pytest
           python scripts/temporary_canonical_ui_rebuild.py
           node --check extension/options/options.js
           node --check extension/dashboard/dashboard.js
