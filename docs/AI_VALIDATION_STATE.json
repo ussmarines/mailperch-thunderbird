@@ -1,12 +1,12 @@
 {
   "schema_version": 1,
   "purpose": "Cache machine-readable des dernières preuves de validation réutilisables. Ce fichier ne remplace ni AGENTS.md ni les règles de sécurité et ne doit jamais servir à inventer un test non exécuté.",
-  "recorded_at": "2026-08-13T01:06:28+02:00",
+  "recorded_at": "2026-08-13T12:40:00+02:00",
   "baseline": {
     "repository": "ussmarines/mailpin-thunderbird",
-    "branch": "main",
-    "commit_sha": "4fdb978e1828325001f95951c115059a931b8b6e",
-    "tree_sha": "ac9178baf462cadd6206199330e6644c243672d5",
+    "branch": "design/organic-workspace-ui",
+    "commit_sha": "d763c359894f1726d6d96f85f8f8f72c2e0e9304",
+    "tree_sha": "afdbae70b6fd3f2312e16be759635d8ad782ef89",
     "working_tree_patch_id": "",
     "untracked_candidate_files": []
   },
@@ -31,12 +31,12 @@
   },
   "repository_checks": [
     {
-      "id": "github-main-release-gate-1.6.0",
+      "id": "github-pr-organic-workspace-gate",
       "result": "success",
-      "validated_commit": "4fdb978e1828325001f95951c115059a931b8b6e",
+      "validated_commit": "d763c359894f1726d6d96f85f8f8f72c2e0e9304",
       "working_tree_patch_id": "",
-      "validated_at": "2026-08-13T01:05:22+02:00",
-      "command": "GitHub Actions QA run 31649530267 + Thunderbird runtime smoke run 31649530256",
+      "validated_at": "2026-08-13T12:39:42+02:00",
+      "command": "GitHub Actions PR #39 QA run 31692030322 + Thunderbird runtime smoke run 31692030281",
       "environment": {
         "ci": "GitHub Actions",
         "linux": "ubuntu-24.04",
@@ -47,15 +47,46 @@
         "geckodriver": "0.37.1"
       },
       "invalidates_on": [
-        "**"
+        "extension/**",
+        "package.json",
+        "scripts/**",
+        "tests/**",
+        ".github/workflows/ci.yml",
+        ".github/workflows/thunderbird-smoke.yml",
+        "docs/UI_SPEC.md",
+        "BRANDING.md"
       ],
       "evidence": {
-        "kind": "github-main-release-gate",
-        "summary": "Sur le commit squash intégré de MailPin 1.6.0 : npm run ci complet et contrôle de structure XPI verts sous Linux ; garde sécurité historique verte ; contrôles source/modèles Windows verts ; smoke réel Thunderbird 153 vert avec téléchargement et vérification des binaires officiels.",
-        "xpi_sha256": "6860e0177795b163cb672edd1a93897260785c4b8eeeeac71d1b3d32dca281ae",
-        "development_artifact_id": 9162031502
+        "kind": "github-pr-organic-workspace-gate",
+        "summary": "PR #39 sur le HEAD produit exact : npm run ci complet et structure XPI verts sous Linux ; contrôles source/modèles Windows verts ; garde sécurité et identité historique verte ; smoke réel Thunderbird 153 vert avec installation, injection unique du panneau, ouverture Dashboard, nettoyage à la désinstallation et réinstallation propre.",
+        "xpi_sha256": "91276448c21361d32709aefb933924dd5d067c83c1eb60a0fc49a50563fe80d7",
+        "development_artifact_id": 9177778752,
+        "thunderbird_smoke_artifact_id": 9177789095
       }
     }
   ],
-  "targeted_checks": []
+  "targeted_checks": [
+    {
+      "id": "organic-workspace-ui-contract",
+      "result": "success",
+      "validated_commit": "d763c359894f1726d6d96f85f8f8f72c2e0e9304",
+      "validated_at": "2026-08-13T12:39:16+02:00",
+      "command": "tests/test_organic_workspace_ui.py + UI regressions/polish + accessibility/localization + Dashboard/Options contracts",
+      "invalidates_on": [
+        "extension/styles/**",
+        "extension/dashboard/**",
+        "extension/options/**",
+        "docs/UI_SPEC.md",
+        "BRANDING.md",
+        "tests/test_organic_workspace_ui.py",
+        "tests/test_ui_regressions.py",
+        "tests/test_ui_polish_3_2_3.py",
+        "tests/static_checks.py"
+      ],
+      "evidence": {
+        "kind": "targeted-ui-contract",
+        "summary": "Organic Workspace, responsive CSS, thèmes, reduced motion, forced-colors, registre Options, Dashboard DOM et localisation/accessibilité passent les gardes ciblées ; aucune ressource distante, gradient, glow ou glassmorphism n'est introduit par le nouveau système partagé."
+      }
+    }
+  ]
 }

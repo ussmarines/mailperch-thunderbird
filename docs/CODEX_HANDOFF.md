@@ -1,29 +1,63 @@
-# Passage de relais Codex — MailPin 1.6.1
+# Passage de relais — MailPin Organic Workspace
 
 ## Référence
 
-- runtime MailPin intégré par la PR #35 : `4fdb978e1828325001f95951c115059a931b8b6e` ;
-- baseline `main` avant préparation 1.6.1 : `6d582da0cf729b1a93df348e4845430fbfb7fad2` ;
-- version cible publique : **1.6.1** ;
-- identifiant canonique : `ussmarines.mailpin@addons.thunderbird.net` ;
-- branche de préparation : `release/mailpin-1.6.1-store-metadata`.
+- dépôt : `ussmarines/mailpin-thunderbird` ;
+- branche active : `design/organic-workspace-ui` ;
+- base `main` : `497d71e9660c068a166201a4da13fdddc3e65628` ;
+- HEAD produit validé : `d763c359894f1726d6d96f85f8f8f72c2e0e9304` ;
+- PR : **#39 — design: rebuild MailPin as Organic Workspace** ;
+- version distribuée inchangée : **1.6.1** ;
+- identifiant canonique inchangé : `ussmarines.mailpin@addons.thunderbird.net`.
 
-## État produit
+## Objectif et état
 
-MailPin 1.6.0 a introduit le nouveau nom, l’ID ATN définitif, l’icône SVG et la palette professionnelle sans modifier la logique métier validée avant rebranding. Le runtime rebrand intégré par #35 a ensuite repassé QA Linux/Windows, garde sécurité et smoke Thunderbird 153 réel sur le commit exact `4fdb978e1828325001f95951c115059a931b8b6e`.
+La branche remplace l’ancienne direction Fluent par **Organic Workspace**. Il ne s’agit pas d’un skin swap : le Dashboard est réorganisé en rail de navigation / canvas / inspector, Options devient un éditeur de réglages persistant, et le panneau Thunderbird devient un compagnon compact. La typographie, la palette, les rayons, la profondeur et la motion ont été redéfinis, sans dépendance distante ni modification de la logique métier.
 
-La 1.6.1 ne corrige pas un bug runtime. Elle retire des métadonnées de publication 1.5.4 restées actives dans l’archive source 1.6.0 et évite d’attribuer à tort une recette manuelle fraîche à un XPI qui ne l’avait pas reçue. Le seul delta XPI prévu est `manifest.version = 1.6.1`.
+Le contrat canonique est désormais `docs/UI_SPEC.md`. La direction interdit gradients, glow, glassmorphism, blobs décoratifs et ressources distantes. Les thèmes clair/sombre, `forced-colors`, `prefers-reduced-motion`, le clavier et le zoom 200 % restent des exigences.
 
-## Preuves
+## Surfaces modifiées
 
-- recette manuelle : dernière preuve fraîche sur le candidat 1.5.4 avant rebranding, réutilisée uniquement pour le métier inchangé ;
-- QA/sécurité/smoke réel MailPin 1.6.0 : verts sur `4fdb978e1828325001f95951c115059a931b8b6e` ;
-- XPI v1.6.0 public : `6860e0177795b163cb672edd1a93897260785c4b8eeeeac71d1b3d32dca281ae` ;
-- 1.6.1 : exiger QA Linux/Windows + sécurité + `npm run ci` + smoke Thunderbird réel sur la PR et le `main` final avant release.
+- design system : `extension/styles/tokens.css`, `extension/styles/workspace.css` ;
+- Dashboard : `extension/dashboard/dashboard.html`, `extension/dashboard/dashboard.js` ;
+- Options : `extension/options/options.html`, `extension/options/options.js`, `extension/options/AGENTS.md` ;
+- panneau Thunderbird : `extension/styles/pin.css` ;
+- contrat / marque : `docs/UI_SPEC.md`, `BRANDING.md`, README FR/EN ;
+- gardes : `tests/test_organic_workspace_ui.py`, gardes UI/statics/métadonnées associées ;
+- métadonnées de dépôt : URLs canoniques synchronisées vers `ussmarines/mailpin-thunderbird`.
 
-## Readiness
+Aucun changement de permission, API Experiment, schéma de données, stockage, workflow métier, réseau, télémétrie, dépendance runtime ou ID d’extension.
 
-- **GitHub 1.6.1 : GO uniquement après les gates ci-dessus** ;
-- **ATN : candidat officiel après release GitHub**, avec recette humaine ciblée, fournisseurs réseau/matrice multi-OS et contrôles accessibilité humains restant explicitement hors preuve.
+## Preuves fraîches
 
-Aucune nouvelle permission, dépendance runtime, connexion réseau, télémétrie, publicité ou migration de stockage n’est introduite en 1.6.1. Le changement d’identité a eu lieu volontairement en 1.6.0 et reste immuable pour la publication ATN. Codex Security n’a pas été utilisé.
+Sur le HEAD produit exact `d763c359894f1726d6d96f85f8f8f72c2e0e9304` :
+
+- PR #39 QA run **31692030322** : succès ;
+  - Full verification Linux + `npm run ci` + structure XPI : succès ;
+  - Source and model checks Windows : succès ;
+  - Security guard regression + full-history identity guard : succès ;
+  - artefact `development-build` : **9177778752** ;
+- PR #39 Thunderbird runtime smoke run **31692030281** : succès ;
+  - Thunderbird **153.0.1esr** + geckodriver **0.37.1** ;
+  - installation temporaire, injection unique panneau/toggle, ouverture Dashboard, nettoyage désinstallation et réinstallation propre : succès ;
+  - artefact `thunderbird-runtime-smoke` : **9177789095** ;
+- XPI de développement produit par ces gates : SHA-256 `91276448c21361d32709aefb933924dd5d067c83c1eb60a0fc49a50563fe80d7`.
+
+Avant la PR, le tree produit et la passe de cohérence ont également chacun passé `npm run ci` complet sur la branche.
+
+## Limites de preuve
+
+Le smoke Thunderbird confirme le chargement, l’injection et le cycle de vie réel ; il ne constitue pas à lui seul une validation humaine de la qualité visuelle. Restent à observer manuellement avant toute décision de merge :
+
+- Dashboard aux largeurs desktop / intermédiaire / étroite ;
+- Options, recherche, navigation et dock Enregistrer/Annuler ;
+- panneau avec resize splitter continu ;
+- clair / sombre / contraste élevé ;
+- zoom 200 % et réduction du mouvement ;
+- ressenti de motion, densité, lisibilité et ergonomie avec données réalistes.
+
+## Git
+
+**Ne pas merger #39 dans `main` sans nouvelle autorisation explicite de l’utilisateur.** La demande courante autorise le travail et les pushs sur la branche dédiée, mais exclut le push/merge sur `main`.
+
+Codex Security n’a pas été utilisé et n’est pas requis par cette refonte.
