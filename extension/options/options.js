@@ -1800,38 +1800,6 @@ function installSupportLinks() {
 }
 
 
-function enhanceOrganicSettingsWorkspace() {
-  if (document.body.dataset.workspaceEnhanced === "true") return;
-  const app = document.querySelector(".settings-app");
-  const layout = app?.querySelector(".settings-layout");
-  const sidebar = layout?.querySelector(".settings-sidebar");
-  const header = app?.querySelector(".page-header");
-  const overview = app?.querySelector(".quick-overview");
-  const loading = $("settings-loading");
-  const failure = $("settings-error");
-  const form = $("settings-form");
-  const status = $("status");
-  const saveDock = $("save-dock");
-  if (!app || !layout || !sidebar || !header || !overview || !loading || !failure || !form) throw new Error("Structure Options incompatible avec Organic Workspace.");
-  document.body.classList.add("mp-organic-settings");
-  document.body.dataset.workspaceEnhanced = "true";
-  const frame = node("div", "settings-organic-frame");
-  const brand = node("div", "settings-organic-brand");
-  const icon = document.createElement("img");
-  icon.src = "../icons/mailpin-icon.svg"; icon.alt = ""; icon.width = 34; icon.height = 34;
-  const brandCopy = node("div", "");
-  brandCopy.append(node("strong", "", "MailPin"), node("span", "", "Workspace settings"));
-  brand.append(icon, brandCopy); sidebar.prepend(brand);
-  const headerActions = header.querySelector(".header-actions");
-  if (saveDock && headerActions) { saveDock.classList.add("header-save-dock"); headerActions.prepend(saveDock); }
-  const stage = node("section", "settings-organic-stage");
-  stage.append(header);
-  if (status) stage.append(status);
-  stage.append(overview, loading, failure, form);
-  frame.append(sidebar, stage);
-  app.replaceChildren(frame);
-}
-
 function installCriticalSettingsActions() {
   const form = $("settings-form");
   const save = $("save-all-floating");
@@ -1869,7 +1837,6 @@ async function startOptions() {
     setConfigurationReady(false);
     validateSettingsControlRegistry();
     enhanceSettingsPage();
-    enhanceOrganicSettingsWorkspace();
   } catch (error) {
     console.error("MailPin : préparation des paramètres impossible", initializationDiagnostic(error));
     setInitializationState("error", error);

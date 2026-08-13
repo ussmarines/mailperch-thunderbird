@@ -128,30 +128,12 @@ Une animation ne doit jamais retarder une action, bloquer le clavier ou masquer 
 
 Une refonte n’est pas considérée validée parce que ses tests statiques passent. Toute affirmation concernant géométrie, responsive, focus, thème ou mouvement dans Thunderbird exige une observation sur le vrai runtime lorsque la surface concernée y est rendue.
 
+## Quality of Life
 
-## Organic Workspace V2
-
-La seconde passe, issue d’une recette vidéo réelle dans Thunderbird, impose les règles suivantes :
-
-- les composants internes se recomposent selon **leur largeur disponible** (`container-type` / container queries) et non uniquement selon la largeur globale de la fenêtre ;
-- le panneau de contexte du Dashboard est **à la demande** : il ne retire pas en permanence 250–300 px au canvas ;
-- une ligne de message affiche au plus deux actions directes, le reste passe par un menu secondaire accessible ;
-- le Kanban ne compresse jamais quatre colonnes sous leur largeur lisible : il s’adapte ou utilise un défilement horizontal contrôlé ;
-- les métriques secondaires sont progressives ; la première lecture reste centrée sur les signaux d’action ;
-- les formulaires complexes ne sont jamais de simples grilles auto-fit : règles, affaires et modèles ont une architecture explicite en cartes et sous-sections ;
-- le Rule Builder utilise la séquence **Quand / Si / Alors / Limites** et conserve tous les contrôles persistés ;
-- les sélecteurs doivent garder des libellés courts ; les explications longues et capacités restent dans des cartes ou aides adjacentes ;
-- un dock flottant doit réserver l’espace qu’il occupe et ne peut jamais recouvrir le dernier contrôle éditable ;
-- les toasts disposent d’une safe area indépendante des docks, panneaux de support et actions fixes ;
-- les espacements verticaux doivent suivre un rythme lisible : 14–18 px à l’intérieur des groupes, 20–28 px entre sous-groupes, 44–56 px entre grandes sections ;
-- une grande zone vide n’est pas un substitut à la hiérarchie : les états vides et blocs peu denses doivent se dimensionner à leur contenu.
-
-## 11. Quality of Life et valeurs par défaut
-
-- Les couleurs générées automatiquement utilisent la palette d’accents MailPin : Sage, Berry, Moss, Indigo, Brass, Ocean, Clay et Plum. Elles doivent être nettement différenciables tout en restant cohérentes avec Organic Workspace.
-- Les couleurs personnalisées choisies par l’utilisateur sont conservées. Seules les anciennes couleurs générées automatiquement par MailPin peuvent être remappées vers la palette courante.
-- Lorsqu’un groupe, une affaire ou toute autre entité colorable est créée, MailPin propose la couleur la moins utilisée de la palette avant de recommencer un cycle.
-- Une création place immédiatement le focus sur son champ de nom et sélectionne le libellé par défaut pour permettre la saisie sans clic supplémentaire.
-- Un champ optionnel ne devient obligatoire qu’au moment de l’action qui en dépend. En particulier, une affaire peut exister sans échéance ni calendrier ; Agenda valide ces données uniquement lors de la création/synchronisation d’un élément.
-- Les contrôles de couleur et de remise à la valeur par défaut doivent exposer un nom accessible contextualisé par l’entité concernée.
-- Les états `dirty`, le raccourci Ctrl/Cmd+S, l’avertissement de fermeture avec modifications non enregistrées, les états busy et les confirmations destructives existantes restent les mécanismes de référence et ne doivent pas être dupliqués par des dialogues supplémentaires sans besoin prouvé.
+- Création Groupe / Affaire / Modèle / Règle : focus immédiat sur le nom et sélection du libellé par défaut.
+- Un champ optionnel ne devient requis qu’au moment de l’action qui en dépend ; Agenda valide échéance et calendrier au moment de créer/synchroniser.
+- Les couleurs automatiques utilisent Sage, Berry, Moss, Indigo, Brass, Ocean, Clay et Plum, en privilégiant la couleur la moins utilisée.
+- Les couleurs personnalisées sont conservées.
+- Menus, inspector et statistiques progressives restent dans le flux ou recomposent le layout avant toute superposition.
+- Les commandes Enregistrer/Annuler restent dans l’en-tête sticky et aucune surface flottante ne recouvre un champ éditable.
+- Un seul landmark `main` par document ; aucun `main` imbriqué.

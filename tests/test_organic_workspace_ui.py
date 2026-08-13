@@ -15,15 +15,18 @@ def test_organic_workspace_shell_is_loaded_and_structural():
 
     assert '../styles/workspace.css' in dashboard_html
     assert '../styles/workspace.css' in options_html
-    assert "function enhanceOrganicDashboard()" in dashboard_js
-    assert 'node("div", "workspace-frame")' in dashboard_js
-    assert 'node("aside", "workspace-rail")' in dashboard_js
-    assert 'node("aside", "workspace-inspector")' in dashboard_js
-    assert "enhanceOrganicDashboard();" in dashboard_js
-    assert "function enhanceOrganicSettingsWorkspace()" in options_js
-    assert 'node("div", "settings-organic-frame")' in options_js
-    assert 'node("section", "settings-organic-stage")' in options_js
-    assert "enhanceOrganicSettingsWorkspace();" in options_js
+    assert 'class="workspace-frame"' in dashboard_html
+    assert 'class="workspace-rail"' in dashboard_html
+    assert 'id="workspace-inspector"' in dashboard_html
+    assert 'id="context-toggle"' in dashboard_html
+    assert "function installOrganicDashboardInteractions()" in dashboard_js
+    assert "installOrganicDashboardInteractions();" in dashboard_js
+    assert "enhanceOrganicDashboard" not in dashboard_js
+    assert 'class="settings-organic-frame"' in options_html
+    assert 'class="settings-organic-stage"' in options_html
+    assert 'class="save-dock header-save-dock"' in options_html
+    assert 'form="settings-form"' in options_html
+    assert "enhanceOrganicSettingsWorkspace" not in options_js
 
 
 def test_organic_design_avoids_generic_effects_and_remote_assets():
@@ -54,6 +57,8 @@ def test_panel_and_spec_follow_organic_workspace_contract():
 
 def test_organic_workspace_v2_video_driven_contracts():
     workspace_css = text("extension/styles/workspace.css")
+    dashboard_html = text("extension/dashboard/dashboard.html")
+    options_html = text("extension/options/options.html")
     dashboard_js = text("extension/dashboard/dashboard.js")
     options_js = text("extension/options/options.js")
 
@@ -70,12 +75,17 @@ def test_organic_workspace_v2_video_driven_contracts():
     assert ".stats-secondary { position: static" in workspace_css
     assert "Canonical workspace stylesheet" in workspace_css
     assert "Organic Workspace V2 — responsive composition" not in workspace_css
-    assert 'saveDock.classList.add("header-save-dock")' in options_js
+    assert 'class="save-dock header-save-dock"' in options_html
+    assert 'id="save-all-floating" type="submit" form="settings-form"' in options_html
+    assert 'id="discard-changes" type="reset" form="settings-form"' in options_html
     assert 'for (const family of ["Essentiel", "Automatisation", "Organisation", "Avancé"])' in options_js
     assert 'node("div", "settings-family-heading")' not in options_js
-    assert 'const status = $("status");' in dashboard_js
+    assert dashboard_html.count("<main") == 1
+    assert "dashboard-layout" not in dashboard_html
+    assert "settings-layout" not in options_html
+    assert 'id="status"' in dashboard_html and 'class="workspace-stage"' in dashboard_html
     assert 'node("details", "item-more")' in dashboard_js
-    assert 'node("button", "button secondary context-toggle"' in dashboard_js
+    assert 'id="context-toggle"' in dashboard_html
     assert 'node("article","rule-row rule-builder-card")' in options_js
     assert 'node("article","group-row case-editor-row case-editor-card")' in options_js
     assert 'const optionState = calendar.taskCompatible && calendar.eventCompatible' in options_js
@@ -121,4 +131,13 @@ def test_qol_palette_defaults_and_low_friction_creation_contract():
     assert 'if (!calendar.value) {' in options_js
 
     assert 'color.setAttribute("aria-label", `${msg("dynamicColor")} · ${primaryLabel}`)' in options_js
-    assert "Quality of Life et valeurs par défaut" in spec
+    assert "## Quality of Life" in spec
+
+
+if __name__ == "__main__":
+    test_organic_workspace_shell_is_loaded_and_structural()
+    test_organic_design_avoids_generic_effects_and_remote_assets()
+    test_panel_and_spec_follow_organic_workspace_contract()
+    test_organic_workspace_v2_video_driven_contracts()
+    test_qol_palette_defaults_and_low_friction_creation_contract()
+    print("Organic Workspace UI contracts: OK")

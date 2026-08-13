@@ -24,7 +24,7 @@ MailPin transforme les e-mails importants en suivi actionnable **sans remplacer 
 
 ## Interface
 
-La branche **Organic Workspace** reconstruit l’interface comme un véritable espace de travail : rail de navigation, canvas éditorial, contexte secondaire, panneaux plus organiques et micro-interactions fonctionnelles. La palette Ink / Slate / Sage / Brass évolue vers des tons plus naturels et une typographie locale plus expressive. Aucun dégradé, glow, glassmorphism, asset ou police distante. Les thèmes clair/sombre, le contraste forcé, le focus clavier et la réduction du mouvement restent pris en charge.
+**Organic Workspace** organise l’interface comme un véritable espace de travail : rail de navigation, canvas éditorial, contexte secondaire, panneaux plus organiques et micro-interactions fonctionnelles. La palette Ink / Slate / Sage / Brass évolue vers des tons plus naturels et une typographie locale plus expressive. Aucun dégradé, glow, glassmorphism, asset ou police distante. Les thèmes clair/sombre, le contraste forcé, le focus clavier et la réduction du mouvement restent pris en charge.
 
 <div align="center">
   <img src="assets/brand/mailpin-brand-board.svg" width="92%" alt="Système de marque MailPin">

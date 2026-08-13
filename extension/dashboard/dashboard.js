@@ -1220,70 +1220,12 @@ function bindEvents() {
   });
 }
 
-function enhanceOrganicDashboard() {
-  if (document.body.dataset.workspaceEnhanced === "true") return;
-  const shell = $("dashboard-main");
-  const header = shell?.querySelector(".dashboard-header");
-  const tabs = shell?.querySelector(".view-tabs");
-  const layout = shell?.querySelector(".dashboard-layout");
-  const legacySidebar = layout?.querySelector(".dashboard-sidebar");
-  const content = layout?.querySelector(".dashboard-content");
-  const stats = $("stats");
-  const reminders = $("reminder-center");
-  const technical = shell?.querySelector(".technical-panel");
-  const support = shell?.querySelector(".support-panel");
-  if (!shell || !header || !tabs || !legacySidebar || !content || !stats || !reminders) {
-    throw new Error("Structure Dashboard incompatible avec Organic Workspace.");
-  }
-
-  document.body.classList.add("mp-organic-workspace");
-  document.body.dataset.workspaceEnhanced = "true";
-
-  const frame = node("div", "workspace-frame");
-  const rail = node("aside", "workspace-rail");
-  rail.setAttribute("aria-label", msg("dashboardTitle", "MailPin"));
-  const railBrand = node("div", "workspace-rail-brand");
-  const railIcon = document.createElement("img");
-  railIcon.src = "../icons/mailpin-icon.svg";
-  railIcon.alt = "";
-  railIcon.width = 34;
-  railIcon.height = 34;
-  const railBrandCopy = node("div", "workspace-rail-brand-copy");
-  railBrandCopy.append(node("strong", "", "MailPin"), node("span", "", "Follow-up workspace"));
-  railBrand.append(railIcon, railBrandCopy);
-  rail.append(railBrand);
-
-  const searchField = legacySidebar.querySelector(".search-field");
-  if (searchField) rail.append(searchField);
-  rail.append(tabs);
-  while (legacySidebar.firstChild) rail.append(legacySidebar.firstChild);
-
-  const stage = node("main", "workspace-stage");
-  const status = $("status");
-  stage.append(header);
-  if (status) stage.append(status);
-  stage.append(stats, reminders, content);
-
-  const inspector = node("aside", "workspace-inspector");
-  inspector.setAttribute("aria-label", msg("contextPanel", "Contexte"));
-  inspector.hidden = true;
-  inspector.id = "workspace-inspector";
-  const inspectorHeader = node("div", "workspace-inspector-header");
-  inspectorHeader.append(node("strong", "", msg("contextPanel", "Contexte")));
-  const inspectorClose = node("button", "icon-button workspace-inspector-close", "×");
-  inspectorClose.type = "button";
-  inspectorClose.setAttribute("aria-label", msg("closeContext", "Fermer le contexte"));
-  inspectorHeader.append(inspectorClose);
-  inspector.append(inspectorHeader);
-  if (technical) inspector.append(technical);
-  if (support) inspector.append(support);
-
-  const contextToggle = node("button", "button secondary context-toggle", msg("contextPanel", "Contexte"));
-  contextToggle.type = "button";
-  contextToggle.setAttribute("aria-expanded", "false");
-  contextToggle.setAttribute("aria-controls", inspector.id);
-  header.querySelector(".header-primary-actions")?.prepend(contextToggle);
-
+function installOrganicDashboardInteractions() {
+  const frame = document.querySelector(".workspace-frame");
+  const inspector = $("workspace-inspector");
+  const contextToggle = $("context-toggle");
+  const inspectorClose = $("workspace-inspector-close");
+  if (!frame || !inspector || !contextToggle || !inspectorClose) throw new Error("Structure Dashboard incompatible avec Organic Workspace.");
   const setInspectorOpen = open => {
     inspector.hidden = !open;
     frame.dataset.inspectorOpen = String(open);
@@ -1296,14 +1238,11 @@ function enhanceOrganicDashboard() {
   document.addEventListener("keydown", event => {
     if (event.key === "Escape" && !inspector.hidden && !document.querySelector("dialog[open]")) setInspectorOpen(false);
   });
-
-  frame.append(rail, stage, inspector);
-  shell.replaceChildren(frame);
 }
 
 window.addEventListener("DOMContentLoaded", async () => {
   localize();
-  enhanceOrganicDashboard();
+  installOrganicDashboardInteractions();
   $("app-version").textContent = `v${api.runtime.getManifest().version}`;
   bindEvents();
   await load();
