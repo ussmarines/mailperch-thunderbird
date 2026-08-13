@@ -1,19 +1,20 @@
 {
   "schema_version": 1,
   "purpose": "Cache machine-readable des dernières preuves de validation réutilisables. Ce fichier ne remplace ni AGENTS.md ni les règles de sécurité et ne doit jamais servir à inventer un test non exécuté.",
-  "recorded_at": "2026-08-13T12:40:00+02:00",
+  "recorded_at": "2026-08-13T17:05:00+02:00",
   "baseline": {
     "repository": "ussmarines/mailpin-thunderbird",
     "branch": "design/organic-workspace-ui",
-    "commit_sha": "d763c359894f1726d6d96f85f8f8f72c2e0e9304",
-    "tree_sha": "afdbae70b6fd3f2312e16be759635d8ad782ef89",
+    "commit_sha": "41ae231d4c3f2fca1ccbb33325b294ba88453d40",
+    "tree_sha": "d16d10fc33740c8a239028c997e7107a3ed88d10",
     "working_tree_patch_id": "",
     "untracked_candidate_files": []
   },
   "policy": {
     "mode": "latest-valid-evidence-only",
     "ignore_for_invalidation": [
-      "docs/AI_VALIDATION_STATE.json"
+      "docs/AI_VALIDATION_STATE.json",
+      "docs/CODEX_HANDOFF.md"
     ],
     "reuse_requires": [
       "result == success",
@@ -31,12 +32,12 @@
   },
   "repository_checks": [
     {
-      "id": "github-pr-organic-workspace-gate",
+      "id": "github-pr-organic-workspace-final-audit-gate",
       "result": "success",
-      "validated_commit": "d763c359894f1726d6d96f85f8f8f72c2e0e9304",
+      "validated_commit": "41ae231d4c3f2fca1ccbb33325b294ba88453d40",
       "working_tree_patch_id": "",
-      "validated_at": "2026-08-13T12:39:42+02:00",
-      "command": "GitHub Actions PR #39 QA run 31692030322 + Thunderbird runtime smoke run 31692030281",
+      "validated_at": "2026-08-13T17:04:26+02:00",
+      "command": "GitHub Actions PR #39 QA run 31713371255 + Thunderbird runtime smoke run 31713371263",
       "environment": {
         "ci": "GitHub Actions",
         "linux": "ubuntu-24.04",
@@ -57,35 +58,34 @@
         "BRANDING.md"
       ],
       "evidence": {
-        "kind": "github-pr-organic-workspace-gate",
-        "summary": "PR #39 sur le HEAD produit exact : npm run ci complet et structure XPI verts sous Linux ; contrôles source/modèles Windows verts ; garde sécurité et identité historique verte ; smoke réel Thunderbird 153 vert avec installation, injection unique du panneau, ouverture Dashboard, nettoyage à la désinstallation et réinstallation propre.",
-        "xpi_sha256": "91276448c21361d32709aefb933924dd5d067c83c1eb60a0fc49a50563fe80d7",
-        "development_artifact_id": 9177778752,
-        "thunderbird_smoke_artifact_id": 9177789095
+        "kind": "github-pr-organic-workspace-final-audit-gate",
+        "summary": "HEAD propre après audit structurel : npm run ci complet et structure XPI verts sous Linux ; contrôles source/modèles Windows verts ; garde sécurité et identité historique verte ; smoke réel Thunderbird 153 vert. Le shell Organic Workspace est désormais statique dans le HTML source et le garde Organic Workspace s'exécute réellement dans npm test.",
+        "xpi_sha256": "5ae857ea9b10303b77fdb87fa5b8fbe7894c1f30e829431942542515316d1e19",
+        "development_artifact_id": 9186201391,
+        "thunderbird_smoke_artifact_id": 9186204968
       }
     }
   ],
   "targeted_checks": [
     {
-      "id": "organic-workspace-ui-contract",
+      "id": "organic-workspace-canonical-shell-and-test-execution",
       "result": "success",
-      "validated_commit": "d763c359894f1726d6d96f85f8f8f72c2e0e9304",
-      "validated_at": "2026-08-13T12:39:16+02:00",
-      "command": "tests/test_organic_workspace_ui.py + UI regressions/polish + accessibility/localization + Dashboard/Options contracts",
+      "validated_commit": "41ae231d4c3f2fca1ccbb33325b294ba88453d40",
+      "validated_at": "2026-08-13T17:04:20+02:00",
+      "command": "tests/test_organic_workspace_ui.py + Dashboard DOM + Options registry + accessibility/localization + UI polish/regressions",
       "invalidates_on": [
         "extension/styles/**",
         "extension/dashboard/**",
         "extension/options/**",
         "docs/UI_SPEC.md",
-        "BRANDING.md",
         "tests/test_organic_workspace_ui.py",
         "tests/test_ui_regressions.py",
         "tests/test_ui_polish_3_2_3.py",
-        "tests/static_checks.py"
+        "tests/test_regressions_3_2_6.py"
       ],
       "evidence": {
         "kind": "targeted-ui-contract",
-        "summary": "Organic Workspace, responsive CSS, thèmes, reduced motion, forced-colors, registre Options, Dashboard DOM et localisation/accessibilité passent les gardes ciblées ; aucune ressource distante, gradient, glow ou glassmorphism n'est introduit par le nouveau système partagé."
+        "summary": "Un seul landmark main par document, aucun shell UI reconstruit par JS, anciennes règles wrapper supprimées, Save/Cancel associés au formulaire depuis le header sticky, et les cinq fonctions de test Organic Workspace sont réellement exécutées par le point d'entrée du script."
       }
     }
   ]

@@ -3,61 +3,44 @@
 ## Référence
 
 - dépôt : `ussmarines/mailpin-thunderbird` ;
-- branche active : `design/organic-workspace-ui` ;
-- base `main` : `497d71e9660c068a166201a4da13fdddc3e65628` ;
-- HEAD produit validé : `d763c359894f1726d6d96f85f8f8f72c2e0e9304` ;
-- PR : **#39 — design: rebuild MailPin as Organic Workspace** ;
+- branche auditée : `design/organic-workspace-ui` ;
+- base `main` avant intégration : `497d71e9660c068a166201a4da13fdddc3e65628` ;
+- HEAD produit propre validé : `41ae231d4c3f2fca1ccbb33325b294ba88453d40` ;
+- PR : **#39 — design: rebuild MailPin as Organic Workspace V2 + QoL** ;
 - version distribuée inchangée : **1.6.1** ;
 - identifiant canonique inchangé : `ussmarines.mailpin@addons.thunderbird.net`.
 
-## Objectif et état
+## État audité
 
-La branche remplace l’ancienne direction Fluent par **Organic Workspace**. Il ne s’agit pas d’un skin swap : le Dashboard est réorganisé en rail de navigation / canvas / inspector, Options devient un éditeur de réglages persistant, et le panneau Thunderbird devient un compagnon compact. La typographie, la palette, les rayons, la profondeur et la motion ont été redéfinis, sans dépendance distante ni modification de la logique métier.
+Organic Workspace est désormais écrit directement dans les sources HTML/CSS canoniques : le runtime gère les états et interactions mais ne reconstruit plus le shell Dashboard/Options. Le Dashboard ne contient qu’un landmark `main`, Options conserve ses 101 contrôles persistés, et les anciens wrappers CSS devenus morts ont été supprimés.
 
-Le contrat canonique est désormais `docs/UI_SPEC.md`. La direction interdit gradients, glow, glassmorphism, blobs décoratifs et ressources distantes. Les thèmes clair/sombre, `forced-colors`, `prefers-reduced-motion`, le clavier et le zoom 200 % restent des exigences.
+La passe vidéo/QoL reste intégrée : responsive par surface disponible, inspector contextuel, menus et statistiques dans le flux, Kanban lisible, Rule Builder structuré, Affaires recomposées, commandes Enregistrer/Annuler dans l’en-tête sticky, palette automatique MailPin et focus immédiat après création.
 
-## Surfaces modifiées
+L’audit a aussi corrigé un défaut de validation : `tests/test_organic_workspace_ui.py` définissait des fonctions de test mais était lancé comme simple script. Il possède maintenant un point d’entrée explicite ; ses cinq contrats sont réellement exécutés par `npm test` et affichent `Organic Workspace UI contracts: OK`.
 
-- design system : `extension/styles/tokens.css`, `extension/styles/workspace.css` ;
-- Dashboard : `extension/dashboard/dashboard.html`, `extension/dashboard/dashboard.js` ;
-- Options : `extension/options/options.html`, `extension/options/options.js`, `extension/options/AGENTS.md` ;
-- panneau Thunderbird : `extension/styles/pin.css` ;
-- contrat / marque : `docs/UI_SPEC.md`, `BRANDING.md`, README FR/EN ;
-- gardes : `tests/test_organic_workspace_ui.py`, gardes UI/statics/métadonnées associées ;
-- métadonnées de dépôt : URLs canoniques synchronisées vers `ussmarines/mailpin-thunderbird`.
+Aucun changement de permission, API Experiment, schéma de données, stockage, réseau, télémétrie, dépendance runtime ou ID d’extension.
 
-Aucun changement de permission, API Experiment, schéma de données, stockage, workflow métier, réseau, télémétrie, dépendance runtime ou ID d’extension.
+## Preuves fraîches du HEAD propre
 
-## Preuves fraîches
+Sur `41ae231d4c3f2fca1ccbb33325b294ba88453d40` :
 
-Sur le HEAD produit exact `d763c359894f1726d6d96f85f8f8f72c2e0e9304` :
+- GitHub Actions QA run **31713371255** : succès ;
+  - `npm run ci` complet + structure XPI sous Linux : succès ;
+  - contrôles source/modèles Windows : succès ;
+  - garde sécurité + full-history identity : succès ;
+  - artefact `development-build` : **9186201391** ;
+- Thunderbird runtime smoke run **31713371263** : succès ;
+  - Thunderbird **153.0.1 ESR** + geckodriver **0.37.1** ;
+  - installation, injection, ouverture Dashboard, désinstallation/nettoyage et réinstallation : succès ;
+  - artefact `thunderbird-runtime-smoke` : **9186204968** ;
+- XPI du HEAD propre : SHA-256 `5ae857ea9b10303b77fdb87fa5b8fbe7894c1f30e829431942542515316d1e19`.
 
-- PR #39 QA run **31692030322** : succès ;
-  - Full verification Linux + `npm run ci` + structure XPI : succès ;
-  - Source and model checks Windows : succès ;
-  - Security guard regression + full-history identity guard : succès ;
-  - artefact `development-build` : **9177778752** ;
-- PR #39 Thunderbird runtime smoke run **31692030281** : succès ;
-  - Thunderbird **153.0.1esr** + geckodriver **0.37.1** ;
-  - installation temporaire, injection unique panneau/toggle, ouverture Dashboard, nettoyage désinstallation et réinstallation propre : succès ;
-  - artefact `thunderbird-runtime-smoke` : **9177789095** ;
-- XPI de développement produit par ces gates : SHA-256 `91276448c21361d32709aefb933924dd5d067c83c1eb60a0fc49a50563fe80d7`.
+## Limites
 
-Avant la PR, le tree produit et la passe de cohérence ont également chacun passé `npm run ci` complet sur la branche.
-
-## Limites de preuve
-
-Le smoke Thunderbird confirme le chargement, l’injection et le cycle de vie réel ; il ne constitue pas à lui seul une validation humaine de la qualité visuelle. Restent à observer manuellement avant toute décision de merge :
-
-- Dashboard aux largeurs desktop / intermédiaire / étroite ;
-- Options, recherche, navigation et dock Enregistrer/Annuler ;
-- panneau avec resize splitter continu ;
-- clair / sombre / contraste élevé ;
-- zoom 200 % et réduction du mouvement ;
-- ressenti de motion, densité, lisibilité et ergonomie avec données réalistes.
+Le smoke réel valide le cycle de vie et les contrats runtime, pas le jugement visuel humain. Les derniers problèmes d’espacement/ergonomie signalés par l’utilisateur devront servir d’entrées à la prochaine passe de revue, après l’audit global du dépôt.
 
 ## Git
 
-**Ne pas merger #39 dans `main` sans nouvelle autorisation explicite de l’utilisateur.** La demande courante autorise le travail et les pushs sur la branche dédiée, mais exclut le push/merge sur `main`.
+L’utilisateur a explicitement autorisé l’intégration de cette refonte dans `main` après cette validation, puis un audit global du dépôt. Utiliser le mode de merge autorisé par le ruleset (squash si requis), vérifier le SHA final de `main`, puis repartir d’une branche dédiée pour le nettoyage global.
 
-Codex Security n’a pas été utilisé et n’est pas requis par cette refonte.
+Codex Security n’a pas été utilisé et n’est pas requis par cette étape.
