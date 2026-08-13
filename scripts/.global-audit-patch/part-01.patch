@@ -1,0 +1,155 @@
+ Les futures fonctions **Prochaine action**, **Timeline de conversation**, **Follow-up récurrent** et **Résultat du suivi** restent hors périmètre de cette release.
+ 
+@@ -27,7 +28,7 @@ Les futures fonctions **Prochaine action**, **Timeline de conversation**, **Foll
+ 12. Le métier ne doit pas réintroduire d’appels directs à `MailServices`, `MailUtils`, `MessageArchiver`, `cal`, `CalEvent` ou `CalTodo` en dehors de la frontière de compatibilité.
+ 13. Le mode **Recommandé** prépare des valeurs sûres mais ne sauvegarde jamais automatiquement ; Enregistrer/Annuler restent explicites.
+ 14. Toute classe ou service privilégié injecté dans `PinCompatibility` doit être importé/défini explicitement avant la création des adaptateurs ; aucun identifiant global implicite ne doit être requis au bootstrap.
+-15. L’apparence Fluent 2 repose sur les composants HTML natifs et les jetons CSS locaux de `extension/styles/tokens.css` ; aucun paquet Fluent, bundler ou actif distant n’entre dans le XPI.
++15. Organic Workspace repose sur HTML natif et les jetons CSS locaux ; le shell Dashboard/Options est écrit directement dans les sources et aucun framework UI, bundler ou actif distant n’entre dans le XPI.
+ 16. La portée « Comptes sélectionnés » utilise `account.key` comme identité canonique de bout en bout ; `incomingServer.key` n’est pas une clé de sélection persistée.
+ 
+ ## Carte complète des fichiers
+@@ -83,7 +84,7 @@ L’action « appliquer les réglages recommandés » produit uniquement un brou
+ 
+ La sélection de comptes apparaît uniquement pour la portée « Comptes sélectionnés », conserve le brouillon lors d’un changement temporaire de portée et affiche les comptes Thunderbird avec leurs libellés lisibles. Le banc 1.5.2 valide automatiquement la sauvegarde Options → panneau et la persistance A+C (34 épingles, B absent) après redémarrage sur le même profil.
+ 
+-`@fluentui/web-components` 3.0.3 a été évalué puis retiré : aucun fichier de l’extension ne l’importait, le build XPI n’a pas de bundler, le paquet exige Node 22/24 alors que le dépôt conserve Node 20 dans sa matrice, et son arbre n’apportait donc aucun composant au produit livré. MailPin garde le langage Fluent 2 local, sans dépendance npm runtime ni lockfile.
++`@fluentui/web-components` 3.0.3 a été évalué puis retiré : aucun fichier de l’extension ne l’importait, le build XPI n’a pas de bundler, le paquet exige Node 22/24 alors que le dépôt conserve Node 20 dans sa matrice, et son arbre n’apportait donc aucun composant au produit livré. MailPin garde Organic Workspace local, sans dépendance npm runtime ni lockfile ; Fluent 2 reste uniquement une référence historique de décisions antérieures.
+ 
+ ### Banc Thunderbird
+ 
+diff --git a/README.en.md b/README.en.md
+index b17dbc7..d89de22 100644
+--- a/README.en.md
++++ b/README.en.md
+@@ -7,6 +7,7 @@
+ 
+ [![QA](https://github.com/ussmarines/mailpin-thunderbird/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/ussmarines/mailpin-thunderbird/actions/workflows/ci.yml)
+ ![Release](https://img.shields.io/badge/release-v1.6.1-4F7F75)
++![Source](https://img.shields.io/badge/candidate-v1.7.0-3D536B)
+ ![Thunderbird](https://img.shields.io/badge/Thunderbird-153.x-3D536B)
+ ![License](https://img.shields.io/badge/license-MailPin%20Source--Available%201.1-1A1D21)
+ </div>
+@@ -32,7 +33,8 @@ MailPin turns important email into actionable follow-up **without replacing Thun
+ 
+ ## Compatibility
+ 
+-- **MailPin:** `1.6.1`
++- **Source version:** `1.7.0` — in development
++- **Latest public release:** `1.6.1`
+ - **Thunderbird:** `153.0` to `153.*`
+ - **Format:** MailExtension Manifest V3
+ - **Locales:** French and English
+@@ -60,8 +62,8 @@ npm run ci
+ 
+ Reproducible outputs:
+ 
+-- `dist/MailPin_v1.6.1.xpi`
+-- `dist/MailPin_GitHub_Repository_v1.6.1.zip`
++- `dist/MailPin_v1.7.0.xpi`
++- `dist/MailPin_GitHub_Repository_v1.7.0.zip`
+ - `dist/SHA256SUMS.txt`
+ 
+ ## Privacy & security
+@@ -70,8 +72,8 @@ MailPin has no runtime network call, telemetry, advertising or remote code. Full
+ 
+ - [Privacy](PRIVACY.md)
+ - [Security](SECURITY.md)
+-- [Security audit 1.6.0](SECURITY_AUDIT_1.6.0.md)
+-- [Validation report 1.6.0](VALIDATION_REPORT_1.6.0.md)
++- [Source security audit 1.7.0](SECURITY_AUDIT_1.7.0.md)
++- [Source validation report 1.7.0](VALIDATION_REPORT_1.7.0.md)
+ - [Known limitations](docs/KNOWN_LIMITATIONS.md)
+ 
+ ## Documentation & support
+diff --git a/README.md b/README.md
+index e92f767..6be4663 100644
+--- a/README.md
++++ b/README.md
+@@ -7,6 +7,7 @@
+ 
+ [![QA](https://github.com/ussmarines/mailpin-thunderbird/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/ussmarines/mailpin-thunderbird/actions/workflows/ci.yml)
+ ![Release](https://img.shields.io/badge/release-v1.6.1-4F7F75)
++![Source](https://img.shields.io/badge/candidate-v1.7.0-3D536B)
+ ![Thunderbird](https://img.shields.io/badge/Thunderbird-153.x-3D536B)
+ ![Licence](https://img.shields.io/badge/licence-MailPin%20Source--Available%201.1-1A1D21)
+ </div>
+@@ -32,7 +33,8 @@ MailPin transforme les e-mails importants en suivi actionnable **sans remplacer
+ 
+ ## Compatibilité
+ 
+-- **MailPin :** `1.6.1`
++- **Version source :** `1.7.0` — en préparation
++- **Dernière release publique :** `1.6.1`
+ - **Thunderbird :** `153.0` à `153.*`
+ - **Format :** MailExtension Manifest V3
+ - **Langues :** français et anglais
+@@ -60,8 +62,8 @@ npm run ci
+ 
+ Livrables reproductibles :
+ 
+-- `dist/MailPin_v1.6.1.xpi`
+-- `dist/MailPin_GitHub_Repository_v1.6.1.zip`
++- `dist/MailPin_v1.7.0.xpi`
++- `dist/MailPin_GitHub_Repository_v1.7.0.zip`
+ - `dist/SHA256SUMS.txt`
+ 
+ ## Confidentialité & sécurité
+@@ -70,8 +72,8 @@ MailPin ne contient aucun appel réseau runtime, aucune télémétrie, aucune pu
+ 
+ - [Politique de confidentialité](PRIVACY.md)
+ - [Politique de sécurité](SECURITY.md)
+-- [Audit sécurité 1.6.0](SECURITY_AUDIT_1.6.0.md)
+-- [Rapport de validation 1.6.0](VALIDATION_REPORT_1.6.0.md)
++- [Audit sécurité source 1.7.0](SECURITY_AUDIT_1.7.0.md)
++- [Rapport de validation source 1.7.0](VALIDATION_REPORT_1.7.0.md)
+ - [Limites connues](docs/KNOWN_LIMITATIONS.md)
+ 
+ ## Documentation & support
+diff --git a/ROADMAP.md b/ROADMAP.md
+index fd61f65..84b2178 100644
+--- a/ROADMAP.md
++++ b/ROADMAP.md
+@@ -1,107 +1,41 @@
+-# Feuille de route
++# Feuille de route MailPin
+ 
+-## État courant — 1.5.1
++## État courant — source 1.7.0
+ 
+-- [x] refonte visuelle 1.5.0 publiée ;
+-- [x] correction de l’éditeur de carte/checklist préparée pour 1.5.1 ;
+-- [x] opérations Messages restantes ramenées derrière `PinCompatibility.messages` ;
+-- [x] diagnostic fournisseur et schéma Settings réalignés ;
+-- [ ] publication GitHub 1.5.1 après double audit, CI, sécurité et banc Thunderbird frais.
++Dernière release publique : **1.6.1**. La source 1.7.0 est une ligne de développement/audit et n’est pas publiée automatiquement.
+ 
+-## 1.3.0 — consolidation Thunderbird et interface
++### Terminé dans la ligne 1.7.0
+ 
+-Branche historique fusionnée : `refactor/thunderbird-integration-and-ux`
+-Base historique : `main` / `385815f546968acf721c8cd8486ff48f55f78a32`
++- [x] Organic Workspace intégré sur `main` par la PR #39 ;
++- [x] Dashboard / Options écrits sous forme de shells canoniques en source, sans re-parenting UI runtime ;
++- [x] responsive interne, menus/statistiques in-flow, inspector contextuel, Rule Builder et Affaires recomposés ;
++- [x] palette QoL MailPin et couleurs automatiques différenciées ;
++- [x] test Organic Workspace réellement exécuté par `npm test` ;
++- [x] audit des permissions, du réseau runtime, des entrées privilégiées, du stockage, des tests et des workflows ;
++- [x] nettoyage des helpers, métadonnées et documents actifs devenus obsolètes.
+ 
+-### Intégration Thunderbird
++### Validation encore requise avant publication 1.7.0
+ 
+-- [x] isoler les opérations Messages derrière un adaptateur injecté ;
+-- [x] isoler la gestion des tags et leur propriété stricte ;
+-- [x] isoler Agenda, ACL, capacités et observateurs ;
+-- [x] fournir une façade `PinCompatibility` ;
+-- [x] ajouter des contrats avec faux services Thunderbird ;
+-- [x] ajouter une garde empêchant le métier de réintroduire les accès natifs extraits ;
+-- [x] garder le DOM `about:3pane` dans l’orchestrateur pour éviter un refactoring graphique massif simultané ;
+-- [x] exécuter et stabiliser le smoke runtime sur Thunderbird 153.0.1 ESR Linux avec profil local synthétique, installation/cleanup/réinstallation validés ;
+-- [ ] après revue Codex, tester la future release sur le poste utilisateur et ses comptes réels.
++- [ ] recette visuelle humaine complète du XPI exact : Dashboard, Options, panneau, menus, splitter, clair/sombre, zoom 200 %, contraste élevé ;
++- [ ] confirmer/corriger les derniers points UI signalés par l’utilisateur ;
++- [ ] revue Codex indépendante sur le `main` audité, sans Codex Security par défaut ;
++- [ ] matrice réelle Gmail / Microsoft / IMAP et calendriers réseau si ces environnements sont annoncés pour la publication ;
