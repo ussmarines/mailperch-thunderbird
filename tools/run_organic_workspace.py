@@ -38,6 +38,22 @@ if old_aria not in dashboard_text:
     raise RuntimeError("dashboard.js: workspace rail aria anchor not found")
 dashboard.write_text(dashboard_text.replace(old_aria, new_aria, 1), encoding="utf-8", newline="\n")
 
+# The repository was renamed before this design branch. Synchronize the active
+# public metadata now instead of relying on GitHub's legacy redirect.
+old_repo = "ussmarines/mailperch-thunderbird"
+new_repo = "ussmarines/mailpin-thunderbird"
+for relative in (
+    "extension/manifest.json",
+    "README.md",
+    "README.en.md",
+    "tests/test_project_metadata.py",
+):
+    path = root / relative
+    value = path.read_text(encoding="utf-8")
+    if old_repo not in value:
+        raise RuntimeError(f"{relative}: expected legacy repository slug not found")
+    path.write_text(value.replace(old_repo, new_repo), encoding="utf-8", newline="\n")
+
 # Typography guard: local preferred faces + guaranteed system fallback.
 guard = root / "tests/test_ui_regressions.py"
 guard_text = guard.read_text(encoding="utf-8")
