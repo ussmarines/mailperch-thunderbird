@@ -191,6 +191,7 @@ body.mp-organic-workspace .schedule-grid { gap: 16px 18px; }
 .settings-organic-stage .entity-field { gap: 8px; }
 .settings-organic-stage .entity-field > span:first-child { margin-bottom: 1px; }
 .settings-organic-stage .entity-actions { display: flex; align-items: center; justify-content: flex-end; gap: 8px; flex-wrap: wrap; }
+.case-editor-actions, .rule-builder-actions { min-width: 0; }
 .settings-organic-stage .group-editor-row { grid-template-columns: auto minmax(240px, 1fr) 88px auto; max-width: 800px; gap: 16px; padding: 18px; }
 .settings-organic-stage .case-editor-card, .settings-organic-stage .template-editor-card { display: grid; grid-template-columns: 1fr; gap: 22px; padding: 24px; }
 .settings-organic-stage .case-editor-card { border-inline-start: 3px solid var(--group-color, var(--mp-brand-foreground)); }
