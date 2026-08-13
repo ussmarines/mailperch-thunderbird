@@ -145,3 +145,13 @@ La seconde passe, issue d’une recette vidéo réelle dans Thunderbird, impose 
 - les toasts disposent d’une safe area indépendante des docks, panneaux de support et actions fixes ;
 - les espacements verticaux doivent suivre un rythme lisible : 14–18 px à l’intérieur des groupes, 20–28 px entre sous-groupes, 44–56 px entre grandes sections ;
 - une grande zone vide n’est pas un substitut à la hiérarchie : les états vides et blocs peu denses doivent se dimensionner à leur contenu.
+
+## 11. Quality of Life et valeurs par défaut
+
+- Les couleurs générées automatiquement utilisent la palette d’accents MailPin : Sage, Berry, Moss, Indigo, Brass, Ocean, Clay et Plum. Elles doivent être nettement différenciables tout en restant cohérentes avec Organic Workspace.
+- Les couleurs personnalisées choisies par l’utilisateur sont conservées. Seules les anciennes couleurs générées automatiquement par MailPin peuvent être remappées vers la palette courante.
+- Lorsqu’un groupe, une affaire ou toute autre entité colorable est créée, MailPin propose la couleur la moins utilisée de la palette avant de recommencer un cycle.
+- Une création place immédiatement le focus sur son champ de nom et sélectionne le libellé par défaut pour permettre la saisie sans clic supplémentaire.
+- Un champ optionnel ne devient obligatoire qu’au moment de l’action qui en dépend. En particulier, une affaire peut exister sans échéance ni calendrier ; Agenda valide ces données uniquement lors de la création/synchronisation d’un élément.
+- Les contrôles de couleur et de remise à la valeur par défaut doivent exposer un nom accessible contextualisé par l’entité concernée.
+- Les états `dirty`, le raccourci Ctrl/Cmd+S, l’avertissement de fermeture avec modifications non enregistrées, les états busy et les confirmations destructives existantes restent les mécanismes de référence et ne doivent pas être dupliqués par des dialogues supplémentaires sans besoin prouvé.

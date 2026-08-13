@@ -72,3 +72,45 @@ def test_organic_workspace_v2_video_driven_contracts():
     assert 'node("article","group-row case-editor-row case-editor-card")' in options_js
     assert 'const optionState = calendar.taskCompatible && calendar.eventCompatible' in options_js
     assert '`${calendar.name} · ${optionState}`' in options_js
+
+def test_qol_palette_defaults_and_low_friction_creation_contract():
+    import re
+
+    implementation = text("extension/api/pinInbox/implementation.js")
+    options_js = text("extension/options/options.js")
+    spec = text("docs/UI_SPEC.md")
+
+    def palette(source, name):
+        match = re.search(rf"const {name} = Object\.freeze\(\[(.*?)\]\);", source, re.S)
+        assert match, name
+        return re.findall(r"#[0-9a-fA-F]{6}", match.group(1))
+
+    runtime_palette = [value.lower() for value in palette(implementation, "DEFAULT_COLORS")]
+    options_palette = [value.lower() for value in palette(options_js, "ENTITY_DEFAULT_COLORS")]
+    assert runtime_palette == options_palette
+    assert len(runtime_palette) == 8
+    assert len(set(runtime_palette)) == len(runtime_palette)
+    assert runtime_palette[0] == "#4e7569"
+    assert "#0f6cbd" not in runtime_palette
+    assert "#6264a7" not in runtime_palette
+
+    assert "function nextDefaultColor(items = [], startIndex = 0)" in implementation
+    assert "stored === getLegacyDefaultColor(accountKey)" in implementation
+    assert "nextDefaultColor(this._data.groups)" in implementation
+    assert "nextDefaultColor([...(this._data.groups || []), ...values])" in implementation
+    assert "function nextEntityColor(items = [], startIndex = 0)" in options_js
+    assert 'color: nextEntityColor([...groups, ...cases])' in options_js
+    assert 'focusCreatedEntity("groups-list")' in options_js
+    assert 'focusCreatedEntity("cases-list")' in options_js
+    assert 'focusCreatedEntity("templates-list")' in options_js
+    assert 'focusCreatedEntity("rules-list")' in options_js
+
+    # Deadline and calendar are optional until the Agenda action itself
+    # validates the values it needs.
+    assert 'control.required = true' not in options_js
+    assert 'due.type="datetime-local";due.required=true' not in options_js
+    assert 'if (!item.dueAt) throw new Error(msg("dynamicCalendarDueRequired"));' in options_js
+    assert 'if (!calendar.value) {' in options_js
+
+    assert 'color.setAttribute("aria-label", `${msg("dynamicColor")} · ${primaryLabel}`)' in options_js
+    assert "Quality of Life et valeurs par défaut" in spec

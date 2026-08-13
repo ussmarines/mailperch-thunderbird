@@ -36,6 +36,39 @@ const INITIALIZATION_TIMEOUTS = Object.freeze({
   calendar: 7_000,
   auxiliary: 7_000
 });
+const ENTITY_DEFAULT_COLORS = Object.freeze([
+  "#4e7569", "#a14f68", "#718547", "#59558f",
+  "#9b7040", "#47758e", "#a95d4e", "#875476"
+]);
+
+function nextEntityColor(items = [], startIndex = 0) {
+  const usage = new Map(ENTITY_DEFAULT_COLORS.map(color => [color, 0]));
+  for (const item of Array.isArray(items) ? items : []) {
+    const color = String(item?.color || "").toLowerCase();
+    if (usage.has(color)) usage.set(color, usage.get(color) + 1);
+  }
+  const minimum = Math.min(...usage.values());
+  const start = Math.max(0, Number(startIndex) || 0) % ENTITY_DEFAULT_COLORS.length;
+  for (let offset = 0; offset < ENTITY_DEFAULT_COLORS.length; offset += 1) {
+    const color = ENTITY_DEFAULT_COLORS[(start + offset) % ENTITY_DEFAULT_COLORS.length];
+    if (usage.get(color) === minimum) return color;
+  }
+  return ENTITY_DEFAULT_COLORS[start];
+}
+
+function focusCreatedEntity(hostId, selector = "input:not([type='color'])") {
+  requestAnimationFrame(() => {
+    const host = $(hostId);
+    const card = host?.lastElementChild;
+    if (!card) return;
+    card.scrollIntoView({block: "nearest", behavior: "smooth"});
+    const control = card.querySelector(selector);
+    control?.focus({preventScroll: true});
+    if (control instanceof HTMLInputElement && ["text", "search", "url", "email", "tel"].includes(control.type)) {
+      control.select();
+    }
+  });
+}
 const COMMANDS = Object.freeze([
   ["toggle-pin-selected", "commandToggle"],
   ["toggle-conversation-selected", "commandConversation"],
@@ -874,7 +907,6 @@ function calendarLabel(id) {
 function calendarOptions(type, selectedId = "") {
   const compatible = availableCalendars.filter(calendar => type === "event" ? calendar.eventCompatible : calendar.taskCompatible);
   const control = select([["", msg("dynamicChooseCalendar")], ...compatible.map(calendar => [calendar.id, calendar.name])], selectedId, msg("calendarTarget"));
-  control.required = true;
   return {control, compatible};
 }
 
@@ -942,7 +974,7 @@ function renderCases(){
     const name=document.createElement("input");name.value=item.name;name.maxLength=120;name.required=true;
     const color=document.createElement("input");color.type="color";color.value=item.color;
     const status=select([["active",msg("statusActive")],["waiting",msg("statusWaiting")],["planned",msg("statusPlanned")],["completed",msg("statusComplete")]],item.status||"active",msg("dynamicStatus"));
-    const due=document.createElement("input");due.type="datetime-local";due.required=true;due.value=item.dueAt?new Date(item.dueAt-new Date().getTimezoneOffset()*60000).toISOString().slice(0,16):"";
+    const due=document.createElement("input");due.type="datetime-local";due.value=item.dueAt?new Date(item.dueAt-new Date().getTimezoneOffset()*60000).toISOString().slice(0,16):"";
     const note=document.createElement("input");note.value=item.note||"";note.placeholder=msg("notes");
     const type=select([["task",msg("task")],["event",msg("event")]],item.calendarItemType||currentSettings().calendarItemType||"task",msg("calendarItemType"));
     let {control: calendar, compatible} = calendarOptions(type.value, item.calendarId || currentSettings().preferredCalendarId || "");
@@ -1050,10 +1082,14 @@ function renderAccounts(accounts) {
     color.dataset.settingDirty = "true";
     color.dataset.settingSave = "true";
     color.dataset.settingMigration = PinSettings.MIGRATION_STRATEGY;
+    color.setAttribute("aria-label", `${msg("dynamicColor")} · ${primaryLabel}`);
+    color.title = `${msg("dynamicColor")} · ${primaryLabel}`;
     color.addEventListener("input", () => card.style.setProperty("--account-color", color.value));
     accountControls.set(account.key, color);
     const reset = node("button", "secondary", msg("defaultButton"));
     reset.type = "button";
+    reset.setAttribute("aria-label", `${msg("defaultButton")} · ${primaryLabel}`);
+    reset.title = `${msg("defaultButton")} · ${primaryLabel}`;
     reset.addEventListener("click", () => {
       color.value = account.defaultColor;
       card.style.setProperty("--account-color", account.defaultColor);
@@ -1882,19 +1918,20 @@ async function startOptions() {
     groups.push({
       id: uniqueEntityId("group", groups),
       name: msg("dynamicNewGroup"),
-      color: "#6264a7"
+      color: nextEntityColor([...groups, ...cases])
     });
     renderGroups();
     renderRules();
     renderTemplates();
     syncDirtyState();
+    focusCreatedEntity("groups-list");
   });
 
   $("add-case").addEventListener("click", () => {
     cases.push({
       id: uniqueEntityId("case", cases),
       name: msg("dynamicNewCase"),
-      color: "#0f6cbd",
+      color: nextEntityColor([...groups, ...cases]),
       status: "active",
       createdAt: Date.now(),
       updatedAt: Date.now()
@@ -1903,6 +1940,7 @@ async function startOptions() {
     renderRules();
     renderTemplates();
     syncDirtyState();
+    focusCreatedEntity("cases-list");
   });
 
   $("add-template").addEventListener("click", () => {
@@ -1916,6 +1954,7 @@ async function startOptions() {
     renderTemplates();
     renderRules();
     syncDirtyState();
+    focusCreatedEntity("templates-list");
   });
 
   $("add-rule").addEventListener("click", () => {
@@ -1932,6 +1971,7 @@ async function startOptions() {
     });
     renderRules();
     syncDirtyState();
+    focusCreatedEntity("rules-list");
   });
 
   $("simulate-rules").addEventListener("click", async event => {
