@@ -1,0 +1,57 @@
+name: Temporary global audit cleanup
+on:
+  push:
+    branches:
+      - audit/global-repo-cleanup-2026-08-13
+permissions:
+  contents: write
+jobs:
+  apply:
+    if: ${{ !contains(github.event.head_commit.message, '[global-audit-applied]') }}
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: audit/global-repo-cleanup-2026-08-13
+          fetch-depth: 0
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: '24'
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.12'
+      - name: Apply audited canonical cleanup
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/temporary_global_audit_cleanup.py
+          node --check extension/api/pinInbox/implementation.js
+          node --check extension/dashboard/dashboard.js
+          node --check extension/options/options.js
+          python scripts/check_versions.py
+          python scripts/check_project_memory.py
+          python scripts/check_repo.py
+          python scripts/deep_audit.py
+          python scripts/scan_secrets.py
+          python tests/test_project_metadata.py
+          python tests/test_thunderbird_test_bench.py
+          python tests/test_security_hardening_3_2_4.py
+          python tests/test_organic_workspace_ui.py
+          python tests/test_cross_platform_ci.py
+          git diff --check
+          npm run ci
+      - name: Commit audited non-workflow changes
+        shell: bash
+        run: |
+          set -euo pipefail
+          git restore --source=HEAD -- .github/workflows/release.yml .github/workflows/thunderbird-functional-bench.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git diff --cached --check
+          if git diff --cached --quiet; then
+            echo "No audited product delta to commit."
+            exit 0
+          fi
+          git commit -m "chore(audit): reconcile MailPin 1.7.0 source and repository state [global-audit-applied]"
+          git push origin HEAD:audit/global-repo-cleanup-2026-08-13
