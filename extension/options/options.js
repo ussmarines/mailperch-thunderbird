@@ -1172,21 +1172,12 @@ function reorderSettingsFamilies() {
   const tail = form.querySelector(".form-footer");
   if (!tail) return;
   for (const heading of form.querySelectorAll(".settings-family-heading")) heading.remove();
-  const families = [
-    ["Essentiel", "navEssential", "Essentiel"],
-    ["Automatisation", "navAutomation", "Automatisation"],
-    ["Organisation", "navOrganization", "Organisation"],
-    ["Avancé", "navAdvanced", "Avancé"]
-  ];
-  for (const [family, key, fallback] of families) {
+  for (const family of ["Essentiel", "Automatisation", "Organisation", "Avancé"]) {
     const sections = [...form.querySelectorAll(`:scope > .settings-section[data-nav-group="${family}"]`)];
-    if (!sections.length) continue;
-    const heading = node("div", "settings-family-heading");
-    heading.append(node("h2", "", msg(key, fallback)));
-    form.insertBefore(heading, tail);
     for (const section of sections) form.insertBefore(section, tail);
   }
 }
+
 function renderRules(){
   const host=$("rules-list");host.replaceChildren();
   if(!rules.length)host.append(node("p","hint",msg("noCustomRules")));
@@ -1819,27 +1810,24 @@ function enhanceOrganicSettingsWorkspace() {
   const loading = $("settings-loading");
   const failure = $("settings-error");
   const form = $("settings-form");
-  if (!app || !layout || !sidebar || !header || !overview || !loading || !failure || !form) {
-    throw new Error("Structure Options incompatible avec Organic Workspace.");
-  }
-
+  const status = $("status");
+  const saveDock = $("save-dock");
+  if (!app || !layout || !sidebar || !header || !overview || !loading || !failure || !form) throw new Error("Structure Options incompatible avec Organic Workspace.");
   document.body.classList.add("mp-organic-settings");
   document.body.dataset.workspaceEnhanced = "true";
-
   const frame = node("div", "settings-organic-frame");
   const brand = node("div", "settings-organic-brand");
   const icon = document.createElement("img");
-  icon.src = "../icons/mailpin-icon.svg";
-  icon.alt = "";
-  icon.width = 34;
-  icon.height = 34;
+  icon.src = "../icons/mailpin-icon.svg"; icon.alt = ""; icon.width = 34; icon.height = 34;
   const brandCopy = node("div", "");
   brandCopy.append(node("strong", "", "MailPin"), node("span", "", "Workspace settings"));
-  brand.append(icon, brandCopy);
-  sidebar.prepend(brand);
-
+  brand.append(icon, brandCopy); sidebar.prepend(brand);
+  const headerActions = header.querySelector(".header-actions");
+  if (saveDock && headerActions) { saveDock.classList.add("header-save-dock"); headerActions.prepend(saveDock); }
   const stage = node("section", "settings-organic-stage");
-  stage.append(header, overview, loading, failure, form);
+  stage.append(header);
+  if (status) stage.append(status);
+  stage.append(overview, loading, failure, form);
   frame.append(sidebar, stage);
   app.replaceChildren(frame);
 }

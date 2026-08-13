@@ -1259,7 +1259,10 @@ function enhanceOrganicDashboard() {
   while (legacySidebar.firstChild) rail.append(legacySidebar.firstChild);
 
   const stage = node("main", "workspace-stage");
-  stage.append(header, stats, reminders, content);
+  const status = $("status");
+  stage.append(header);
+  if (status) stage.append(status);
+  stage.append(stats, reminders, content);
 
   const inspector = node("aside", "workspace-inspector");
   inspector.setAttribute("aria-label", msg("contextPanel", "Contexte"));

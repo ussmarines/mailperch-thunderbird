@@ -65,7 +65,15 @@ def test_organic_workspace_v2_video_driven_contracts():
     assert '.rule-builder-card' in workspace_css
     assert '.rule-builder-section' in workspace_css
     assert '.case-editor-card' in workspace_css
-    assert 'body.mp-organic-settings[data-dirty] #settings-form' in workspace_css
+    assert ".header-save-dock" in workspace_css
+    assert ".item-more-menu { position: static" in workspace_css
+    assert ".stats-secondary { position: static" in workspace_css
+    assert "Canonical workspace stylesheet" in workspace_css
+    assert "Organic Workspace V2 — responsive composition" not in workspace_css
+    assert 'saveDock.classList.add("header-save-dock")' in options_js
+    assert 'for (const family of ["Essentiel", "Automatisation", "Organisation", "Avancé"])' in options_js
+    assert 'node("div", "settings-family-heading")' not in options_js
+    assert 'const status = $("status");' in dashboard_js
     assert 'node("details", "item-more")' in dashboard_js
     assert 'node("button", "button secondary context-toggle"' in dashboard_js
     assert 'node("article","rule-row rule-builder-card")' in options_js

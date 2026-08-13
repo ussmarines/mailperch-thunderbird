@@ -69,7 +69,7 @@ body.mp-organic-settings::before {
 .workspace-stage .header-primary-actions { flex-wrap: wrap; justify-content: flex-end; }
 .workspace-stage .header-primary-actions .button { min-height: 40px; }
 .workspace-stage .support-button { display: none; }
-.workspace-stage > .status { position: static; inset: auto; width: 100%; max-width: none; margin: 14px 0 0; transform: none; border-radius: var(--mp-radius-organic-md); box-shadow: none; }
+.workspace-stage > #status { position: static; inset: auto; width: 100%; max-width: none; margin: 14px 0 0; transform: none; border-radius: var(--mp-radius-organic-md); box-shadow: none; }
 .workspace-stage .stats-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(170px, auto); gap: 14px; align-items: start; margin: 28px 0 40px; }
 .stats-primary { display: grid; grid-template-columns: repeat(5, minmax(132px, 1fr)); gap: 14px; }
 .workspace-stage .stat { min-height: 90px; padding: 17px 18px; border: 1px solid var(--mp-border-soft); border-radius: var(--mp-radius-organic-md); background: var(--mp-workspace-surface); box-shadow: none; }
@@ -163,7 +163,7 @@ body.mp-organic-workspace .schedule-grid { gap: 16px 18px; }
 .settings-organic-stage .header-save-dock[hidden] { display: none; }
 .settings-organic-stage .header-save-dock > span:first-child { max-width: 220px; color: var(--mp-text-muted); font-size: 12px; line-height: 1.3; }
 .settings-organic-stage .header-save-dock .save-dock-actions { display: flex; gap: 7px; }
-.settings-organic-stage > .settings-inline-status { position: static; inset: auto; width: 100%; max-width: none; margin: 14px 0 0; transform: none; border-radius: var(--mp-radius-organic-md); box-shadow: none; }
+.settings-organic-stage > #status { position: static; inset: auto; width: 100%; max-width: none; margin: 14px 0 0; transform: none; border-radius: var(--mp-radius-organic-md); box-shadow: none; }
 .settings-organic-stage .quick-overview { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; margin: 32px 0 54px; }
 .settings-organic-stage .quick-overview article { min-height: 98px; padding: 17px 18px; border: 1px solid var(--mp-border-soft); border-radius: var(--mp-radius-organic-md); background: var(--mp-workspace-surface); box-shadow: none; }
 .settings-organic-stage .quick-overview strong { font-family: var(--mp-font-family-display); letter-spacing: -.03em; }
