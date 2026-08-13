@@ -938,7 +938,7 @@ function renderCases(){
   const host=$("cases-list");host.replaceChildren();
   if(!cases.length)host.append(node("p","hint",msg("noCases")));
   cases.forEach((item,index)=>{
-    const row=node("article","group-row case-editor-row");row.style.setProperty("--group-color",item.color);
+    const row=node("article","group-row case-editor-row case-editor-card");row.style.setProperty("--group-color",item.color);
     const name=document.createElement("input");name.value=item.name;name.maxLength=120;name.required=true;
     const color=document.createElement("input");color.type="color";color.value=item.color;
     const status=select([["active",msg("statusActive")],["waiting",msg("statusWaiting")],["planned",msg("statusPlanned")],["completed",msg("statusComplete")]],item.status||"active",msg("dynamicStatus"));
@@ -955,7 +955,7 @@ function renderCases(){
       sync();
     });
     for(const control of[name,color,status,due,note,type,calendar])control.addEventListener("input",sync);
-    const agenda = node("button", "secondary compact", item.calendarItemId ? msg("dynamicCalendarSync") : msg("calendarCreate"));
+    const agenda = node("button", "secondary", item.calendarItemId ? msg("dynamicCalendarSync") : msg("calendarCreate"));
     agenda.type = "button";
     agenda.dataset.action = "case-calendar";
     agenda.addEventListener("click", async event => {
@@ -970,32 +970,35 @@ function renderCases(){
         }
         const result = await withBusy(event.currentTarget, msg("dynamicCalendarBusy"), async () => {
           await messenger.pinInbox.updateCase(item.id, item);
-          return messenger.pinInbox.createCaseCalendarItem(
-            item.id,
-            type.value,
-            calendar.value
-          );
+          return messenger.pinInbox.createCaseCalendarItem(item.id,type.value,calendar.value);
         });
         item.calendarItemId = result.itemId || item.calendarItemId || "";
         item.calendarId = result.calendarId || item.calendarId || "";
         renderCases();
-        setStatus(
-          msg(result.updated ? "dynamicCaseSynchronized" : "dynamicCaseCreated", [calendarLabel(result.calendarId || calendar.value), msg(result.itemType === "event" ? "event" : "task"), new Date(item.dueAt).toLocaleString()]),
-          "success"
-        );
+        setStatus(msg(result.updated ? "dynamicCaseSynchronized" : "dynamicCaseCreated", [calendarLabel(result.calendarId || calendar.value), msg(result.itemType === "event" ? "event" : "task"), new Date(item.dueAt).toLocaleString()]),"success");
       } catch (error) {
         setStatus(failureMessage("calendarWriteFailed", error), "error");
       }
     });
     const[up,down]=moveButtons(cases,index,renderCases);
-    row.append(entityField("dynamicTitle",name,"dynamicCaseTitleHelp"),entityField("dynamicColor",color),entityField("dynamicStatus",status),entityField("deadline",due,"dynamicCaseDueHelp"),entityField("notes",note),entityField("calendarItemType",type),entityField("calendarTarget",calendar,"calendarCreateHelp"),agenda,up,down,removeButton(()=>{cases.splice(index,1);renderCases();renderRules();renderTemplates();}));host.append(row);
+    const remove=removeButton(()=>{cases.splice(index,1);renderCases();renderRules();renderTemplates();});
+    const head=node("div","case-editor-head");
+    const identity=node("div","case-editor-identity");
+    identity.append(entityField("dynamicTitle",name,"dynamicCaseTitleHelp"),entityField("dynamicColor",color));
+    const actions=node("div","entity-actions case-editor-actions");actions.append(up,down,remove);
+    head.append(identity,actions);
+    const fields=node("div","case-editor-grid");
+    fields.append(entityField("dynamicStatus",status),entityField("deadline",due,"dynamicCaseDueHelp"),entityField("calendarItemType",type),entityField("calendarTarget",calendar,"calendarCreateHelp"));
+    const noteField=entityField("notes",note);noteField.classList.add("case-editor-note");
+    const footer=node("div","case-editor-footer");footer.append(agenda);
+    row.append(head,fields,noteField,footer);host.append(row);
   });
 }
 function renderTemplates(){
   const host=$("templates-list");host.replaceChildren();
   if(!templates.length)host.append(node("p","hint",msg("noTemplates")));
   templates.forEach((item,index)=>{
-    const row=node("article","rule-row template-row");
+    const row=node("article","rule-row template-row template-editor-card");
     const name=document.createElement("input");name.value=item.name;name.placeholder=msg("templateNamePlaceholder");
     const group=select([["",msg("withoutGroup")],...groups.map(g=>[g.id,g.name])],item.groupId||"",msg("group"));
     const caseSelect=select([["",msg("withoutCase")],...cases.map(c=>[c.id,c.name])],item.caseId||"",msg("case"));
@@ -1010,8 +1013,16 @@ function renderTemplates(){
     const sync=()=>Object.assign(item,{name:name.value.slice(0,120),groupId:group.value,caseId:caseSelect.value,priorityLevel:priority.value,workflowStatus:status.value,dueOffsetDays:Number(due.value)||0,followUpDelayDays:Number(follow.value)||0,reminderLeadMinutes:Number(lead.value)||0,recurrenceRule:recurrence.value,recurrenceInterval:Number(interval.value)||1,notePrefix:note.value.slice(0,500)});
     for(const control of[name,group,caseSelect,priority,status,due,follow,lead,recurrence,interval,note])control.addEventListener("input",sync);
     const[up,down]=moveButtons(templates,index,renderTemplates);
-    row.append(entityField("dynamicName",name,"dynamicTemplateNameHelp"),entityField("group",group),entityField("case",caseSelect),entityField("priority",priority),entityField("dynamicStatus",status),entityField("deadline",due,"dynamicTemplateDeadlineHelp"),entityField("dynamicFollowUp",follow,"dynamicTemplateFollowUpHelp"),entityField("dynamicLead",lead,"dynamicTemplateLeadHelp"),entityField("dynamicRecurrence",recurrence),entityField("dynamicInterval",interval,"dynamicTemplateIntervalHelp"),entityField("dynamicNotePrefix",note),up,down,removeButton(()=>{templates.splice(index,1);renderTemplates();renderRules();}));
-    host.append(row);
+    const remove=removeButton(()=>{templates.splice(index,1);renderTemplates();renderRules();});
+    const head=node("div","template-editor-head");
+    const nameField=entityField("dynamicName",name,"dynamicTemplateNameHelp");nameField.classList.add("template-name-field");
+    const actions=node("div","entity-actions");actions.append(up,down,remove);head.append(nameField,actions);
+    const organization=node("div","template-editor-grid");
+    organization.append(entityField("group",group),entityField("case",caseSelect),entityField("priority",priority),entityField("dynamicStatus",status));
+    const timing=node("div","template-editor-grid template-timing-grid");
+    timing.append(entityField("deadline",due,"dynamicTemplateDeadlineHelp"),entityField("dynamicFollowUp",follow,"dynamicTemplateFollowUpHelp"),entityField("dynamicLead",lead,"dynamicTemplateLeadHelp"),entityField("dynamicRecurrence",recurrence),entityField("dynamicInterval",interval,"dynamicTemplateIntervalHelp"));
+    const noteField=entityField("dynamicNotePrefix",note);noteField.classList.add("template-note-field");
+    row.append(head,organization,timing,noteField);host.append(row);
   });
 }
 function renderAccounts(accounts) {
@@ -1143,9 +1154,9 @@ function reorderSettingsFamilies() {
 function renderRules(){
   const host=$("rules-list");host.replaceChildren();
   if(!rules.length)host.append(node("p","hint",msg("noCustomRules")));
-  const accountOptions=[["",msg("allAccounts")],...(configuration?.accounts||[]).map(account=>[account.key,account.name||account.email||account.key])];
+  const accountOptions=[["",msg("allAccounts")],...(configuration?.accounts||[]).map(a=>[a.key,a.name||a.email||a.key])];
   rules.forEach((rule,index)=>{
-    const row=node("article","rule-row");
+    const row=node("article","rule-row rule-builder-card");
     const enabled=document.createElement("input");enabled.type="checkbox";enabled.checked=rule.enabled!==false;enabled.title=msg("dynamicRuleEnabledHelp");enabled.setAttribute("aria-label",msg("dynamicRuleEnabled"));
     const name=document.createElement("input");name.value=rule.name||msg("ruleDefaultName", [index+1]);name.placeholder=msg("dynamicName");
     const priority=document.createElement("input");priority.type="number";priority.min="1";priority.max="10000";priority.value=rule.priority||((index+1)*100);priority.title=msg("dynamicRulePriorityHelp");
@@ -1161,7 +1172,7 @@ function renderRules(){
     const caseSelect=select([["",msg("withoutCase")],...cases.map(c=>[c.id,c.name])],rule.caseId||"",msg("dynamicCaseTarget"));
     const template=select([["",msg("withoutTemplate")],...templates.map(t=>[t.id,t.name])],rule.templateId||"",msg("dynamicTemplateTarget"));
     const status=select([["active",msg("statusActive")],["waiting",msg("statusWaiting")],["planned",msg("statusPlanned")],["completed",msg("statusComplete")]],rule.workflowStatus||"active",msg("dynamicStatusTarget"));
-    const stopLabel=node("label","compact-check");const stop=document.createElement("input");stop.type="checkbox";stop.checked=rule.stopProcessing!==false;stopLabel.append(stop,document.createTextNode(msg("stopProcessing")));
+    const stopLabel=node("label","compact-check rule-stop-processing");const stop=document.createElement("input");stop.type="checkbox";stop.checked=rule.stopProcessing!==false;stopLabel.append(stop,document.createTextNode(msg("stopProcessing")));
     const rate=document.createElement("input");rate.type="number";rate.min="1";rate.max="1000";rate.value=rule.maxPerMinute||60;rate.title=msg("dynamicRuleLimitHelp");
     const sync=()=>Object.assign(rule,{
       enabled:enabled.checked,name:name.value.slice(0,100),priority:Number(priority.value)||100,
@@ -1173,8 +1184,24 @@ function renderRules(){
     });
     for(const control of[enabled,name,priority,trigger,action,target,sender,subject,tag,account,folder,group,caseSelect,template,status,stop,rate])control.addEventListener("input",sync);
     const [up,down]=moveButtons(rules,index,renderRules);
-    row.append(entityField("dynamicRuleEnabled",enabled,"dynamicRuleEnabledHelp"),entityField("dynamicName",name,"dynamicRuleNameHelp"),entityField("priority",priority,"dynamicRulePriorityHelp"),entityField("dynamicTrigger",trigger),entityField("dynamicAction",action),entityField("dynamicTarget",target),entityField("dynamicSenderContains",sender),entityField("dynamicSubjectContains",subject),entityField("dynamicTagKey",tag),entityField("dynamicAccount",account),entityField("folder",folder,"dynamicFolderHelp"),entityField("dynamicGroupTarget",group),entityField("dynamicCaseTarget",caseSelect),entityField("dynamicTemplateTarget",template),entityField("dynamicStatusTarget",status),stopLabel,entityField("dynamicRuleLimit",rate,"dynamicRuleLimitHelp"),up,down,removeButton(()=>{rules.splice(index,1);renderRules();}));
-    host.append(row);
+    const remove=removeButton(()=>{rules.splice(index,1);renderRules();});
+
+    const head=node("div","rule-builder-head");
+    const identity=node("div","rule-builder-identity");
+    const enabledLabel=node("label","compact-check rule-enabled");enabledLabel.append(enabled,document.createTextNode(msg("dynamicRuleEnabled")));
+    identity.append(enabledLabel,entityField("dynamicName",name,"dynamicRuleNameHelp"),entityField("priority",priority,"dynamicRulePriorityHelp"));
+    const actions=node("div","entity-actions rule-builder-actions");actions.append(up,down,remove);head.append(identity,actions);
+
+    const section=(labelKey,className,fields)=>{
+      const box=node("section",`rule-builder-section ${className}`);
+      box.append(node("h4","rule-builder-kicker",msg(labelKey)));
+      const grid=node("div","rule-builder-grid");grid.append(...fields);box.append(grid);return box;
+    };
+    const when=section("ruleBuilderWhen","rule-when",[entityField("dynamicTrigger",trigger),entityField("dynamicTarget",target)]);
+    const conditions=section("ruleBuilderIf","rule-if",[entityField("dynamicSenderContains",sender),entityField("dynamicSubjectContains",subject),entityField("dynamicTagKey",tag),entityField("dynamicAccount",account),entityField("folder",folder,"dynamicFolderHelp")]);
+    const then=section("ruleBuilderThen","rule-then",[entityField("dynamicAction",action),entityField("dynamicGroupTarget",group),entityField("dynamicCaseTarget",caseSelect),entityField("dynamicTemplateTarget",template),entityField("dynamicStatusTarget",status)]);
+    const limits=section("ruleBuilderLimits","rule-limits",[stopLabel,entityField("dynamicRuleLimit",rate,"dynamicRuleLimitHelp")]);
+    row.append(head,when,conditions,then,limits);host.append(row);
   });
 }
 async function renderCalendars(selected) {
@@ -1196,11 +1223,14 @@ async function renderCalendars(selected) {
     if (generation !== calendarRenderGeneration) return;
     availableCalendars = calendars.filter(calendar => calendar && typeof calendar.id === "string");
     for (const calendar of calendars) {
-      const option = node(
-        "option",
-        "",
-        `${calendar.name} — ${msg("tasksShort")} ${calendar.taskCompatible ? "✓" : "✕"} · ${msg("eventsShort")} ${calendar.eventCompatible ? "✓" : "✕"}${calendar.reason ? ` · ${calendar.reason}` : ""}`
-      );
+      const optionState = calendar.taskCompatible && calendar.eventCompatible
+        ? msg("calendarTasksAndEvents")
+        : calendar.taskCompatible
+          ? msg("calendarTasksOnly")
+          : calendar.eventCompatible
+            ? msg("calendarEventsOnly")
+            : msg("calendarReadOnly");
+      const option = node("option", "", `${calendar.name} · ${optionState}`);
       option.value = calendar.id;
       option.disabled = !calendar.taskCompatible && !calendar.eventCompatible;
       el.append(option);

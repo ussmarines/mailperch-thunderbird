@@ -51,3 +51,24 @@ def test_panel_and_spec_follow_organic_workspace_contract():
     assert "Typographie Fluent 2" not in spec
     assert "pas de dégradé" in spec.lower() or "dégradés" in spec.lower()
     assert "zoom 200 %" in spec
+
+def test_organic_workspace_v2_video_driven_contracts():
+    workspace_css = text("extension/styles/workspace.css")
+    dashboard_js = text("extension/dashboard/dashboard.js")
+    options_js = text("extension/options/options.js")
+
+    assert 'container-type: inline-size' in workspace_css
+    assert 'workspace-frame[data-inspector-open="true"]' in workspace_css
+    assert '.stats-primary' in workspace_css and '.stats-secondary' in workspace_css
+    assert '.item-more-menu' in workspace_css
+    assert 'grid-template-columns: repeat(4, minmax(272px, 1fr))' in workspace_css
+    assert '.rule-builder-card' in workspace_css
+    assert '.rule-builder-section' in workspace_css
+    assert '.case-editor-card' in workspace_css
+    assert 'body.mp-organic-settings[data-dirty] #settings-form' in workspace_css
+    assert 'node("details", "item-more")' in dashboard_js
+    assert 'node("button", "button secondary context-toggle"' in dashboard_js
+    assert 'node("article","rule-row rule-builder-card")' in options_js
+    assert 'node("article","group-row case-editor-row case-editor-card")' in options_js
+    assert 'const optionState = calendar.taskCompatible && calendar.eventCompatible' in options_js
+    assert '`${calendar.name} · ${optionState}`' in options_js

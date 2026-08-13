@@ -354,16 +354,30 @@ function createCard(item, {compact = false, selectable = true} = {}) {
     const waitingAction = item.workflowStatus === "waiting" ? "active" : "waiting";
     const waitingButton = actionButton(waitingAction, item.workflowStatus === "waiting" ? msg("returnToActive", "Repasser à traiter") : msg("statusWaiting", "En attente"));
     waitingButton.setAttribute("aria-pressed", String(item.workflowStatus === "waiting"));
-    actions.append(
-      actionButton("open", msg("open", "Ouvrir")),
+
+    const primaryOpen = actionButton("open", msg("open", "Ouvrir"));
+    const primaryComplete = actionButton(item.completedAt ? "active" : "complete", item.completedAt ? msg("reopen", "Rouvrir") : msg("statusComplete", "Terminer"));
+    primaryOpen.classList.add("item-action-primary");
+    primaryComplete.classList.add("item-action-primary");
+
+    const more = node("details", "item-more");
+    const summary = node("summary", "item-more-trigger", "•••");
+    summary.setAttribute("aria-label", msg("moreActions", "Plus d’actions"));
+    summary.title = msg("moreActions", "Plus d’actions");
+    const menu = node("div", "item-more-menu");
+    menu.append(
       actionButton("reply", msg("reply", "Répondre")),
-      actionButton(item.completedAt ? "active" : "complete", item.completedAt ? msg("reopen", "Rouvrir") : msg("statusComplete", "Terminer")),
       actionButton(Number(item.snoozeUntil || 0) > Date.now() ? "wake" : "snooze", Number(item.snoozeUntil || 0) > Date.now() ? msg("wakeNow", "Réveiller maintenant") : msg("snoozeOneHour", "Reporter d’une heure")),
       waitingButton,
       actionButton("trackNoReply", item.noReplyTracking ? msg("changeNoReplyTracking", "Modifier la relance") : msg("trackNoReply", "Relancer sans réponse")),
       actionButton("calendar", msg("calendar", "Agenda")),
       actionButton("unpin", msg("unpin", "Désépingler"))
     );
+    more.append(summary, menu);
+    more.addEventListener("click", event => {
+      if (event.target.closest("button")) more.open = false;
+    });
+    actions.append(primaryOpen, primaryComplete, more);
     card.append(actions);
   }
   return card;
@@ -371,17 +385,26 @@ function createCard(item, {compact = false, selectable = true} = {}) {
 
 function renderStats() {
   const stats = current?.stats || {};
-  $("stats").replaceChildren(
+  const host = $("stats");
+  const primary = node("div", "stats-primary");
+  primary.append(
     statCard(msg("allPins", "Toutes"), displayCount(stats.total)),
     statCard(msg("statusActive", "À traiter"), displayCount(stats.active)),
     statCard(msg("waitingForThem", "J’attends"), displayCount(stats.waitingForThem)),
     statCard(msg("needsReply", "Je dois répondre"), displayCount(stats.needsReply), displayCount(stats.needsReply) ? "warning" : ""),
-    statCard(msg("overdue", "En retard"), displayCount(stats.overdue), displayCount(stats.overdue) ? "warning" : ""),
+    statCard(msg("overdue", "En retard"), displayCount(stats.overdue), displayCount(stats.overdue) ? "warning" : "")
+  );
+  const more = node("details", "stats-more");
+  const summary = node("summary", "", msg("moreStats", "Plus de statistiques"));
+  const secondary = node("div", "stats-secondary");
+  secondary.append(
     statCard(msg("pendingSubtasks", "Sous-tâches en attente"), displayCount(stats.checklistPendingItems)),
     statCard(msg("completedLast7Days", "Terminés sur 7 jours"), displayCount(stats.completedLast7Days)),
     statCard(msg("averageOpenAge", "Âge moyen des suivis"), `${formatDurationDays(stats.averageOpenAgeMs)} ${msg("daysShort", "j")}`),
     statCard(msg("averageWaitingAge", "Attente moyenne"), `${formatDurationDays(stats.averageWaitingAgeMs)} ${msg("daysShort", "j")}`)
   );
+  more.append(summary, secondary);
+  host.replaceChildren(primary, more);
 }
 
 function renderSmartViews() {
@@ -1226,10 +1249,7 @@ function enhanceOrganicDashboard() {
   railIcon.width = 34;
   railIcon.height = 34;
   const railBrandCopy = node("div", "workspace-rail-brand-copy");
-  railBrandCopy.append(
-    node("strong", "", "MailPin"),
-    node("span", "", "Follow-up workspace")
-  );
+  railBrandCopy.append(node("strong", "", "MailPin"), node("span", "", "Follow-up workspace"));
   railBrand.append(railIcon, railBrandCopy);
   rail.append(railBrand);
 
@@ -1242,9 +1262,37 @@ function enhanceOrganicDashboard() {
   stage.append(header, stats, reminders, content);
 
   const inspector = node("aside", "workspace-inspector");
-  inspector.setAttribute("aria-label", msg("technicalDetails", "Contexte et outils"));
+  inspector.setAttribute("aria-label", msg("contextPanel", "Contexte"));
+  inspector.hidden = true;
+  inspector.id = "workspace-inspector";
+  const inspectorHeader = node("div", "workspace-inspector-header");
+  inspectorHeader.append(node("strong", "", msg("contextPanel", "Contexte")));
+  const inspectorClose = node("button", "icon-button workspace-inspector-close", "×");
+  inspectorClose.type = "button";
+  inspectorClose.setAttribute("aria-label", msg("closeContext", "Fermer le contexte"));
+  inspectorHeader.append(inspectorClose);
+  inspector.append(inspectorHeader);
   if (technical) inspector.append(technical);
   if (support) inspector.append(support);
+
+  const contextToggle = node("button", "button secondary context-toggle", msg("contextPanel", "Contexte"));
+  contextToggle.type = "button";
+  contextToggle.setAttribute("aria-expanded", "false");
+  contextToggle.setAttribute("aria-controls", inspector.id);
+  header.querySelector(".header-primary-actions")?.prepend(contextToggle);
+
+  const setInspectorOpen = open => {
+    inspector.hidden = !open;
+    frame.dataset.inspectorOpen = String(open);
+    contextToggle.setAttribute("aria-expanded", String(open));
+    if (open) inspector.querySelector("summary, button, a")?.focus({preventScroll: true});
+    else contextToggle.focus({preventScroll: true});
+  };
+  contextToggle.addEventListener("click", () => setInspectorOpen(inspector.hidden));
+  inspectorClose.addEventListener("click", () => setInspectorOpen(false));
+  document.addEventListener("keydown", event => {
+    if (event.key === "Escape" && !inspector.hidden && !document.querySelector("dialog[open]")) setInspectorOpen(false);
+  });
 
   frame.append(rail, stage, inspector);
   shell.replaceChildren(frame);

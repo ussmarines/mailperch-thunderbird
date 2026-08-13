@@ -127,3 +127,21 @@ Une animation ne doit jamais retarder une action, bloquer le clavier ou masquer 
 ## Critère de validation visuelle
 
 Une refonte n’est pas considérée validée parce que ses tests statiques passent. Toute affirmation concernant géométrie, responsive, focus, thème ou mouvement dans Thunderbird exige une observation sur le vrai runtime lorsque la surface concernée y est rendue.
+
+
+## Organic Workspace V2
+
+La seconde passe, issue d’une recette vidéo réelle dans Thunderbird, impose les règles suivantes :
+
+- les composants internes se recomposent selon **leur largeur disponible** (`container-type` / container queries) et non uniquement selon la largeur globale de la fenêtre ;
+- le panneau de contexte du Dashboard est **à la demande** : il ne retire pas en permanence 250–300 px au canvas ;
+- une ligne de message affiche au plus deux actions directes, le reste passe par un menu secondaire accessible ;
+- le Kanban ne compresse jamais quatre colonnes sous leur largeur lisible : il s’adapte ou utilise un défilement horizontal contrôlé ;
+- les métriques secondaires sont progressives ; la première lecture reste centrée sur les signaux d’action ;
+- les formulaires complexes ne sont jamais de simples grilles auto-fit : règles, affaires et modèles ont une architecture explicite en cartes et sous-sections ;
+- le Rule Builder utilise la séquence **Quand / Si / Alors / Limites** et conserve tous les contrôles persistés ;
+- les sélecteurs doivent garder des libellés courts ; les explications longues et capacités restent dans des cartes ou aides adjacentes ;
+- un dock flottant doit réserver l’espace qu’il occupe et ne peut jamais recouvrir le dernier contrôle éditable ;
+- les toasts disposent d’une safe area indépendante des docks, panneaux de support et actions fixes ;
+- les espacements verticaux doivent suivre un rythme lisible : 14–18 px à l’intérieur des groupes, 20–28 px entre sous-groupes, 44–56 px entre grandes sections ;
+- une grande zone vide n’est pas un substitut à la hiérarchie : les états vides et blocs peu denses doivent se dimensionner à leur contenu.
