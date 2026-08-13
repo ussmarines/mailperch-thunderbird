@@ -1,0 +1,301 @@
++- [ ] décision explicite de publication GitHub/ATN, tag et release séparés.
+ 
+-### Options plus simples
+-
+-- [x] organiser les réglages en **Essentiel / Organisation / Automatisation / Avancé** ;
+-- [x] présenter le mode `guided` comme **Recommandé** sans modifier la valeur persistée ;
+-- [x] masquer les sections techniques avancées en Recommandé sans supprimer les fonctions ;
+-- [x] ajouter une action de brouillon recommandé qui ne sauvegarde jamais automatiquement ;
+-- [x] préserver les choix propres au profil lors de l’application du brouillon ;
+-- [x] conserver recherche, Enregistrer, Annuler et le mode Avancé ;
+-- [x] couvrir la taxonomie et le comportement par une garde dédiée FR/EN.
+-- [x] valider dans un navigateur réel la bijection registre/HTML, le brouillon, Enregistrer/Annuler et les reprises d’initialisation.
+-
+-### Qualité et banc de test
+-
+-- [x] ajouter un workflow de smoke Thunderbird séparé de la QA obligatoire pendant sa phase d’épreuve ;
+-- [x] vérifier les téléchargements de test Thunderbird/geckodriver par SHA-256 ;
+-- [x] installer, désinstaller et réinstaller le XPI dans le scénario runtime ;
+-- [x] conserver les logs/résultats/captures comme artefacts ;
+-- [x] documenter les niveaux de preuve et la voie officielle comm-central `mach` ;
+-- [x] confirmer que Fluent 2 reste local et sans dépendance npm runtime tant qu’aucun bundle de composants n’est justifié ;
+-- [ ] promouvoir éventuellement le smoke en contrôle requis uniquement après plusieurs exécutions fiables.
+-
+-### Documentation et revue
+-
+-- [x] documenter la frontière Thunderbird et le banc runtime ;
+-- [x] remettre la mémoire projet, l’état machine, l’architecture, la sécurité et le handoff au niveau de la branche ;
+-- [x] exécuter la passe finale `npm run ci` et l’audit du diff ;
+-- [x] synchroniser la branche GitHub et obtenir QA/smoke verts ; CodeQL reste le gate de PR ;
+-- [x] faire relire/corriger la branche par Codex avec Thunderbird, Fluent 2, Playwright, Context7 et Security Diff Scan ;
+-- [x] préparer la release 1.3.0 ; PR, CodeQL, fusion et publication constituent les derniers gates GitHub.
+-
+-## Validation de la 1.2.1 stable
+-
+-- [x] release 1.2.1 publiée avec QA et CodeQL verts ;
+-- [x] correctif des détections fournisseurs `live.com` / `me.com` validé par CodeQL ;
+-- [x] test réel utilisateur de la 1.2.1 effectué le 8 août 2026 sans anomalie signalée sur la passe demandée ;
+-- [ ] la matrice exhaustive Windows/Linux/macOS, extrêmes 128/153, zoom 200 % et chaque fournisseur annoncé reste une exigence distincte avant une éventuelle soumission ATN.
+-
+-## 1.2.0 / 1.2.1 — socle fonctionnel actuel
+-
+-- [x] notes étendues et checklists/sous-tâches ;
+-- [x] recherche globale sur métadonnées, sans corps de message ;
+-- [x] synchronisation facultative de tags MailPin ;
+-- [x] synchronisation Agenda bidirectionnelle ;
+-- [x] palette de commandes et vues enregistrées ;
+-- [x] états **J’attends / Je dois répondre** ;
+-- [x] statistiques de suivi enrichies ;
+-- [x] Fluent 2, plancher typographique 12 px et responsive ;
+-- [x] schémas paramètres/données 7, migrations, sauvegardes et documentation sécurité ;
+-- [x] durcissement 1.2.1 de la classification locale des fournisseurs.
+-
+-## Après consolidation — prochaine version fonctionnelle
+-
+-Ces fonctions sont volontairement hors de la branche actuelle et seront développées après la nouvelle release de consolidation et sa validation réelle :
++## Fonctions futures
+ 
+ 1. **Prochaine action** — file de traitement centrée sur ce qui demande réellement l’attention ;
+-2. **Timeline complète d’une conversation** — chronologie messages, rappels, notes, checklist, Agenda et changements d’état ;
+-3. **Follow-up récurrent** — génération contrôlée de rappels tant qu’une réponse manque, sans envoi automatique ;
++2. **Timeline complète d’une conversation** — messages, rappels, notes, checklist, Agenda et changements d’état ;
++3. **Follow-up récurrent** — rappels contrôlés tant qu’une réponse manque, sans envoi automatique ;
+ 4. **Résultat du suivi** — motif de clôture structuré pour enrichir les statistiques.
+ 
+-## Dette et validations longues
+-
+-- reproductibilité binaire ZIP réellement identique entre Windows et Linux (`MP-2026-018`) ;
+-- tests XPCShell/Mochitest dans un checkout Thunderbird réel ;
+-- matrice manuelle IMAP, POP, Gmail, Microsoft, boîte unifiée, dossiers virtuels et calendriers ;
+-- mesure avec 100, 500 et 2 000 épingles ;
+-- audit lecteur d’écran NVDA/Orca ;
+-- validation de désinstallation/réinstallation et sauvegardes sur plusieurs plateformes ;
+-- captures, notes reviewers, politique de support et procédure de retour arrière avant ATN.
+-
+-## Publication ATN
+-
+-Avant une soumission :
++## Validations longues / dette suivie
+ 
+-- fournir le code source lisible et les instructions de build reproductible ;
+-- joindre la matrice de compatibilité réelle et les hashes SHA-256 ;
+-- confirmer la conformité des marques, de la licence et des données personnelles ;
+-- tester la version stable courante dans Thunderbird réel ;
+-- traiter les retours reviewers sans élargissement opportuniste du périmètre.
++- reproductibilité binaire ZIP entre Windows et Linux : `MP-2026-018` ;
++- XPCShell/Mochitest dans un checkout Thunderbird réel ;
++- matrice exhaustive Windows/Linux/macOS, fournisseurs, dossiers virtuels et calendriers ;
++- lecteur d’écran NVDA/Orca et audit humain contraste/zoom ;
++- validation multi-plateforme désinstallation/réinstallation/sauvegardes ;
++- disponibilité juridique de la marque et validation finale ATN.
+ 
+-Les anciennes étapes internes `3.2.x` restent consultables dans l’historique Git et les audits archivés ; elles ne constituent plus la feuille de route active.
++L’historique détaillé des versions déjà livrées reste dans `CHANGELOG.md` et les rapports versionnés ; il n’est pas dupliqué ici.
+diff --git a/SECURITY.md b/SECURITY.md
+index 8897575..907f966 100644
+--- a/SECURITY.md
++++ b/SECURITY.md
+@@ -49,7 +49,7 @@ npm run build
+ npm run ci
+ ```
+ 
+-Le rapport courant est [SECURITY_AUDIT_1.6.1.md](SECURITY_AUDIT_1.6.1.md).
++Le rapport de la source courante est [SECURITY_AUDIT_1.7.0.md](SECURITY_AUDIT_1.7.0.md). Le dernier rapport publié reste `SECURITY_AUDIT_1.6.1.md`.
+ 
+ ## Limite importante
+ 
+diff --git a/SECURITY_AUDIT_1.7.0.md b/SECURITY_AUDIT_1.7.0.md
+new file mode 100644
+index 0000000..9987f63
+--- /dev/null
++++ b/SECURITY_AUDIT_1.7.0.md
+@@ -0,0 +1,27 @@
++# Audit de sécurité — MailPin 1.7.0 (source)
++
++## État
++
++Audit global de la ligne source 1.7.0. Dernière release publique : 1.6.1. Ce document décrit la source en cours de validation et ne constitue pas une publication.
++
++## Périmètre contrôlé
++
++- manifeste MV3, permission `menus` et CSP `connect-src none` ;
++- absence de réseau runtime, télémétrie, publicité, CDN et code distant ;
++- API Experiment, validation/normalisation des entrées et frontières `PinCompatibility` ;
++- SQLite, imports/restauration, règles, Agenda, Tags et cycle de désinstallation ;
++- secrets/identité, actions GitHub épinglées, build sans dépendance tierce ;
++- revue statique des helpers morts, surfaces DOM dangereuses et identifiants persistants legacy.
++
++## Résultat de l’audit local standard
++
++- `security_guard.py` : vert ;
++- `scan_secrets.py` : vert ;
++- `deep_audit.py` : vert après nettoyage ;
++- aucun `eval`, `new Function`, `innerHTML`, `outerHTML` ou appel réseau runtime détecté dans `extension/` ;
++- les clés historiques `mailperch.installation`, `mailperch-*`, préférences legacy et noms de base sont conservés lorsqu’ils assurent compatibilité/migration ;
++- deux helpers privilégiés devenus sans appel ont été supprimés.
++
++## Validation finale
++
++Les résultats GitHub Actions/scan standard du commit final seront enregistrés dans ce document avant toute décision de publication. Codex Security n’est pas utilisé par défaut.
+diff --git a/STORE_RELEASE.md b/STORE_RELEASE.md
+index 2cf7473..afe581f 100644
+--- a/STORE_RELEASE.md
++++ b/STORE_RELEASE.md
+@@ -1,70 +1,40 @@
+-# Publication MailPin 1.6.1
++# Préparation MailPin 1.7.0
+ 
+-## Identité
++## État
+ 
+-- **Nom :** MailPin
+-- **Nom complet :** MailPin — Email Follow-up & Productivity for Thunderbird
+-- **Version publique :** 1.6.1
+-- **Sous-titre FR :** Suivi d’e-mails & productivité pour Thunderbird.
+-- **Subtitle EN:** Email Follow-up & Productivity for Thunderbird
+-- **Auteur public :** ussmarines
+-- **Identifiant permanent :** `ussmarines.mailpin@addons.thunderbird.net`
++- **Version source/candidate :** 1.7.0
++- **Dernière release publique :** 1.6.1
++- **Publication 1.7.0 :** non effectuée — décision explicite requise
++- **Nom :** MailPin — Email Follow-up & Productivity for Thunderbird
++- **ID permanent :** `ussmarines.mailpin@addons.thunderbird.net`
+ - **Compatibilité déclarée :** Thunderbird 153.0 à 153.*
+ - **Licence :** MailPin Source-Available License 1.1
+ 
+-L’identifiant a été adopté volontairement en 1.6.0 avant la première publication ATN. Il doit conserver exactement la même casse et ne plus être modifié après publication ATN.
++## Portée du candidat 1.7.0
+ 
+-## Pourquoi 1.6.1
++Le candidat source intègre Organic Workspace, les corrections QoL issues des recettes vidéo et l’audit global du dépôt. Il sépare désormais explicitement le numéro de source de la release publique 1.6.1, afin qu’aucun build modifié ne réutilise le nom/version d’un artefact déjà publié.
+ 
+-La 1.6.0 a réalisé le rebranding **MailPerch → MailPin**, l’adoption de l’ID public définitif et la nouvelle direction artistique. Son runtime intégré par la PR #35 (`4fdb978e1828325001f95951c115059a931b8b6e`) a passé QA Linux/Windows, garde sécurité et smoke Thunderbird 153 réel. La release GitHub v1.6.0 a ensuite été publiée depuis `main`.
++Aucune nouvelle permission WebExtension, dépendance runtime, connexion réseau, télémétrie, publicité ou code distant n’est ajoutée. Les identifiants persistants legacy nécessaires aux migrations restent inchangés.
+ 
+-Un contrôle reviewer post-publication a détecté que certains documents actifs de l’archive source 1.6.0 contenaient encore des preuves textuelles héritées de la préparation 1.5.4 (ancien numéro de PR/SHA, ancien hash XPI et une phrase niant à tort le changement d’identité). **Aucun défaut runtime n’a été trouvé.**
++## Livrables de candidat
+ 
+-La 1.6.1 corrige uniquement cette cohérence de publication et le numéro de version. Aucun comportement métier, permission, schéma, stockage, dépendance runtime, réseau, télémétrie, publicité ou code distant n’est modifié.
++Après `npm run ci` :
+ 
+-## Preuves correctement attribuées
++- `dist/MailPin_v1.7.0.xpi` ;
++- `dist/MailPin_GitHub_Repository_v1.7.0.zip` ;
++- `dist/SHA256SUMS.txt`.
+ 
+-- recette manuelle utilisateur : dernière preuve fraîche sur le candidat pré-rebranding 1.5.4 ; réutilisable uniquement pour les comportements métier inchangés ;
+-- rebranding/runtime MailPin 1.6.0 : PR #35 puis commit `4fdb978e1828325001f95951c115059a931b8b6e`, QA Linux/Windows + garde sécurité + smoke Thunderbird réel verts ;
+-- release 1.6.0 : XPI publié SHA-256 `6860e0177795b163cb672edd1a93897260785c4b8eeeeac71d1b3d32dca281ae` ;
+-- 1.6.1 : la PR et la release doivent refaire la QA complète et le smoke Thunderbird car le manifeste/version est modifié ; les résultats publiés par GitHub Actions et `SHA256SUMS.txt` constituent la preuve fraîche de cette version.
++Ces fichiers ne deviennent des artefacts publics qu’après validation humaine, revue indépendante, autorisation explicite de publication, tag et workflow Release.
+ 
+-Aucune recette manuelle fraîche du XPI 1.6.1 n’est revendiquée tant qu’elle n’a pas été réellement effectuée.
++## Preuves requises avant publication
+ 
+-## Livrables GitHub / ATN
++- QA Linux/Windows ;
++- garde sécurité et identité historique ;
++- build reproductible ;
++- smoke Thunderbird 153 réel ;
++- audit sécurité standard ;
++- recette humaine ciblée Organic Workspace ;
++- vérification des limitations/fournisseurs annoncés ;
++- revue Codex indépendante demandée par le propriétaire.
+ 
+-Le workflow Release publie, après `npm run ci` :
+-
+-- `dist/MailPin_v1.6.1.xpi` — extension ;
+-- `dist/MailPin_GitHub_Repository_v1.6.1.zip` — sources complètes pour review ;
+-- `dist/SHA256SUMS.txt` — empreintes définitives ;
+-- `release/ATN_REVIEW_NOTES_TEMPLATE.md` — informations reviewers ;
+-- `release/BUILD_INSTRUCTIONS.md` — reproduction du build.
+-
+-Pour une soumission ATN, **les sommes du `SHA256SUMS.txt` attaché à la release v1.6.1 sont la référence définitive** ; aucun ancien hash 1.5.x/1.6.0 ne doit être recopié dans le dossier reviewer.
+-
+-## Informations de fiche ATN
+-
+-### Description courte FR
+-
+-Épinglez, organisez et suivez vos e-mails importants dans Thunderbird avec portée par comptes, notes, sous-tâches, rappels, vues, Agenda et tableau de bord local.
+-
+-### Short description EN
+-
+-Pin, organize, and follow up on important email in Thunderbird with account scoping, notes, subtasks, reminders, saved views, Calendar integration, and a local dashboard.
+-
+-### Confidentialité
+-
+-MailPin ne transmet aucune donnée. Aucun corps complet de message ni contenu de pièce jointe n’est copié dans sa base. Voir `PRIVACY.md`.
+-
+-### Permission privilégiée
+-
+-L’API Experiment `pinInbox` est nécessaire pour intégrer le panneau dans `about:3pane`, résoudre les messages déplacés, utiliser SQLite, écouter les changements de dossiers, gérer les tags MailPin et créer/synchroniser les tâches ou événements Agenda compatibles. Cette API explique l’avertissement d’accès complet affiché par Thunderbird.
+-
+-## Limites restant externes à GitHub
+-
+-- recette humaine ciblée du XPI 1.6.1 avant ATN ;
+-- matrice Windows/Linux/macOS Thunderbird réelle exhaustive ;
+-- Gmail/Microsoft/IMAP et calendriers réseau réels hors banc ;
+-- validation humaine complète zoom 200 %, contraste OS élevé et lecteurs d’écran ;
+-- accès au compte développeur et décision finale des reviewers ATN.
++L’historique et les hashes de la release publique 1.6.1 restent dans `VALIDATION_REPORT_1.6.1.md`, `SECURITY_AUDIT_1.6.1.md` et la release GitHub correspondante.
+diff --git a/THIRD_PARTY_NOTICES.md b/THIRD_PARTY_NOTICES.md
+index cef683e..acd4a02 100644
+--- a/THIRD_PARTY_NOTICES.md
++++ b/THIRD_PARTY_NOTICES.md
+@@ -1,5 +1,5 @@
+ # Third-party notices
+ 
+-MailPin 1.6.1 does not bundle any third-party JavaScript library, font, remote service, CDN resource, analytics SDK, or advertising component.
++MailPin 1.7.0 source does not bundle any third-party JavaScript library, font, remote service, CDN resource, analytics SDK, or advertising component.
+ 
+-The SVG and PNG assets in `extension/icons/` are original MailPin project assets. Thunderbird is a trademark of MZLA Technologies Corporation. Microsoft and Fluent are trademarks of Microsoft Corporation; the interface is inspired by Fluent 2 design principles but does not bundle Microsoft code or assets.
++The SVG and PNG assets in `extension/icons/` are original MailPin project assets. Thunderbird is a trademark of MZLA Technologies Corporation. Organic Workspace uses only MailPin project assets and local system typography; no Microsoft UI code or asset is bundled.
+diff --git a/VALIDATION_REPORT_1.7.0.md b/VALIDATION_REPORT_1.7.0.md
+new file mode 100644
+index 0000000..c4b74b2
+--- /dev/null
++++ b/VALIDATION_REPORT_1.7.0.md
+@@ -0,0 +1,17 @@
++# Rapport de validation — MailPin 1.7.0 (source)
++
++## État
++
++La source 1.7.0 est la ligne post-Organic Workspace et audit global. Dernière release publique : 1.6.1. Aucun tag/release 1.7.0 n’est créé par ce rapport.
++
++## Contrôles déjà établis
++
++- Organic Workspace intégré via PR #39 ;
++- shell Dashboard/Options canonique dans le HTML source ;
++- garde Organic Workspace réellement exécuté dans `npm test` ;
++- permission, réseau, stockage et identifiant d’extension inchangés ;
++- audit de code mort, documents actifs, workflows, tests et métadonnées effectué sur la branche d’audit globale.
++
++## Validation finale attendue
++
++Avant merge/publication : tests ciblés du delta, `npm run ci`, QA Linux/Windows, garde sécurité/full-history, smoke Thunderbird 153 réel et contrôle des artefacts. La recette visuelle humaine du XPI exact reste distincte des preuves automatisées.
+diff --git a/docs/ATN_RELEASE_CHECKLIST.md b/docs/ATN_RELEASE_CHECKLIST.md
+index 8e970fc..7a7fb1e 100644
+--- a/docs/ATN_RELEASE_CHECKLIST.md
++++ b/docs/ATN_RELEASE_CHECKLIST.md
+@@ -1,51 +1,30 @@
+-# Checklist de publication Add-ons for Thunderbird — 1.6.1
++# Checklist Add-ons for Thunderbird — candidat 1.7.0
+ 
+-Les cases cochées correspondent à des éléments présents dans l’artefact/repo ou à des validations automatisées exigées par le processus de release. Les cases non cochées nécessitent encore une action humaine, un fournisseur externe ou l’accès au portail ATN.
++Dernière release publique : **1.6.1**. Cette checklist décrit le candidat source 1.7.0 et ne signifie pas qu’il a été publié ou soumis à ATN.
+ 
+-## Identité et fiche
++## Identité et build
+ 
+-- [x] nom MailPin, slogan, sous-titres FR/EN, auteur et assets synchronisés ;
+-- [x] identifiant permanent `ussmarines.mailpin@addons.thunderbird.net` défini avant première publication ATN ;
+-- [x] version 1.6.1 synchronisée dans manifeste, package, README, build et dossier reviewer ;
+-- [x] licence et politique de confidentialité présentes ;
+-- [ ] recherche juridique finale de disponibilité de la marque ;
+-- [ ] support et politique de confidentialité vérifiés dans le portail ATN au moment de la soumission.
+-
+-## Compatibilité
+-
+-- [x] Manifest V3 et clés de manifeste contrôlés ;
+-- [x] plage déclarée Thunderbird 153.0 à 153.* ;
+-- [x] thèmes clair/sombre, clipping, overflow et contraste de base couverts par les gardes automatisées existantes ;
