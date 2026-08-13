@@ -1,0 +1,44 @@
+name: Temporary canonical UI rebuild
+on:
+  push:
+    branches:
+      - design/organic-workspace-ui
+permissions:
+  contents: write
+jobs:
+  rebuild:
+    if: ${{ !contains(github.event.head_commit.message, '[canonical-ui-applied]') }}
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: design/organic-workspace-ui
+          fetch-depth: 0
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.13'
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: '22'
+      - name: Rewrite canonical UI sources
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/temporary_canonical_ui_rebuild.py
+          node --check extension/options/options.js
+          node --check extension/dashboard/dashboard.js
+          python -m pytest -q tests/test_organic_workspace_ui.py tests/test_options_controls.py tests/test_ui_regressions.py tests/test_calendar_and_card_actions.py
+          git diff --check
+      - name: Commit canonical source corrections
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add extension/styles/workspace.css extension/options/options.js extension/dashboard/dashboard.js tests/test_organic_workspace_ui.py
+          if git diff --cached --quiet; then
+            echo "No product delta to commit."
+            exit 0
+          fi
+          git commit -m "fix(ui): remove layout overlaps and restore spacing [canonical-ui-applied]"
+          git push origin HEAD:design/organic-workspace-ui
