@@ -5,7 +5,7 @@
 
 **Email Follow-up & Productivity for Thunderbird**
 
-[![QA](https://github.com/ussmarines/mailperch-thunderbird/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/ussmarines/mailperch-thunderbird/actions/workflows/ci.yml)
+[![QA](https://github.com/ussmarines/mailpin-thunderbird/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/ussmarines/mailpin-thunderbird/actions/workflows/ci.yml)
 ![Release](https://img.shields.io/badge/release-v1.6.1-4F7F75)
 ![Thunderbird](https://img.shields.io/badge/Thunderbird-153.x-3D536B)
 ![License](https://img.shields.io/badge/license-MailPin%20Source--Available%201.1-1A1D21)
@@ -81,7 +81,7 @@ MailPin has no runtime network call, telemetry, advertising or remote code. Full
 - [Thunderbird test bench](docs/THUNDERBIRD_TEST_BENCH.md)
 - [Reviewer build instructions](release/BUILD_INSTRUCTIONS.md)
 - [ATN preparation](STORE_RELEASE.md)
-- [Report an issue](https://github.com/ussmarines/mailperch-thunderbird/issues)
+- [Report an issue](https://github.com/ussmarines/mailpin-thunderbird/issues)
 
 Maintained by [ussmarines](https://github.com/ussmarines). [PayPal](https://paypal.me/ussmarinesdot) donations are optional and unlock no functionality.
 

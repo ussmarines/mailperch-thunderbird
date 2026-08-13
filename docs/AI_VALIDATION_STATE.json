@@ -3,7 +3,7 @@
   "purpose": "Cache machine-readable des dernières preuves de validation réutilisables. Ce fichier ne remplace ni AGENTS.md ni les règles de sécurité et ne doit jamais servir à inventer un test non exécuté.",
   "recorded_at": "2026-08-13T01:06:28+02:00",
   "baseline": {
-    "repository": "ussmarines/mailperch-thunderbird",
+    "repository": "ussmarines/mailpin-thunderbird",
     "branch": "main",
     "commit_sha": "4fdb978e1828325001f95951c115059a931b8b6e",
     "tree_sha": "ac9178baf462cadd6206199330e6644c243672d5",
