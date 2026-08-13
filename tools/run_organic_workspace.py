@@ -27,6 +27,17 @@ script.write_text(text, encoding="utf-8", newline="\n")
 compile(text, str(script), "exec")
 runpy.run_path(str(script), run_name="__main__")
 
+# Reuse an existing localized string rather than growing FR/EN locale catalogs
+# for a navigation landmark whose accessible name is already covered by the
+# Dashboard title.
+dashboard = root / "extension/dashboard/dashboard.js"
+dashboard_text = dashboard.read_text(encoding="utf-8")
+old_aria = 'rail.setAttribute("aria-label", msg("ariaDashboardViews", "Navigation MailPin"));'
+new_aria = 'rail.setAttribute("aria-label", msg("dashboardTitle", "MailPin"));'
+if old_aria not in dashboard_text:
+    raise RuntimeError("dashboard.js: workspace rail aria anchor not found")
+dashboard.write_text(dashboard_text.replace(old_aria, new_aria, 1), encoding="utf-8", newline="\n")
+
 # Typography guard: local preferred faces + guaranteed system fallback.
 guard = root / "tests/test_ui_regressions.py"
 guard_text = guard.read_text(encoding="utf-8")
