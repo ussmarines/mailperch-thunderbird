@@ -68,6 +68,7 @@ jobs:
             extension/options/AGENTS.md \
             extension/options/options.html \
             extension/options/options.js \
+            tests/static_checks.py \
             tests/test_organic_workspace_ui.py \
             tests/test_ui_regressions.py \
             tests/test_ui_polish_3_2_3.py
