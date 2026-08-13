@@ -746,6 +746,7 @@ const VIEW_SECTION_IDS = Object.freeze({
 
 function setView(view) {
   const next = Object.prototype.hasOwnProperty.call(VIEW_SECTION_IDS, view) ? view : "today";
+  document.body.dataset.workspaceView = next;
   for (const button of document.querySelectorAll("[data-view]")) {
     button.setAttribute("aria-pressed", String(button.dataset.view === next));
   }
@@ -1196,8 +1197,62 @@ function bindEvents() {
   });
 }
 
+function enhanceOrganicDashboard() {
+  if (document.body.dataset.workspaceEnhanced === "true") return;
+  const shell = $("dashboard-main");
+  const header = shell?.querySelector(".dashboard-header");
+  const tabs = shell?.querySelector(".view-tabs");
+  const layout = shell?.querySelector(".dashboard-layout");
+  const legacySidebar = layout?.querySelector(".dashboard-sidebar");
+  const content = layout?.querySelector(".dashboard-content");
+  const stats = $("stats");
+  const reminders = $("reminder-center");
+  const technical = shell?.querySelector(".technical-panel");
+  const support = shell?.querySelector(".support-panel");
+  if (!shell || !header || !tabs || !legacySidebar || !content || !stats || !reminders) {
+    throw new Error("Structure Dashboard incompatible avec Organic Workspace.");
+  }
+
+  document.body.classList.add("mp-organic-workspace");
+  document.body.dataset.workspaceEnhanced = "true";
+
+  const frame = node("div", "workspace-frame");
+  const rail = node("aside", "workspace-rail");
+  rail.setAttribute("aria-label", msg("dashboardTitle", "MailPin"));
+  const railBrand = node("div", "workspace-rail-brand");
+  const railIcon = document.createElement("img");
+  railIcon.src = "../icons/mailpin-icon.svg";
+  railIcon.alt = "";
+  railIcon.width = 34;
+  railIcon.height = 34;
+  const railBrandCopy = node("div", "workspace-rail-brand-copy");
+  railBrandCopy.append(
+    node("strong", "", "MailPin"),
+    node("span", "", "Follow-up workspace")
+  );
+  railBrand.append(railIcon, railBrandCopy);
+  rail.append(railBrand);
+
+  const searchField = legacySidebar.querySelector(".search-field");
+  if (searchField) rail.append(searchField);
+  rail.append(tabs);
+  while (legacySidebar.firstChild) rail.append(legacySidebar.firstChild);
+
+  const stage = node("main", "workspace-stage");
+  stage.append(header, stats, reminders, content);
+
+  const inspector = node("aside", "workspace-inspector");
+  inspector.setAttribute("aria-label", msg("technicalDetails", "Contexte et outils"));
+  if (technical) inspector.append(technical);
+  if (support) inspector.append(support);
+
+  frame.append(rail, stage, inspector);
+  shell.replaceChildren(frame);
+}
+
 window.addEventListener("DOMContentLoaded", async () => {
   localize();
+  enhanceOrganicDashboard();
   $("app-version").textContent = `v${api.runtime.getManifest().version}`;
   bindEvents();
   await load();
