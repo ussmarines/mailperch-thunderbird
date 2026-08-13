@@ -1,0 +1,78 @@
+name: Organic Workspace branch validation
+
+on:
+  push:
+    branches:
+      - "design/organic-workspace-ui"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: mailpin-organic-workspace-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  transform-validate-commit:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - name: Checkout design branch
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: "24"
+
+      - name: Setup Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: "3.12"
+
+      - name: Apply Organic Workspace transformation
+        run: |
+          python tools/run_organic_workspace.py
+          git restore tools/apply_organic_workspace.py
+          git diff --check
+
+      - name: Targeted UI contracts
+        run: |
+          python tests/test_organic_workspace_ui.py
+          python tests/test_ui_regressions.py
+          python tests/test_dashboard_dom_contract.py
+          python tests/test_options_controls.py
+          python tests/test_recommended_options_ux.py
+          python tests/test_dynamic_options_localization.py
+          node tests/dashboard_browser_test_contract.mjs
+          node tests/options_browser_test_contract.mjs
+
+      - name: Full release-equivalent CI
+        run: npm run ci
+
+      - name: Commit validated product delta
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add \
+            BRANDING.md \
+            package.json \
+            docs/UI_SPEC.md \
+            extension/styles/tokens.css \
+            extension/styles/workspace.css \
+            extension/styles/pin.css \
+            extension/dashboard/dashboard.html \
+            extension/dashboard/dashboard.js \
+            extension/options/AGENTS.md \
+            extension/options/options.html \
+            extension/options/options.js \
+            tests/test_organic_workspace_ui.py
+          git diff --cached --check
+          if git diff --cached --quiet; then
+            echo "No product delta to commit."
+            exit 0
+          fi
+          git commit -m "design: rebuild MailPin as Organic Workspace"
+          git push origin HEAD:design/organic-workspace-ui
