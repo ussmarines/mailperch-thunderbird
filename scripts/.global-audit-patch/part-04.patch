@@ -1,0 +1,316 @@
++Le présent plan complète les validations automatisées de la source 1.7.0. La dernière release publique reste 1.6.1. Organic Workspace modifie fortement l’interface ; une nouvelle recette humaine est donc requise avant toute publication 1.7.0, même si les invariants métier restent couverts par les tests automatisés.
+ 
+-## Priorité 1.6.1 — recette ciblée avant ATN
++## Priorité 1.7.0 — recette ciblée avant publication
+ 
+ 1. Dans Options, ouvrir les règles personnalisées en FR puis EN et vérifier à 100/125/200 % que l’aide reste lisible, que les trois actions passent proprement à la ligne et qu’aucun scroll horizontal n’apparaît.
+ 2. Dans le Dashboard puis le panneau Thunderbird, ouvrir Agenda sur une petite fenêtre : une nouvelle création doit démarrer sur **Événement** ; créer un événement avec début/fin personnalisés, puis choisir Tâche avec et sans calendrier compatible. Sans destination tâche, aucun sélecteur vide ne doit apparaître, l’explication doit être visible et la création désactivée. Vérifier aussi qu’un élément Agenda existant conserve son type réel.
+@@ -14,7 +14,7 @@ Le présent plan complète les validations automatisées du candidat 1.6.1. La l
+ 6. Utiliser l’action explicitement conversation puis une entrée générique inverse ; vérifier qu’une seule référence logique subsiste et que notes, checklist, échéance, groupe et Agenda ne sont pas perdus.
+ 7. Avec une fenêtre Thunderbird globalement large, déplacer continûment le splitter du panneau entre environ 800 et 280 px ; vérifier header, recherche, filtres, cartes, actions et absence de scroll horizontal ou sauts de layout.
+ 
+-Pour GitHub, le GO 1.6.1 dépend des QA Linux/Windows, de la garde sécurité, du build reproductible et du smoke Thunderbird réel. Pour ATN, une recette humaine ciblée du XPI 1.6.1 reste recommandée et doit être consignée sans réattribuer les tests 1.5.4 à cette version.
++Pour GitHub, le GO 1.7.0 dépend des QA Linux/Windows, de la garde sécurité, du build reproductible, du smoke Thunderbird réel et de la recette UI humaine du XPI exact. ATN reste une étape séparée après décision explicite de publication.
+ 
+ ## Priorité A — intégration Thunderbird consolidée
+ 
+diff --git a/docs/PROJECT_STATE.json b/docs/PROJECT_STATE.json
+index f757007..9f0e747 100644
+--- a/docs/PROJECT_STATE.json
++++ b/docs/PROJECT_STATE.json
+@@ -2,11 +2,11 @@
+   "format": "mailperch-project-state",
+   "version": 1,
+   "project": "MailPin — Email Follow-up & Productivity for Thunderbird",
+-  "extensionVersion": "1.6.1",
++  "extensionVersion": "1.7.0",
+   "baseGitHub": {
+     "branch": "main",
+-    "commit": "6d582da0cf729b1a93df348e4845430fbfb7fad2",
+-    "role": "pre-1.6.1 release-metadata baseline"
++    "commit": "0c0400170aac631d13d795050d669cbb1a83ea7f",
++    "role": "Organic Workspace merged baseline before global audit"
+   },
+   "extensionId": "ussmarines.mailpin@addons.thunderbird.net",
+   "thunderbird": {
+@@ -110,7 +110,7 @@
+     "uiDependencyPolicy": "native HTML plus local Organic Workspace CSS tokens; canonical shell in source; no npm runtime dependency, bundler, CDN or remote asset",
+     "runtimeTestSupplyChain": "test-only Thunderbird/geckodriver downloads are checksum-verified and are not runtime dependencies of the extension"
+   },
+-  "developmentBranch": "main",
++  "developmentBranch": "audit/global-repo-cleanup-2026-08-13",
+   "testing": {
+     "contract": [
+       "tests/test_thunderbird_compatibility_boundary.py",
+@@ -120,7 +120,9 @@
+     ],
+     "runtimeWorkflow": ".github/workflows/thunderbird-smoke.yml",
+     "runtimeScript": "tests/thunderbird/real_smoke.py",
+-    "browserStatus": "Chromium DOM-flow and geometry evidence predates the branding-only release delta and remains applicable to unchanged business/layout behavior; MailPin identity/palette are covered by current static/UI guards.",
+-    "runtimeStatus": "MailPin 1.6.0 rebrand runtime commit 4fdb978e1828325001f95951c115059a931b8b6e passed Linux/Windows QA, security guard and real Thunderbird 153 smoke. MailPin 1.6.1 changes only manifest version plus publication/reviewer metadata; its release process must rerun full QA and real Thunderbird smoke. No fresh manual 1.6.1 XPI acceptance is claimed."
+-  }
++    "browserStatus": "Organic Workspace DOM/layout contracts are current and the final shell is written directly in source HTML. Browser-model evidence complements, but does not replace, real Thunderbird visual acceptance.",
++    "runtimeStatus": "Organic Workspace PR #39 passed Linux/Windows QA, security guard and real Thunderbird 153 smoke before merge. Source 1.7.0 is the post-merge audit line; latest public release remains 1.6.1 until a separate publication decision."
++  },
++  "latestPublicVersion": "1.6.1",
++  "releaseStatus": "development"
+ }
+diff --git a/docs/SCREENSHOT_FINDINGS.md b/docs/SCREENSHOT_FINDINGS.md
+index 300be53..f913ffb 100644
+--- a/docs/SCREENSHOT_FINDINGS.md
++++ b/docs/SCREENSHOT_FINDINGS.md
+@@ -69,3 +69,12 @@ possède une règle CSS.
+ - la punaise héritait encore de classes d’icône Thunderbird et l’étoile était déplacée par le CSS MailPin ;
+ - la barre Enregistrer/Annuler était visible mais les contrôles restaient hors du formulaire et dépendaient de `form=`, non fiable dans l’onglet Options ;
+ - ces constats correspondent à MP-2026-004 et MP-2026-005 dans `docs/BUG_TRACKER.md`.
++
++## Vidéos du 13 août 2026 — Organic Workspace
++
++- la première refonte Organic Workspace conservait trop de densité, des grilles complexes comprimées et plusieurs surfaces flottantes susceptibles de recouvrir le contenu ;
++- les menus `•••`, statistiques secondaires, inspector et commandes Enregistrer/Annuler ont été ramenés dans le flux ou dans le layout ;
++- Rule Builder, Affaires, modèles et Agenda ont reçu une structure de champs explicite et davantage de respiration ;
++- `workspace.css` a été consolidé en une feuille canonique au lieu d’empiler une nouvelle couche V3 ;
++- l’audit post-vidéo a supprimé le re-parenting runtime Dashboard/Options : le shell final est désormais écrit directement dans le HTML ;
++- la recette visuelle humaine reste ouverte : le smoke Thunderbird confirme le cycle de vie et les erreurs runtime, pas le jugement pixel/ergonomie.
+diff --git a/docs/SECURITY_BOUNDARY.md b/docs/SECURITY_BOUNDARY.md
+index 0553659..54c2e8f 100644
+--- a/docs/SECURITY_BOUNDARY.md
++++ b/docs/SECURITY_BOUNDARY.md
+@@ -105,7 +105,7 @@ Cette activité réseau appartient à la chaîne CI, pas au produit installé ;
+ 
+ ## Dépendances de l’interface
+ 
+-Le XPI ne contient aucune dépendance npm runtime, aucun composant chargé depuis un CDN et aucun code généré à l’installation. L’évaluation de `@fluentui/web-components` 3.0.3 n’a trouvé aucun import dans l’extension et aucun chemin de bundle vers le XPI ; conserver le paquet aurait ajouté une chaîne de dépendances inutilisée et une exigence Node 22/24. Le paquet et le lockfile ont donc été retirés. Les contrôles restent natifs et les jetons Fluent 2 sont versionnés localement dans `extension/styles/tokens.css`.
++Le XPI ne contient aucune dépendance npm runtime, aucun composant chargé depuis un CDN et aucun code généré à l’installation. L’évaluation de `@fluentui/web-components` 3.0.3 n’a trouvé aucun import dans l’extension et aucun chemin de bundle vers le XPI ; conserver le paquet aurait ajouté une chaîne de dépendances inutilisée et une exigence Node 22/24. Le paquet et le lockfile ont donc été retirés. Les contrôles restent natifs et les jetons Organic Workspace sont versionnés localement dans `extension/styles/tokens.css`; l’évaluation Fluent est conservée uniquement comme historique de chaîne d’approvisionnement.
+ 
+ ## Règles pour les futures modifications
+ 
+diff --git a/docs/THUNDERBIRD_TEST_BENCH.md b/docs/THUNDERBIRD_TEST_BENCH.md
+index b7a7e0a..56fb80b 100644
+--- a/docs/THUNDERBIRD_TEST_BENCH.md
++++ b/docs/THUNDERBIRD_TEST_BENCH.md
+@@ -118,7 +118,7 @@ Après publication de la branche, lancer **Thunderbird functional and scale benc
+ ```bash
+ python tests/thunderbird/functional_bench.py \
+   --binary /chemin/vers/thunderbird \
+-  --xpi dist/MailPin_v1.5.3.xpi \
++  --xpi dist/MailPin_v1.7.0.xpi \
+   --geckodriver /chemin/vers/geckodriver \
+   --output-dir artifacts/thunderbird-bench \
+   --volumes 50,100,500,1000,2000 \
+@@ -136,7 +136,7 @@ Pour préparer cette validation manuelle sans automatiser l’onglet Options, ut
+ ```bash
+ python tests/thunderbird/functional_bench.py \
+   --binary /chemin/vers/thunderbird \
+-  --xpi dist/MailPin_v1.5.3.xpi \
++  --xpi dist/MailPin_v1.7.0.xpi \
+   --geckodriver /chemin/vers/geckodriver \
+   --output-dir artifacts/thunderbird-manual-scope \
+   --prepare-manual-scope-validation \
+@@ -146,7 +146,7 @@ python tests/thunderbird/functional_bench.py \
+ ```bash
+ python tests/thunderbird/functional_bench.py \
+   --binary /chemin/vers/thunderbird \
+-  --xpi dist/MailPin_v1.5.3.xpi \
++  --xpi dist/MailPin_v1.7.0.xpi \
+   --geckodriver /chemin/vers/geckodriver \
+   --output-dir artifacts/thunderbird-multi-account \
+   --scope-validation-only \
+@@ -182,7 +182,7 @@ Sous Windows x64, l’installation utilisateur validée est `C:\Users\ussma\AppD
+ ```bash
+ python tests/thunderbird/real_smoke.py \
+   --binary /chemin/vers/thunderbird \
+-  --xpi dist/MailPin_v1.5.3.xpi \
++  --xpi dist/MailPin_v1.7.0.xpi \
+   --geckodriver /chemin/vers/geckodriver \
+   --output-dir artifacts/thunderbird-smoke \
+   --timeout 45
+diff --git a/extension/api/pinInbox/implementation.js b/extension/api/pinInbox/implementation.js
+index b8ca567..4fbcc19 100644
+--- a/extension/api/pinInbox/implementation.js
++++ b/extension/api/pinInbox/implementation.js
+@@ -393,9 +393,6 @@ function clampNumber(value, min, max, fallback) {
+   return Math.min(max, Math.max(min, number));
+ }
+ 
+-function normalizeBoolean(value, fallback) {
+-  return typeof value === "boolean" ? value : fallback;
+-}
+ 
+ const UNSAFE_RECORD_KEYS = new Set(["__proto__", "prototype", "constructor"]);
+ 
+@@ -888,9 +885,6 @@ function getLegacyDefaultColor(accountKey) {
+   return LEGACY_DEFAULT_COLORS[hashString(accountKey) % LEGACY_DEFAULT_COLORS.length];
+ }
+ 
+-function getFolderChildren(folder) {
+-  return THUNDERBIRD_COMPAT?.messages?.folderChildren?.(folder) || [];
+-}
+ 
+ function walkFolders(root) {
+   return THUNDERBIRD_COMPAT?.messages?.walkFolders?.(root) || [];
+@@ -3679,7 +3673,7 @@ var pinInbox = class extends ExtensionCommon.ExtensionAPI {
+   _exportDiagnosticBundle() {
+     return {
+       ...this._getDiagnosticReport(),
+-      format: "mailperch-diagnostic-bundle",
++      format: "mailpin-diagnostic-bundle",
+       version: 4,
+       healthSnapshot: PIN_MODULES.PinHealth?.build({
+         data: this._data, settings: this._settings, compatibility: this._compatibility,
+diff --git a/extension/dashboard/dashboard.js b/extension/dashboard/dashboard.js
+index 955cb12..13a7968 100644
+--- a/extension/dashboard/dashboard.js
++++ b/extension/dashboard/dashboard.js
+@@ -181,12 +181,12 @@ function setLoading(value) {
+   for (const control of document.querySelectorAll("button, select, input")) {
+     if (control.id === "retry" || control.closest("dialog")) continue;
+     if (loading) {
+-      control.dataset.mailperchLoadingWasDisabled = String(control.disabled);
++      control.dataset.mailpinLoadingWasDisabled = String(control.disabled);
+       control.disabled = true;
+       control.setAttribute("aria-busy", "true");
+-    } else if (Object.prototype.hasOwnProperty.call(control.dataset, "mailperchLoadingWasDisabled")) {
+-      control.disabled = control.dataset.mailperchLoadingWasDisabled === "true";
+-      delete control.dataset.mailperchLoadingWasDisabled;
++    } else if (Object.prototype.hasOwnProperty.call(control.dataset, "mailpinLoadingWasDisabled")) {
++      control.disabled = control.dataset.mailpinLoadingWasDisabled === "true";
++      delete control.dataset.mailpinLoadingWasDisabled;
+       control.removeAttribute("aria-busy");
+     }
+   }
+@@ -195,15 +195,15 @@ function setLoading(value) {
+ function setButtonBusy(control, busy) {
+   if (!(control instanceof HTMLButtonElement)) return;
+   if (busy) {
+-    if (!Object.prototype.hasOwnProperty.call(control.dataset, "mailperchBusyWasDisabled")) {
+-      control.dataset.mailperchBusyWasDisabled = String(control.disabled);
++    if (!Object.prototype.hasOwnProperty.call(control.dataset, "mailpinBusyWasDisabled")) {
++      control.dataset.mailpinBusyWasDisabled = String(control.disabled);
+     }
+     control.disabled = true;
+     control.dataset.busy = "true";
+     control.setAttribute("aria-busy", "true");
+   } else {
+-    control.disabled = control.dataset.mailperchBusyWasDisabled === "true";
+-    delete control.dataset.mailperchBusyWasDisabled;
++    control.disabled = control.dataset.mailpinBusyWasDisabled === "true";
++    delete control.dataset.mailpinBusyWasDisabled;
+     delete control.dataset.busy;
+     control.removeAttribute("aria-busy");
+   }
+@@ -638,14 +638,14 @@ function renderKanban() {
+     list.addEventListener("drop", async event => {
+       event.preventDefault();
+       clearKanbanDropState();
+-      const key = event.dataTransfer.getData("text/x-mailperch-key");
++      const key = event.dataTransfer.getData("text/x-mailpin-key");
+       if (!key) return;
+       await perform([key], status === "completed" ? "complete" : status);
+     });
+     for (const item of items) {
+       const card = createCard(item, {compact: true, selectable: false});
+       card.draggable = true;
+-      card.addEventListener("dragstart", event => { event.dataTransfer.setData("text/x-mailperch-key", item.stableKey); event.dataTransfer.effectAllowed = "move"; });
++      card.addEventListener("dragstart", event => { event.dataTransfer.setData("text/x-mailpin-key", item.stableKey); event.dataTransfer.effectAllowed = "move"; });
+       card.addEventListener("dblclick", () => perform([item.stableKey], "open", {}, {reload: false}));
+       list.append(card);
+     }
+@@ -1166,7 +1166,7 @@ function bindEvents() {
+       try {
+         const bundle = await api.pinInbox.exportDiagnosticBundle();
+         const date = new Date().toISOString().slice(0, 10);
+-        downloadJson(`mailperch-diagnostic-${date}.json`, bundle);
++        downloadJson(`mailpin-diagnostic-${date}.json`, bundle);
+         setStatus(msg("diagnosticExported", "Diagnostic local exporté."), "success");
+       } catch (error) { setStatus(failureMessage("diagnosticExportFailed", "Export impossible", error), "error", {persistent: true}); }
+       finally { setButtonBusy(control, false); }
+diff --git a/extension/manifest.json b/extension/manifest.json
+index 077dae9..c87f25f 100644
+--- a/extension/manifest.json
++++ b/extension/manifest.json
+@@ -3,7 +3,7 @@
+   "name": "__MSG_extensionName__",
+   "short_name": "__MSG_extensionShortName__",
+   "description": "__MSG_extensionDescription__",
+-  "version": "1.6.1",
++  "version": "1.7.0",
+   "author": "ussmarines",
+   "developer": {
+     "name": "ussmarines",
+diff --git a/extension/options/options.js b/extension/options/options.js
+index 26c1915..9f2814b 100644
+--- a/extension/options/options.js
++++ b/extension/options/options.js
+@@ -2115,7 +2115,7 @@ async function startOptions() {
+         () => messenger.pinInbox.exportDiagnosticBundle()
+       );
+       downloadJson(
+-        `mailperch-diagnostic-${new Date().toISOString().slice(0, 10)}.json`,
++        `mailpin-diagnostic-${new Date().toISOString().slice(0, 10)}.json`,
+         report
+       );
+       setStatus(msg("diagnosticExported"), "success");
+@@ -2132,7 +2132,7 @@ async function startOptions() {
+         value.shortcut = value.shortcuts["toggle-pin-selected"] || "";
+         return value;
+       });
+-      downloadJson(`mailperch-${new Date().toISOString().slice(0, 10)}.json`, data);
++      downloadJson(`mailpin-${new Date().toISOString().slice(0, 10)}.json`, data);
+       setStatus(msg("backupExported"), "success");
+     } catch (error) {
+       setStatus(failureMessage("backupExportFailed", error), "error");
+diff --git a/package.json b/package.json
+index cb6b9a0..7c1baa7 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "mailpin-thunderbird",
+-  "version": "1.6.1",
++  "version": "1.7.0",
+   "private": true,
+   "description": "Build, test, and release tooling for MailPin — Email Follow-up & Productivity for Thunderbird.",
+   "author": "ussmarines",
+diff --git a/release/ATN_REVIEW_NOTES_TEMPLATE.md b/release/ATN_REVIEW_NOTES_TEMPLATE.md
+index 0e78a20..da7ed97 100644
+--- a/release/ATN_REVIEW_NOTES_TEMPLATE.md
++++ b/release/ATN_REVIEW_NOTES_TEMPLATE.md
+@@ -1,10 +1,10 @@
+-# Notes pour les reviewers ATN — MailPin 1.6.1
++# Notes pour les reviewers ATN — MailPin 1.7.0 (candidate)
+ 
+ ## Identité
+ 
+ - **Nom :** MailPin — Email Follow-up & Productivity for Thunderbird
+ - **Nom court :** MailPin
+-- **Version :** 1.6.1
++- **Version :** 1.7.0
+ - **ID :** `ussmarines.mailpin@addons.thunderbird.net`
+ - **Compatibilité :** Thunderbird 153.0 à 153.*
+ - **Langues :** français et anglais
+@@ -36,7 +36,7 @@ L’Experiment possède par nature un accès privilégié et provoque l’averti
+ - aucune dépendance d’exécution ou de build tierce ;
+ - code source lisible, non minifié et build reproductible.
+ 
+-Voir `PRIVACY.md`, `SECURITY.md`, `SECURITY_AUDIT_1.6.0.md` et `release/BUILD_INSTRUCTIONS.md`.
++Voir `PRIVACY.md`, `SECURITY.md`, `SECURITY_AUDIT_1.7.0.md` et `release/BUILD_INSTRUCTIONS.md`.
+ 
+ ## Scénario de test rapide
+ 
+diff --git a/release/BUILD_INSTRUCTIONS.md b/release/BUILD_INSTRUCTIONS.md
+index 805489b..a2267fe 100644
+--- a/release/BUILD_INSTRUCTIONS.md
++++ b/release/BUILD_INSTRUCTIONS.md
+@@ -1,34 +1,30 @@
+-# Instructions de build pour les reviewers
++# Instructions de build pour les reviewers — candidat 1.7.0
+ 
+-## Environnement
++## État
++
++La source courante est **1.7.0** ; la dernière release publique est **1.6.1**. Aucune publication 1.7.0 n’est implicite dans ce document.
+ 
+-Le build 1.6.1 est conçu pour l’environnement reviewer standard et a besoin uniquement de :
++## Environnement
+ 
