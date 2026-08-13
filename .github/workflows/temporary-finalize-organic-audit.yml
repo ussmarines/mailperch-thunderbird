@@ -1,0 +1,369 @@
+name: Temporary finalize Organic Workspace audit
+on:
+  push:
+    branches:
+      - design/organic-workspace-ui
+permissions:
+  contents: write
+jobs:
+  finalize:
+    if: ${{ !contains(github.event.head_commit.message, '[organic-audit-applied]') }}
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: design/organic-workspace-ui
+          fetch-depth: 0
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: '24'
+      - name: Write canonical audited UI sources
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          import json
+          import re
+
+          ROOT = Path('.')
+          def extract_element(text, marker, tag):
+              start = text.index(marker)
+              token_re = re.compile(rf'<(/?){tag}\b[^>]*>', re.I)
+              depth = 0
+              for match in token_re.finditer(text, start):
+                  if match.group(1):
+                      depth -= 1
+                      if depth == 0:
+                          return start, match.end(), text[start:match.end()]
+                  else:
+                      depth += 1
+              raise RuntimeError(f'unclosed {tag}: {marker}')
+          def inner(element, tag):
+              return element[element.find('>') + 1:element.lower().rfind(f'</{tag}>')]
+          def indent_block(value, spaces):
+              pad = ' ' * spaces
+              lines = value.strip('\n').splitlines()
+              nonblank = [len(line) - len(line.lstrip()) for line in lines if line.strip()]
+              cut = min(nonblank) if nonblank else 0
+              return '\n'.join(pad + line[cut:] if line.strip() else '' for line in lines)
+          def write(path, text):
+              (ROOT / path).write_text(text, encoding='utf-8')
+
+          # Dashboard: canonical shell directly in HTML.
+          path = ROOT / 'extension/dashboard/dashboard.html'
+          text = path.read_text(encoding='utf-8')
+          main_start, main_end, main = extract_element(text, '<main id="dashboard-main"', 'main')
+          _, _, header = extract_element(main, '<header class="dashboard-header">', 'header')
+          _, _, stats = extract_element(main, '<section id="stats"', 'section')
+          _, _, reminders = extract_element(main, '<section id="reminder-center"', 'section')
+          _, _, tabs = extract_element(main, '<nav class="view-tabs"', 'nav')
+          _, _, sidebar = extract_element(main, '<aside class="dashboard-sidebar">', 'aside')
+          _, _, content = extract_element(main, '<div class="dashboard-content">', 'div')
+          _, _, technical = extract_element(main, '<aside class="technical-panel">', 'aside')
+          _, _, support = extract_element(main, '<aside class="support-panel"', 'aside')
+          _, _, status = extract_element(text, '<div id="status"', 'div')
+          sidebar_inner = inner(sidebar, 'aside')
+          _, _, search = extract_element(sidebar_inner, '<label class="search-field">', 'label')
+          search_start = sidebar_inner.index(search)
+          sidebar_rest = (sidebar_inner[:search_start] + sidebar_inner[search_start + len(search):]).strip('\n')
+          header = header.replace('<div class="header-primary-actions">','<div class="header-primary-actions"><button id="context-toggle" type="button" class="button secondary context-toggle" aria-expanded="false" aria-controls="workspace-inspector" data-i18n="contextPanel">Contexte</button>',1)
+          new_main = '''<main id="dashboard-main" class="dashboard-shell" tabindex="-1">
+            <div class="workspace-frame" data-inspector-open="false">
+              <aside class="workspace-rail" aria-label="MailPin" data-i18n-aria-label="dashboardTitle">
+                <div class="workspace-rail-brand"><img src="../icons/mailpin-icon.svg" width="34" height="34" alt=""><div class="workspace-rail-brand-copy"><strong>MailPin</strong><span data-i18n="dashboardHeading">Tableau de bord</span></div></div>
+          %s
+          %s
+          %s
+              </aside>
+              <div class="workspace-stage">
+          %s
+          %s
+          %s
+          %s
+          %s
+              </div>
+              <aside id="workspace-inspector" class="workspace-inspector" aria-label="Contexte" data-i18n-aria-label="contextPanel" hidden>
+                <div class="workspace-inspector-header"><strong data-i18n="contextPanel">Contexte</strong><button id="workspace-inspector-close" type="button" class="icon-button workspace-inspector-close" aria-label="Fermer le contexte" data-i18n-aria-label="closeContext">×</button></div>
+          %s
+          %s
+              </aside>
+            </div>
+          </main>''' % (indent_block(search,6),indent_block(tabs,6),indent_block(sidebar_rest,6),indent_block(header,6),indent_block(status,6),indent_block(stats,6),indent_block(reminders,6),indent_block(content,6),indent_block(technical,6),indent_block(support,6))
+          text = text[:main_start] + new_main + text[main_end:]
+          first = text.find('<div id="status"')
+          second = text.find('<div id="status"', first + 1) if first >= 0 else -1
+          if second >= 0:
+              rel_start, rel_end, _ = extract_element(text[second:], '<div id="status"', 'div')
+              text = text[:second + rel_start] + text[second + rel_end:]
+          text = text.replace('<body data-loading>', '<body class="mp-organic-workspace" data-loading>', 1)
+          write('extension/dashboard/dashboard.html','\n'.join(line.rstrip() for line in text.splitlines())+'\n')
+
+          # Options: canonical shell directly in HTML, save actions in sticky header.
+          path = ROOT / 'extension/options/options.html'
+          text = path.read_text(encoding='utf-8')
+          app_start, app_end, app = extract_element(text, '<main class="settings-app">', 'main')
+          _, _, header = extract_element(app, '<header class="page-header">', 'header')
+          _, _, overview = extract_element(app, '<section class="quick-overview"', 'section')
+          _, _, sidebar = extract_element(app, '<aside class="settings-sidebar"', 'aside')
+          _, _, loading = extract_element(app, '<div id="settings-loading"', 'div')
+          _, _, failure = extract_element(app, '<section id="settings-error"', 'section')
+          _, _, form = extract_element(app, '<form id="settings-form"', 'form')
+          _, _, status = extract_element(text, '<aside id="status"', 'aside')
+          _, _, save_dock = extract_element(form, '<div id="save-dock"', 'div')
+          form = form.replace(save_dock, '')
+          save_dock = save_dock.replace('class="save-dock"','class="save-dock header-save-dock"',1)
+          save_dock = save_dock.replace('id="discard-changes" type="reset"','id="discard-changes" type="reset" form="settings-form"',1)
+          save_dock = save_dock.replace('id="save-all-floating" type="submit"','id="save-all-floating" type="submit" form="settings-form"',1)
+          header = header.replace('<div class="header-actions">','<div class="header-actions">\n        '+save_dock,1)
+          sidebar_inner = inner(sidebar,'aside').strip('\n')
+          new_app = '''<main class="settings-app">
+            <div class="settings-organic-frame">
+              <aside class="settings-sidebar" aria-label="Navigation des paramètres" data-i18n-aria-label="ariaSettingsNavigation">
+                <div class="settings-organic-brand"><img src="../icons/mailpin-icon.svg" width="34" height="34" alt=""><div><strong>MailPin</strong><span data-i18n="settings">Paramètres</span></div></div>
+          %s
+              </aside>
+              <section class="settings-organic-stage">
+          %s
+          %s
+          %s
+          %s
+          %s
+          %s
+              </section>
+            </div>
+          </main>''' % (indent_block(sidebar_inner,6),indent_block(header,6),indent_block(status,6),indent_block(overview,6),indent_block(loading,6),indent_block(failure,6),indent_block(form,6))
+          text = text[:app_start] + new_app + text[app_end:]
+          first = text.find('<aside id="status"')
+          second = text.find('<aside id="status"', first + 1) if first >= 0 else -1
+          if second >= 0:
+              rel_start, rel_end, _ = extract_element(text[second:], '<aside id="status"', 'aside')
+              text = text[:second + rel_start] + text[second + rel_end:]
+          text = text.replace('<body>','<body class="mp-organic-settings">',1)
+          write('extension/options/options.html','\n'.join(line.rstrip() for line in text.splitlines())+'\n')
+
+          # Runtime only binds state/interactions; it no longer rebuilds the shell.
+          path = ROOT / 'extension/dashboard/dashboard.js'
+          text = path.read_text(encoding='utf-8')
+          start = text.index('function enhanceOrganicDashboard() {')
+          end = text.index('\nwindow.addEventListener("DOMContentLoaded"', start)
+          replacement = '''function installOrganicDashboardInteractions() {
+            const frame = document.querySelector(".workspace-frame");
+            const inspector = $("workspace-inspector");
+            const contextToggle = $("context-toggle");
+            const inspectorClose = $("workspace-inspector-close");
+            if (!frame || !inspector || !contextToggle || !inspectorClose) throw new Error("Structure Dashboard incompatible avec Organic Workspace.");
+            const setInspectorOpen = open => {
+              inspector.hidden = !open;
+              frame.dataset.inspectorOpen = String(open);
+              contextToggle.setAttribute("aria-expanded", String(open));
+              if (open) inspector.querySelector("summary, button, a")?.focus({preventScroll: true});
+              else contextToggle.focus({preventScroll: true});
+            };
+            contextToggle.addEventListener("click", () => setInspectorOpen(inspector.hidden));
+            inspectorClose.addEventListener("click", () => setInspectorOpen(false));
+            document.addEventListener("keydown", event => {
+              if (event.key === "Escape" && !inspector.hidden && !document.querySelector("dialog[open]")) setInspectorOpen(false);
+            });
+          }
+          '''
+          text = text[:start] + replacement + text[end:]
+          text = text.replace('  enhanceOrganicDashboard();','  installOrganicDashboardInteractions();',1)
+          write('extension/dashboard/dashboard.js',text)
+
+          path = ROOT / 'extension/options/options.js'
+          text = path.read_text(encoding='utf-8')
+          start = text.index('function enhanceOrganicSettingsWorkspace() {')
+          end = text.index('\nfunction installCriticalSettingsActions()', start)
+          text = text[:start] + text[end + 1:]
+          text = text.replace('    enhanceOrganicSettingsWorkspace();\n','',1)
+          write('extension/options/options.js',text)
+
+          # Remove legacy wrapper CSS now superseded by static canonical markup.
+          path = ROOT / 'extension/styles/workspace.css'
+          text = path.read_text(encoding='utf-8').replace('.workspace-stage .dashboard-layout { display: block; margin: 0; }\n','').replace('.workspace-stage .dashboard-sidebar { display: none; }\n','')
+          write('extension/styles/workspace.css',text)
+
+          path = ROOT / 'extension/dashboard/dashboard.css'
+          text = path.read_text(encoding='utf-8')
+          legacy = '''.dashboard-layout { display: grid; grid-template-columns: minmax(230px, 270px) minmax(0, 1fr); gap: var(--mp-space-6); margin-top: var(--mp-space-5); align-items: start; }
+          .dashboard-sidebar {
+            position: sticky;
+            top: 1rem;
+            display: grid;
+            gap: var(--mp-space-4);
+            padding: 0 var(--mp-space-4) 0 0;
+            border: 0;
+            border-inline-end: 1px solid var(--border);
+            border-radius: 0;
+            background: transparent;
+            box-shadow: none;
+          }
+          '''
+          if legacy not in text: raise RuntimeError('legacy dashboard wrapper block missing')
+          text = text.replace(legacy,'').replace('  .dashboard-layout { grid-template-columns: 1fr; }\n  .dashboard-sidebar { position: static; }\n','').replace('.dashboard-header, .stat, .view-tabs, .dashboard-sidebar, .item,','.dashboard-header, .stat, .view-tabs, .item,').replace('/* MailPin 1.2 — saved views, command palette, checklist and calmer Fluent 2 spacing. */','/* Saved views, command palette and checklist base styles. */')
+          write('extension/dashboard/dashboard.css',text)
+
+          path = ROOT / 'extension/options/options.css'
+          text = path.read_text(encoding='utf-8')
+          legacy = '''.settings-layout {
+            display: grid;
+            grid-template-columns: minmax(250px, 300px) minmax(0, 1fr);
+            gap: var(--space-6);
+            align-items: start;
+          }
+          '''
+          if legacy not in text: raise RuntimeError('legacy settings wrapper block missing')
+          text = text.replace(legacy,'').replace('''  .settings-layout { grid-template-columns: 1fr; }
+            .settings-sidebar { position: static; max-height: none; }
+            .settings-nav { grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); }
+            .settings-nav-group + .settings-nav-group { margin-top: 0; padding-top: 0; border-top: 0; }
+          ''','').replace('.group-row, .rule-row, .account-card, .calendar-capability, .info-panel, .health-panel, .provider-panel, #import-preview {','.group-row, .rule-row, .account-card, .calendar-capability, .health-panel, #import-preview {').replace('.account-card-header { display: flex; align-items: center; gap: .65rem; }\n','').replace('.account-inboxes, .inbox-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); gap: .55rem; }','.inbox-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); gap: .55rem; }').replace('.health-panel, .provider-panel { display: grid; gap: .65rem; margin-top: var(--space-3); }','.health-panel { display: grid; gap: .65rem; margin-top: var(--space-3); }')
+          write('extension/options/options.css',text)
+
+          # Organic Workspace guard must execute under `python file.py`, as package.json invokes it.
+          path = ROOT / 'tests/test_organic_workspace_ui.py'
+          text = path.read_text(encoding='utf-8')
+          old = '''    assert "function enhanceOrganicDashboard()" in dashboard_js
+              assert 'node("div", "workspace-frame")' in dashboard_js
+              assert 'node("aside", "workspace-rail")' in dashboard_js
+              assert 'node("aside", "workspace-inspector")' in dashboard_js
+              assert "enhanceOrganicDashboard();" in dashboard_js
+              assert "function enhanceOrganicSettingsWorkspace()" in options_js
+              assert 'node("div", "settings-organic-frame")' in options_js
+              assert 'node("section", "settings-organic-stage")' in options_js
+              assert "enhanceOrganicSettingsWorkspace();" in options_js
+          '''
+          new = '''    assert 'class="workspace-frame"' in dashboard_html
+              assert 'class="workspace-rail"' in dashboard_html
+              assert 'id="workspace-inspector"' in dashboard_html
+              assert 'id="context-toggle"' in dashboard_html
+              assert "function installOrganicDashboardInteractions()" in dashboard_js
+              assert "installOrganicDashboardInteractions();" in dashboard_js
+              assert "enhanceOrganicDashboard" not in dashboard_js
+              assert 'class="settings-organic-frame"' in options_html
+              assert 'class="settings-organic-stage"' in options_html
+              assert 'class="save-dock header-save-dock"' in options_html
+              assert 'form="settings-form"' in options_html
+              assert "enhanceOrganicSettingsWorkspace" not in options_js
+          '''
+          if old not in text: raise RuntimeError('old Organic shell test missing')
+          text = text.replace(old,new,1).replace('''def test_organic_workspace_v2_video_driven_contracts():
+              workspace_css = text("extension/styles/workspace.css")
+              dashboard_js = text("extension/dashboard/dashboard.js")
+              options_js = text("extension/options/options.js")
+          ''','''def test_organic_workspace_v2_video_driven_contracts():
+              workspace_css = text("extension/styles/workspace.css")
+              dashboard_html = text("extension/dashboard/dashboard.html")
+              options_html = text("extension/options/options.html")
+              dashboard_js = text("extension/dashboard/dashboard.js")
+              options_js = text("extension/options/options.js")
+          ''').replace('''    assert 'saveDock.classList.add("header-save-dock")' in options_js
+              assert 'for (const family of ["Essentiel", "Automatisation", "Organisation", "Avancé"])' in options_js
+              assert 'node("div", "settings-family-heading")' not in options_js
+              assert 'const status = $("status");' in dashboard_js
+              assert 'node("details", "item-more")' in dashboard_js
+              assert 'node("button", "button secondary context-toggle"' in dashboard_js
+          ''','''    assert 'class="save-dock header-save-dock"' in options_html
+              assert 'id="save-all-floating" type="submit" form="settings-form"' in options_html
+              assert 'id="discard-changes" type="reset" form="settings-form"' in options_html
+              assert 'for (const family of ["Essentiel", "Automatisation", "Organisation", "Avancé"])' in options_js
+              assert 'node("div", "settings-family-heading")' not in options_js
+              assert dashboard_html.count("<main") == 1
+              assert "dashboard-layout" not in dashboard_html
+              assert "settings-layout" not in options_html
+              assert 'id="status"' in dashboard_html and 'class="workspace-stage"' in dashboard_html
+              assert 'node("details", "item-more")' in dashboard_js
+              assert 'id="context-toggle"' in dashboard_html
+          ''').replace('assert "Quality of Life et valeurs par défaut" in spec','assert "## Quality of Life" in spec')
+          if 'if __name__ == "__main__":' not in text:
+              text += '''\n\nif __name__ == "__main__":
+              test_organic_workspace_shell_is_loaded_and_structural()
+              test_organic_design_avoids_generic_effects_and_remote_assets()
+              test_panel_and_spec_follow_organic_workspace_contract()
+              test_organic_workspace_v2_video_driven_contracts()
+              test_qol_palette_defaults_and_low_friction_creation_contract()
+              print("Organic Workspace UI contracts: OK")
+          '''
+          write('tests/test_organic_workspace_ui.py',text)
+
+          path = ROOT / 'tests/test_regressions_3_2_6.py'
+          text = path.read_text(encoding='utf-8')
+          old = '''# Save/cancel live inside the form and use direct click handlers. Native form
+          # events remain as a keyboard/assistive fallback, but no cross-form association
+          # is required by the visible controls.
+          form_start = OPTIONS_HTML.index('<form id="settings-form"')
+          form_end = OPTIONS_HTML.index('</form>', form_start)
+          dock_pos = OPTIONS_HTML.index('id="save-dock"')
+          assert form_start < dock_pos < form_end
+          assert 'id="discard-changes" type="reset"' in OPTIONS_HTML
+          assert 'id="save-all-floating" type="submit"' in OPTIONS_HTML
+          assert 'form="settings-form"' not in OPTIONS_HTML[OPTIONS_HTML.index('id="save-dock"'):form_end]
+          '''
+          new = '''# Save/cancel live in the canonical sticky header so they cannot cover fields.
+          # Explicit form association preserves semantics; direct click handlers remain
+          # authoritative in Thunderbird embedding.
+          form_start = OPTIONS_HTML.index('<form id="settings-form"')
+          form_end = OPTIONS_HTML.index('</form>', form_start)
+          dock_pos = OPTIONS_HTML.index('id="save-dock"')
+          assert dock_pos < form_start < form_end
+          assert 'class="save-dock header-save-dock"' in OPTIONS_HTML
+          assert 'id="discard-changes" type="reset" form="settings-form"' in OPTIONS_HTML
+          assert 'id="save-all-floating" type="submit" form="settings-form"' in OPTIONS_HTML
+          '''
+          if old not in text: raise RuntimeError('old save dock regression contract missing')
+          write('tests/test_regressions_3_2_6.py',text.replace(old,new,1))
+
+          # Integrate current design rules into one canonical spec (no V1/V2 patch layers).
+          spec = (ROOT / 'docs/UI_SPEC.md').read_text(encoding='utf-8')
+          split = spec.find('\n## Organic Workspace V2')
+          if split > 0: spec = spec[:split].rstrip() + '\n'
+          spec = spec.replace('## Structure produit','## Structure produit\n\nLe shell final Dashboard/Options est écrit directement dans le HTML source. Le runtime gère les états et interactions mais ne reconstruit ni ne re-parente l’interface pour appliquer la DA.')
+          if '## Quality of Life' not in spec:
+              spec += '''\n## Quality of Life\n\n- Création Groupe / Affaire / Modèle / Règle : focus immédiat sur le nom et sélection du libellé par défaut.\n- Un champ optionnel ne devient requis qu’au moment de l’action qui en dépend ; Agenda valide échéance et calendrier au moment de créer/synchroniser.\n- Les couleurs automatiques utilisent Sage, Berry, Moss, Indigo, Brass, Ocean, Clay et Plum, en privilégiant la couleur la moins utilisée.\n- Les couleurs personnalisées sont conservées.\n- Menus, inspector et statistiques progressives restent dans le flux ou recomposent le layout avant toute superposition.\n- Les commandes Enregistrer/Annuler restent dans l’en-tête sticky et aucune surface flottante ne recouvre un champ éditable.\n- Un seul landmark `main` par document ; aucun `main` imbriqué.\n'''
+          write('docs/UI_SPEC.md',spec)
+
+          path = ROOT / 'docs/ARCHITECTURE.md'
+          text = path.read_text(encoding='utf-8').replace('des notifications fixes mais non bloquantes','une zone de statut non bloquante intégrée au flux')
+          text = text.replace('MailPin suit Fluent 2 par ses jetons CSS locaux, sa hiérarchie, ses états et ses contrôles HTML natifs.','MailPin utilise Organic Workspace avec HTML natif, jetons CSS locaux et des shells Dashboard/Options écrits directement dans les sources. Le runtime gère les états sans reconstruire la structure visuelle. Fluent 2 reste un historique de conception et non le langage UI canonique.')
+          write('docs/ARCHITECTURE.md',text)
+
+          path = ROOT / 'docs/PROJECT_STATE.json'
+          data = json.loads(path.read_text(encoding='utf-8'))
+          data['invariants'] = [('Organic Workspace uses native HTML plus local CSS tokens, with canonical Dashboard/Options shells written directly in source and no remote UI asset' if value.startswith('Fluent 2 styling') else value) for value in data['invariants']]
+          data['security']['uiDependencyPolicy'] = 'native HTML plus local Organic Workspace CSS tokens; canonical shell in source; no npm runtime dependency, bundler, CDN or remote asset'
+          path.write_text(json.dumps(data,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+
+          path = ROOT / 'README.md'
+          write('README.md',path.read_text(encoding='utf-8').replace('La branche **Organic Workspace** reconstruit l’interface comme un véritable espace de travail :','**Organic Workspace** organise l’interface comme un véritable espace de travail :'))
+          path = ROOT / 'README.en.md'
+          text = path.read_text(encoding='utf-8')
+          text = text.replace('Version 1.6.0 introduces the **MailPin** identity: envelope + pin mark, Ink / Slate / Sage / Brass palette, warm canvas, local typography, and restrained accents. No gradients and no remote assets. Light/dark themes, forced colors, keyboard focus, and reduced motion remain supported.','**Organic Workspace** organizes MailPin as a real productivity workspace: persistent navigation, an editorial canvas, on-demand context, compact Thunderbird companion surfaces, and functional micro-interactions. The Ink / Slate / Sage / Brass identity uses natural tones and local typography only. No gradients, glow, glassmorphism, remote assets, or remote fonts. Light/dark themes, forced colors, keyboard focus, and reduced motion remain supported.')
+          write('README.en.md',text)
+          print('Organic Workspace audit corrections written directly to canonical sources.')
+          PY
+          node --check extension/dashboard/dashboard.js
+          node --check extension/options/options.js
+          python tests/test_organic_workspace_ui.py
+          python tests/test_regressions_3_2_6.py
+          python tests/test_dashboard_dom_contract.py
+          python tests/test_options_controls.py
+          python tests/test_accessibility_localization.py
+          python tests/test_ui_polish_3_2_3.py
+          python tests/test_ui_regressions.py
+          git diff --check
+          npm run ci
+      - name: Commit audited canonical sources
+        shell: bash
+        run: |
+          set -euo pipefail
+          git restore --source=HEAD -- .github/workflows/temporary-finalize-organic-audit.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add README.md README.en.md docs/ARCHITECTURE.md docs/PROJECT_STATE.json docs/UI_SPEC.md extension/dashboard/dashboard.css extension/dashboard/dashboard.html extension/dashboard/dashboard.js extension/options/options.css extension/options/options.html extension/options/options.js extension/styles/workspace.css tests/test_organic_workspace_ui.py tests/test_regressions_3_2_6.py
+          git diff --cached --check
+          git commit -m "fix(ui): harden canonical Organic Workspace after audit [organic-audit-applied]"
+          git push origin HEAD:design/organic-workspace-ui
