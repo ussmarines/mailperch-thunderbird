@@ -60,3 +60,18 @@ polish_text = polish_text.replace(
     1,
 )
 polish.write_text(polish_text, encoding="utf-8", newline="\n")
+
+# Static token guard must follow the canonical design values rather than freeze
+# the pre-Organic palette and motion timings.
+static_checks = root / "tests/static_checks.py"
+static_text = static_checks.read_text(encoding="utf-8")
+replacements = {
+    '"--mp-brand-background: #4f7f75", "--mp-secondary-background: #3d536b",': '"--mp-brand-background: #4e7569", "--mp-secondary-background: #46575d",',
+    '"--mp-color-neutral-background-canvas: #f7f5f0", "--mp-color-neutral-background-canvas: #111315",': '"--mp-color-neutral-background-canvas: #f4f1e9", "--mp-color-neutral-background-canvas: #121512",',
+    '"--mp-radius-lg: var(--mp-radius-xxlarge)", "--mp-duration-normal: 180ms"': '"--mp-radius-lg: var(--mp-radius-xxlarge)", "--mp-duration-normal: 220ms",\n    "--mp-radius-organic-lg: 20px", "--mp-ease-organic"',
+}
+for old, new in replacements.items():
+    if old not in static_text:
+        raise RuntimeError(f"tests/static_checks.py: token guard anchor not found: {old}")
+    static_text = static_text.replace(old, new, 1)
+static_checks.write_text(static_text, encoding="utf-8", newline="\n")
