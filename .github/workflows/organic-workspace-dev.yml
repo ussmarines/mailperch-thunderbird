@@ -13,7 +13,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  transform-validate-commit:
+  validate-final-branch:
     runs-on: ubuntu-24.04
     timeout-minutes: 25
     steps:
@@ -32,16 +32,49 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Apply Organic Workspace transformation
+      - name: Synchronize canonical repository references
         run: |
-          python tools/run_organic_workspace.py
-          git restore tools/apply_organic_workspace.py
+          python - <<'PY'
+          from pathlib import Path
+          import subprocess
+
+          old = "ussmarines/mailperch-thunderbird"
+          new = "ussmarines/mailpin-thunderbird"
+          names = subprocess.check_output(["git", "ls-files", "-z"]).split(b"\0")
+          for raw in names:
+              if not raw:
+                  continue
+              path = Path(raw.decode("utf-8"))
+              try:
+                  value = path.read_text(encoding="utf-8")
+              except (UnicodeDecodeError, IsADirectoryError):
+                  continue
+              if old in value:
+                  path.write_text(value.replace(old, new), encoding="utf-8", newline="\n")
+
+          readme = Path("README.md")
+          fr = readme.read_text(encoding="utf-8")
+          old_fr = "La 1.6.0 inaugure l’identité **MailPin** : symbole enveloppe + pin, palette Ink / Slate / Sage / Brass, canvas chaud, typographie locale et accents sobres. Aucun dégradé ni asset distant. Les thèmes clair/sombre, le contraste forcé, le focus clavier et la réduction du mouvement restent pris en charge."
+          new_fr = "La branche **Organic Workspace** reconstruit l’interface comme un véritable espace de travail : rail de navigation, canvas éditorial, contexte secondaire, panneaux plus organiques et micro-interactions fonctionnelles. La palette Ink / Slate / Sage / Brass évolue vers des tons plus naturels et une typographie locale plus expressive. Aucun dégradé, glow, glassmorphism, asset ou police distante. Les thèmes clair/sombre, le contraste forcé, le focus clavier et la réduction du mouvement restent pris en charge."
+          if old_fr in fr:
+              readme.write_text(fr.replace(old_fr, new_fr, 1), encoding="utf-8", newline="\n")
+
+          readme_en = Path("README.en.md")
+          en = readme_en.read_text(encoding="utf-8")
+          old_en = "Version 1.6.0 introduces the **MailPin** identity: envelope + pin mark, Ink / Slate / Sage / Brass palette, warm canvas, local typography and restrained accents. No gradients or remote assets. Light/dark themes, forced contrast, keyboard focus and reduced motion remain supported."
+          new_en = "The **Organic Workspace** branch rebuilds the interface as a true working environment: navigation rail, editorial canvas, secondary context, more organic surfaces, and functional micro-interactions. The Ink / Slate / Sage / Brass palette shifts toward more natural tones with more expressive local typography. No gradients, glow, glassmorphism, remote assets, or remote fonts. Light/dark themes, forced contrast, keyboard focus, and reduced motion remain supported."
+          if old_en in en:
+              readme_en.write_text(en.replace(old_en, new_en, 1), encoding="utf-8", newline="\n")
+          PY
           git diff --check
 
-      - name: Targeted UI contracts
+      - name: Targeted Organic Workspace contracts
         run: |
           python tests/test_organic_workspace_ui.py
           python tests/test_ui_regressions.py
+          python tests/test_ui_polish_3_2_3.py
+          python tests/test_project_metadata.py
+          python tests/test_accessibility_localization.py
           python tests/test_dashboard_dom_contract.py
           python tests/test_options_controls.py
           python tests/test_recommended_options_ux.py
@@ -52,34 +85,15 @@ jobs:
       - name: Full release-equivalent CI
         run: npm run ci
 
-      - name: Commit validated product delta
+      - name: Commit post-transform consistency delta
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add \
-            BRANDING.md \
-            README.md \
-            README.en.md \
-            package.json \
-            docs/UI_SPEC.md \
-            extension/manifest.json \
-            extension/styles/tokens.css \
-            extension/styles/workspace.css \
-            extension/styles/pin.css \
-            extension/dashboard/dashboard.html \
-            extension/dashboard/dashboard.js \
-            extension/options/AGENTS.md \
-            extension/options/options.html \
-            extension/options/options.js \
-            tests/static_checks.py \
-            tests/test_organic_workspace_ui.py \
-            tests/test_project_metadata.py \
-            tests/test_ui_regressions.py \
-            tests/test_ui_polish_3_2_3.py
+          git add -u
           git diff --cached --check
           if git diff --cached --quiet; then
-            echo "No product delta to commit."
+            echo "No consistency delta to commit."
             exit 0
           fi
-          git commit -m "design: rebuild MailPin as Organic Workspace"
+          git commit -m "docs: align Organic Workspace and repository metadata"
           git push origin HEAD:design/organic-workspace-ui
