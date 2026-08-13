@@ -28,6 +28,15 @@ jobs:
           base64 -d .organic-v2.patch.gz.b64 | gzip -d > /tmp/organic-v2.patch
           git apply --check -p1 /tmp/organic-v2.patch
           git apply -p1 /tmp/organic-v2.patch
+          python - <<'PY'
+          from pathlib import Path
+          for raw in (
+              "extension/styles/workspace.css",
+              "tests/test_organic_workspace_ui.py",
+          ):
+              path = Path(raw)
+              path.write_text(path.read_text(encoding="utf-8").rstrip() + "\n", encoding="utf-8")
+          PY
           node --check extension/dashboard/dashboard.js
           node --check extension/options/options.js
           python tests/test_organic_workspace_ui.py
