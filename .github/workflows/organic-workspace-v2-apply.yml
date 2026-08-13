@@ -1,0 +1,54 @@
+name: Apply Organic Workspace V2
+
+on:
+  push:
+    branches:
+      - design/organic-workspace-ui
+    paths:
+      - .github/workflows/organic-workspace-v2-apply.yml
+
+permissions:
+  contents: write
+
+jobs:
+  apply-v2:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout feature branch
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: design/organic-workspace-ui
+          fetch-depth: 1
+
+      - name: Apply validated V2 patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          base64 -d .organic-v2.patch.gz.b64 | gzip -d > /tmp/organic-v2.patch
+          git apply --check -p1 /tmp/organic-v2.patch
+          git apply -p1 /tmp/organic-v2.patch
+          node --check extension/dashboard/dashboard.js
+          node --check extension/options/options.js
+          python tests/test_organic_workspace_ui.py
+          git diff --check
+
+      - name: Commit only product V2 changes
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- \
+            .agents/skills/mailpin-project-knowledge/chapters/ui-ux-and-branding.md \
+            docs/UI_SPEC.md \
+            extension/_locales/en/messages.json \
+            extension/_locales/fr/messages.json \
+            extension/dashboard/dashboard.html \
+            extension/dashboard/dashboard.js \
+            extension/options/options.js \
+            extension/styles/workspace.css \
+            tests/test_organic_workspace_ui.py
+          git diff --cached --check
+          git commit -m "fix(ui): harden Organic Workspace V2 ergonomics"
+          git push origin HEAD:design/organic-workspace-ui
