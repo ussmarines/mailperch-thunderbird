@@ -39,6 +39,7 @@ jobs:
           python tests/test_organic_workspace_ui.py
           python tests/test_cross_platform_ci.py
           git diff --check
+          git add SECURITY_AUDIT_1.7.0.md VALIDATION_REPORT_1.7.0.md
           npm run ci
       - name: Commit audited non-workflow changes
         shell: bash
