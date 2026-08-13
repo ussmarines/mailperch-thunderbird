@@ -1,0 +1,45 @@
+name: Temporary QoL audit
+
+on:
+  push:
+    branches:
+      - design/organic-workspace-ui
+    paths:
+      - .github/workflows/qol-audit-temp.yml
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: design/organic-workspace-ui
+          fetch-depth: 1
+      - name: Audit QoL defaults and friction
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo '=== HEAD ==='
+          git rev-parse HEAD
+          git status --short --branch
+          echo '=== COLOR INPUTS / DEFAULT COLORS ==='
+          grep -RInE --exclude-dir=node_modules --exclude='*.map' '(type[[:space:]]*=[[:space:]]*["'"']color|\.type[[:space:]]*=[[:space:]]*["'"']color["'"']|#[0-9A-Fa-f]{6})' extension tests | head -n 400 || true
+          echo '=== ENTITY CREATION / PUSH DEFAULTS ==='
+          grep -RInE --exclude-dir=node_modules '(groups\.push|cases\.push|templates\.push|rules\.push|savedViews\.push|createGroup|createCase|addGroup|addCase|newGroup|newCase|default.*color|color.*default)' extension | head -n 400 || true
+          echo '=== CONFIRM / PROMPT / ALERT ==='
+          grep -RInE --exclude-dir=node_modules '(window\.)?(confirm|prompt|alert)\(' extension | head -n 250 || true
+          echo '=== DESTRUCTIVE / REMOVE BUTTONS ==='
+          grep -RInE --exclude-dir=node_modules '(removeButton|delete|Delete|Supprimer|remove\(|splice\()' extension/options extension/dashboard | head -n 350 || true
+          echo '=== KEYBOARD / SHORTCUTS / FOCUS ==='
+          grep -RInE --exclude-dir=node_modules '(keydown|keyup|shortcut|accesskey|focus\(|focus\{|tabindex|aria-keyshortcuts)' extension/options extension/dashboard extension/experiments | head -n 350 || true
+          echo '=== DIRTY / SAVE / AUTOSAVE ==='
+          grep -RInE --exclude-dir=node_modules '(dirty|save-all|saveAll|autosave|beforeunload|setStatus\(|status-toast)' extension/options | head -n 400 || true
+          echo '=== EMPTY STATES / LOADING / BUSY ==='
+          grep -RInE --exclude-dir=node_modules '(empty|loading|busy|disabled|withBusy)' extension/options extension/dashboard | head -n 350 || true
+          echo '=== TODO/FIXME/HACK ==='
+          grep -RInE --exclude-dir=node_modules '(TODO|FIXME|HACK|XXX)' extension docs tests | head -n 300 || true
+          echo '=== OPTIONS ADD BUTTON WIRING ==='
+          grep -RInE --exclude-dir=node_modules '(add-group|add-case|add-template|add-rule|new-group|new-case|create.*group|create.*case)' extension/options | head -n 250 || true
