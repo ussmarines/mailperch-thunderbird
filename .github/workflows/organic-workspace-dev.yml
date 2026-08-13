@@ -66,6 +66,9 @@ jobs:
           if old_en in en:
               readme_en.write_text(en.replace(old_en, new_en, 1), encoding="utf-8", newline="\n")
           PY
+          # Temporary branch automation may contain the legacy slug as data.
+          # It is never part of the product/documentation consistency commit.
+          git restore .github/workflows tools/apply_organic_workspace.py tools/run_organic_workspace.py
           git diff --check
 
       - name: Targeted Organic Workspace contracts
