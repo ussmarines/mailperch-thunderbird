@@ -58,8 +58,11 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add \
             BRANDING.md \
+            README.md \
+            README.en.md \
             package.json \
             docs/UI_SPEC.md \
+            extension/manifest.json \
             extension/styles/tokens.css \
             extension/styles/workspace.css \
             extension/styles/pin.css \
@@ -70,6 +73,7 @@ jobs:
             extension/options/options.js \
             tests/static_checks.py \
             tests/test_organic_workspace_ui.py \
+            tests/test_project_metadata.py \
             tests/test_ui_regressions.py \
             tests/test_ui_polish_3_2_3.py
           git diff --cached --check
