@@ -69,7 +69,8 @@ jobs:
             extension/options/options.html \
             extension/options/options.js \
             tests/test_organic_workspace_ui.py \
-            tests/test_ui_regressions.py
+            tests/test_ui_regressions.py \
+            tests/test_ui_polish_3_2_3.py
           git diff --cached --check
           if git diff --cached --quiet; then
             echo "No product delta to commit."
