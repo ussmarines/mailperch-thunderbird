@@ -1,26 +1,27 @@
-name: Post-release sync
+name: Release
 
 on:
   push:
-    branches:
-      - "workflow-dispatch-probe"
+    tags:
+      - "v*"
+  workflow_dispatch:
 
 permissions:
   contents: write
 
 concurrency:
-  group: mailpin-post-release-sync
+  group: mailpin-release
   cancel-in-progress: false
 
 jobs:
-  sync:
+  publish:
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
-          persist-credentials: true
+          persist-credentials: false
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 24
@@ -28,28 +29,47 @@ jobs:
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: "3.12"
-      - name: Restore canonical main and apply validated post-release patch
+      - name: Verify and build release
+        run: npm run ci
+      - name: Prepare release metadata
+        id: metadata
         shell: bash
         run: |
           set -euo pipefail
-          MAIN_SHA="c2b886677413a205d57a191234b1dac6279b86d6"
-          git checkout "$MAIN_SHA" -- .
-          PATCH_GZ_B64='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'
-          printf '%s' "$PATCH_GZ_B64" | base64 -d | gzip -d > /tmp/postrelease.patch
-          git apply --index /tmp/postrelease.patch
-          test "$(git write-tree)" = "05c1c66ea388071159c9408617b19c3b2e401195"
-          git diff --cached --check
-      - name: Validate post-release state
-        run: |
-          set -euo pipefail
-          npm run check
-          python tests/test_project_metadata.py
-      - name: Commit synchronized metadata
+          VERSION="$(node -p "require('./package.json').version")"
+          test "$(node -p "require('./extension/manifest.json').version")" = "$VERSION"
+          test "$(node -p "require('./docs/PROJECT_STATE.json').releaseStatus")" = "candidate"
+          TAG="v${VERSION}"
+          if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
+            test "${GITHUB_REF_NAME}" = "$TAG"
+          else
+            test "${GITHUB_REF_NAME}" = "main"
+          fi
+          awk -v version="$VERSION" '
+            $0 ~ "^## " version "([[:space:]]|$)" {found=1; next}
+            found && /^## / {exit}
+            found {print}
+          ' CHANGELOG.md > release-notes.md
+          test -s release-notes.md
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+      - name: Publish GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.metadata.outputs.tag }}
+          VERSION: ${{ steps.metadata.outputs.version }}
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git write-tree)" = "05c1c66ea388071159c9408617b19c3b2e401195"
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git commit -m "docs(release): finalize MailPin 1.7.1 publication"
-          git push origin HEAD:workflow-dispatch-probe
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Release $TAG already exists; keeping it unchanged."
+            exit 0
+          fi
+          gh release create "$TAG" \
+            "dist/MailPin_v${VERSION}.xpi" \
+            "dist/MailPin_GitHub_Repository_v${VERSION}.zip" \
+            "dist/SHA256SUMS.txt" \
+            --target "$GITHUB_SHA" \
+            --title "MailPin ${VERSION}" \
+            --notes-file release-notes.md \
+            --latest
