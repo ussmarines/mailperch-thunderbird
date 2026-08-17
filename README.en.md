@@ -79,7 +79,7 @@ MailPin has no runtime network call, telemetry, advertising or remote code. Full
 - [ATN preparation](STORE_RELEASE.md)
 - [Support](SUPPORT.md)
 
-Maintained by [ussmarines](https://github.com/ussmarines). Donations are optional and unlock no functionality.
+Maintained by [ussmarines](https://github.com/ussmarines). [PayPal](https://paypal.me/ussmarinesdot) donations are optional and unlock no functionality.
 
 ## License
 
