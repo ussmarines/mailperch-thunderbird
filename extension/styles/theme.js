@@ -5,6 +5,16 @@
   const root = document.documentElement;
   const darkPreference = matchMedia("(prefers-color-scheme: dark)");
   const themeApi = globalThis.messenger?.theme || globalThis.browser?.theme;
+  const scriptBase = new URL(".", document.currentScript?.src || document.baseURI);
+
+  function installInteractionStabilityStyles() {
+    if (document.querySelector("link[data-mailpin-interaction-stability]")) return;
+    const link = document.createElement("link");
+    link.rel = "stylesheet";
+    link.href = new URL("interaction-stability.css", scriptBase).href;
+    link.dataset.mailpinInteractionStability = "true";
+    document.head.appendChild(link);
+  }
 
   function rgbFromColor(value) {
     const match = String(value || "").match(/rgba?\(\s*(\d+(?:\.\d+)?)\D+(\d+(?:\.\d+)?)\D+(\d+(?:\.\d+)?)/i);
@@ -46,6 +56,11 @@
     return darkPreference.matches ? "dark" : "light";
   }
 
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", installInteractionStabilityStyles, {once: true});
+  } else {
+    installInteractionStabilityStyles();
+  }
   setTheme(darkPreference.matches ? "dark" : "light");
 
   const refresh = async () => {
