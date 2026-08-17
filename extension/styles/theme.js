@@ -5,13 +5,14 @@
   const root = document.documentElement;
   const darkPreference = matchMedia("(prefers-color-scheme: dark)");
   const themeApi = globalThis.messenger?.theme || globalThis.browser?.theme;
-  const scriptBase = new URL(".", document.currentScript?.src || document.baseURI);
+  const scriptSource = String(document.currentScript?.src || "");
+  const scriptBase = scriptSource.includes("/") ? scriptSource.slice(0, scriptSource.lastIndexOf("/") + 1) : "";
 
   function installInteractionStabilityStyles() {
     if (document.querySelector("link[data-mailpin-interaction-stability]")) return;
     const link = document.createElement("link");
     link.rel = "stylesheet";
-    link.href = new URL("interaction-stability.css", scriptBase).href;
+    link.href = `${scriptBase}interaction-stability.css`;
     link.dataset.mailpinInteractionStability = "true";
     document.head.appendChild(link);
   }
