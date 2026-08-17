@@ -101,7 +101,8 @@ def test_field_review_interaction_stability_contracts():
     bootstrap = text("extension/options/options-bootstrap.js")
     navigation = text("extension/options/options-navigation-stability.js")
 
-    assert 'new URL("interaction-stability.css", scriptBase)' in theme
+    assert 'link.href = `${scriptBase}interaction-stability.css`' in theme
+    assert 'const scriptSource = String(document.currentScript?.src || "")' in theme
     assert 'loadClassicScript("./options-navigation-stability.js")' in bootstrap
 
     # The dashboard disclosure remains full-width before and after expansion,
