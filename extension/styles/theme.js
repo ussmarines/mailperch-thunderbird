@@ -9,6 +9,11 @@
   const scriptBase = scriptSource.includes("/") ? scriptSource.slice(0, scriptSource.lastIndexOf("/") + 1) : "";
 
   function installInteractionStabilityStyles() {
+    if (
+      typeof document.querySelector !== "function" ||
+      typeof document.createElement !== "function" ||
+      typeof document.head?.appendChild !== "function"
+    ) return;
     if (document.querySelector("link[data-mailpin-interaction-stability]")) return;
     const link = document.createElement("link");
     link.rel = "stylesheet";
