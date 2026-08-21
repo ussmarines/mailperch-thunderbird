@@ -1,0 +1,23 @@
+name: One-shot merge PR 61
+
+on:
+  push:
+    branches:
+      - ops/prune-stale-branches
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  merge:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Merge validated cleanup PR
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh pr merge 61 --repo "$GH_REPO" --squash --delete-branch
