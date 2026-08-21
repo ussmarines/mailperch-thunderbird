@@ -1,5 +1,5 @@
 name: Finalize MailPin 1.7.5 published state
-# Second change intentionally triggers the now-valid finalizer workflow.
+# Stage temporary workflow removals before running the final source guard.
 
 on:
   push:
@@ -32,13 +32,13 @@ jobs:
       - name: Prepare final published state
         run: python scripts/finalize_1_7_5_release.py
 
-      - name: Remove temporary release automation
+      - name: Stage removal of temporary release automation
         shell: bash
         run: |
           set -euo pipefail
-          rm -f .github/workflows/release-1.7.5.yml
-          rm -f .github/workflows/finalize-1.7.5.yml
-          rm -f scripts/finalize_1_7_5_release.py
+          git rm -f -- .github/workflows/release-1.7.5.yml
+          git rm -f -- .github/workflows/finalize-1.7.5.yml
+          git rm -f -- scripts/finalize_1_7_5_release.py
 
       - name: Verify final published state
         shell: bash
@@ -63,7 +63,6 @@ jobs:
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git status --short
-          git add -u
           git add -- \
             README.md README.en.md PROJECT_MEMORY.md STORE_RELEASE.md \
             SECURITY_AUDIT_1.7.5.md VALIDATION_REPORT_1.7.5.md \
