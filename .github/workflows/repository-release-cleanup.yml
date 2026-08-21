@@ -1,0 +1,141 @@
+name: Repository release cleanup
+
+on:
+  push:
+    branches:
+      - chore/repository-release-cleanup
+
+permissions:
+  contents: write
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Organize release evidence and verify repository
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          python - <<'PY'
+          from __future__ import annotations
+
+          import json
+          import os
+          from pathlib import Path
+          import subprocess
+
+          root = Path.cwd()
+          manifest = json.loads((root / "extension/manifest.json").read_text(encoding="utf-8"))
+          version = str(manifest["version"])
+
+          moves: dict[str, str] = {}
+
+          def register(pattern: str, current_name: str, current_dir: str, archive_dir: str) -> None:
+              for path in sorted(root.glob(pattern)):
+                  destination_dir = root / (current_dir if path.name == current_name else archive_dir)
+                  destination_dir.mkdir(parents=True, exist_ok=True)
+                  destination = destination_dir / path.name
+                  moves[path.as_posix()] = destination.relative_to(root).as_posix()
+
+          register(
+              "SECURITY_AUDIT_*.md",
+              f"SECURITY_AUDIT_{version}.md",
+              "docs/reports/security",
+              "docs/archive/reports/security",
+          )
+          register(
+              "VALIDATION_REPORT_*.md",
+              f"VALIDATION_REPORT_{version}.md",
+              "docs/reports/validation",
+              "docs/archive/reports/validation",
+          )
+
+          legacy_dir = root / "docs/archive/reports/legacy"
+          for path in sorted(root.glob("AUDIT_REPORT_*.md")):
+              legacy_dir.mkdir(parents=True, exist_ok=True)
+              destination = legacy_dir / path.name
+              moves[path.as_posix()] = destination.relative_to(root).as_posix()
+
+          if not moves:
+              raise SystemExit("No root release reports found to organize")
+
+          for source, destination in moves.items():
+              subprocess.run(["git", "mv", source, destination], check=True)
+
+          text_suffixes = {".md", ".txt", ".py", ".js", ".mjs", ".json", ".yml", ".yaml"}
+          tracked = subprocess.check_output(["git", "ls-files", "-z"]).decode("utf-8").split("\0")
+          for relative in tracked:
+              if not relative:
+                  continue
+              path = root / relative
+              if not path.is_file():
+                  continue
+              if path.suffix.lower() not in text_suffixes and path.name not in {"LICENSE"}:
+                  continue
+              try:
+                  text = path.read_text(encoding="utf-8")
+              except UnicodeDecodeError:
+                  continue
+              original = text
+              for source, destination in moves.items():
+                  old_name = Path(source).name
+                  relative_target = os.path.relpath(root / destination, path.parent).replace(os.sep, "/")
+                  text = text.replace(f"]({old_name})", f"]({relative_target})")
+                  text = text.replace(f"](<{old_name}>)", f"](<{relative_target}>)")
+                  text = text.replace(old_name, destination)
+              if text != original:
+                  path.write_text(text, encoding="utf-8", newline="\n")
+
+          reports_readme = root / "docs/reports/README.md"
+          reports_readme.parent.mkdir(parents=True, exist_ok=True)
+          reports_readme.write_text(
+              "# Release evidence\n\n"
+              "Release-specific audit and validation evidence is kept out of the repository root so the public project view remains concise.\n\n"
+              "## Current public release\n\n"
+              f"- [Security audit {version}](security/SECURITY_AUDIT_{version}.md)\n"
+              f"- [Validation report {version}](validation/VALIDATION_REPORT_{version}.md)\n\n"
+              "## Historical evidence\n\n"
+              "Older immutable reports are retained for traceability under `docs/archive/reports/` rather than deleted.\n\n"
+              "- [Historical security audits](../archive/reports/security/)\n"
+              "- [Historical validation reports](../archive/reports/validation/)\n"
+              "- [Legacy audit reports](../archive/reports/legacy/)\n",
+              encoding="utf-8",
+              newline="\n",
+          )
+
+          archive_readme = root / "docs/archive/README.md"
+          archive_text = archive_readme.read_text(encoding="utf-8")
+          marker = "## Release reports"
+          if marker not in archive_text:
+              archive_text = archive_text.rstrip() + (
+                  "\n\n## Release reports\n\n"
+                  "Historical security audits and validation reports are preserved under `reports/` for traceability. "
+                  "The current release evidence lives in [`../reports/`](../reports/).\n"
+              )
+              archive_readme.write_text(archive_text, encoding="utf-8", newline="\n")
+
+          print("Organized release evidence:")
+          for source, destination in moves.items():
+              print(f"  {source} -> {destination}")
+          PY
+
+          git rm .github/workflows/repository-release-cleanup.yml
+          git diff --check
+          npm run ci
+
+          if git diff --quiet && git diff --cached --quiet; then
+            echo "No repository cleanup changes produced"
+            exit 1
+          fi
+
+          git add -A
+          git status --short
+          git commit -m "chore(repo): organize release evidence"
+          git push origin HEAD:chore/repository-release-cleanup
