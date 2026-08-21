@@ -1,4 +1,4 @@
-# Triggered after workflow registration.
+# Registered workflow: execute cleanup on this push.
 name: Repository release cleanup
 
 on:
