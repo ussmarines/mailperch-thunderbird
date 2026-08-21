@@ -1,4 +1,5 @@
 name: Finalize MailPin 1.7.5 published state
+# Second change intentionally triggers the now-valid finalizer workflow.
 
 on:
   push:
