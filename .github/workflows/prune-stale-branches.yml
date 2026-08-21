@@ -1,9 +1,10 @@
+# One-shot branch-only cleanup; never merged to main.
 name: One-shot prune stale branches
 
 on:
   push:
     branches:
-      - main
+      - ops/prune-stale-branches
 
 permissions:
   contents: write
@@ -25,7 +26,6 @@ jobs:
             "ops/verify-release175-final"
             "release/atn-name-1.7.5"
             "release/publish-1.7.5"
-            "ops/prune-stale-branches"
           )
 
           for branch in "${branches[@]}"; do
@@ -46,4 +46,6 @@ jobs:
             fi
           done
 
+          echo "Deleting one-shot branch last"
+          gh api -X DELETE "repos/${GH_REPO}/git/refs/heads/ops/prune-stale-branches"
           echo "Stale branch pruning complete."
