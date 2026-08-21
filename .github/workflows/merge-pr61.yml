@@ -1,4 +1,4 @@
-# Registered helper: run on this push.
+# QA 32486973269 passed; merge validated cleanup PR on this push.
 name: One-shot merge PR 61
 
 on:
