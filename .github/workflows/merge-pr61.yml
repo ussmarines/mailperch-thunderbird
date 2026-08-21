@@ -1,3 +1,4 @@
+# Registered helper: run on this push.
 name: One-shot merge PR 61
 
 on:
